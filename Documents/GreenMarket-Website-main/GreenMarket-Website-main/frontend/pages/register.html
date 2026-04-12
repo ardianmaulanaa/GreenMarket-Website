@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>Register</title>
+
+    <!-- FONT -->
+    <link
+      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- BOOTSTRAP -->
+    <link rel="stylesheet" href="../bootstrap-5.0.2-dist/css/bootstrap.css" />
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="../css/halamanDepan.css" />
+  </head>
+
+  <body style="font-family: &quot;Plus Jakarta Sans&quot;, sans-serif">
+    <div class="container-fluid">
+      <div class="row">
+        <!-- LEFT IMAGE -->
+        <div class="col-md-5 d-none d-md-block position-relative p-0">
+          <img
+            src="../assets/daun.jpeg"
+            style="
+              width: 100%;
+              height: 100vh;
+              object-fit: cover;
+              object-position: left center;
+            "
+          />
+
+          <!-- TEXT -->
+          <div
+            style="
+              position: absolute;
+              bottom: 50px;
+              left: 35px;
+              color: white;
+              font-size: 34px;
+              font-weight: 700;
+              line-height: 1.25;
+              letter-spacing: -0.5px;
+            "
+          >
+            Mulai perjalanan <br />
+            ramah <br />
+            lingkunganmu.
+          </div>
+        </div>
+
+        <!-- RIGHT FORM -->
+        <div
+          class="col-md-7 d-flex flex-column justify-content-center align-items-center"
+          style="background: #f1f8e9; height: 100vh"
+        >
+          <!-- LOGO -->
+          <div class="logo mb-4" style="font-size: 21px">GreenMarket</div>
+
+          <!-- CARD -->
+          <div
+            style="
+              background: white;
+              padding: 40px 36px;
+              border-radius: 18px;
+              width: 100%;
+              max-width: 440px;
+              box-shadow: 0 6px 30px rgba(30, 80, 40, 0.08);
+            "
+          >
+            <!-- TITLE -->
+            <h1 style="font-size: 26px; font-weight: 600; margin-bottom: 10px">
+              Buat Akun
+            </h1>
+
+            <p style="font-size: 14px; color: #6b7c71; margin-bottom: 24px">
+              Jadilah bagian dari komunitas hijau kami.
+            </p>
+
+            <!-- FORM -->
+            <form>
+              <!-- NAMA -->
+              <div style="margin-bottom: 18px">
+                <label
+                  style="font-size: 11px; font-weight: 600; color: #6b7c71"
+                >
+                  NAMA LENGKAP
+                </label>
+                <input
+                  type="text"
+                  class="form-control"
+                  style="height: 44px; margin-top: 6px"
+                />
+              </div>
+
+              <!-- EMAIL -->
+              <div style="margin-bottom: 18px">
+                <label
+                  style="font-size: 11px; font-weight: 600; color: #6b7c71"
+                >
+                  EMAIL
+                </label>
+                <input
+                  type="email"
+                  class="form-control"
+                  style="height: 44px; margin-top: 6px"
+                />
+              </div>
+
+              <!-- PASSWORD -->
+              <div style="margin-bottom: 20px">
+                <label
+                  style="font-size: 11px; font-weight: 600; color: #6b7c71"
+                >
+                  KATA SANDI
+                </label>
+                <input
+                  type="password"
+                  class="form-control"
+                  style="height: 44px; margin-top: 6px"
+                />
+              </div>
+
+              <!-- CHECKBOX -->
+              <div
+                style="
+                  display: flex;
+                  gap: 10px;
+                  align-items: flex-start;
+                  margin-bottom: 22px;
+                "
+              >
+                <input
+                  type="checkbox"
+                  style="width: 17px; height: 17px; margin-top: 4px"
+                />
+
+                <label
+                  style="font-size: 13px; color: #6b7c71; line-height: 1.4"
+                >
+                  Saya menyetujui Syarat & Ketentuan <br />
+                  <span style="color: #2fa84f; font-weight: 500">
+                    Sustainability Report.
+                  </span>
+                </label>
+              </div>
+
+              <!-- BUTTON -->
+              <button
+                class="btn-green w-100"
+                style="font-size: 15px; padding: 13px"
+              >
+                Daftar
+              </button>
+            </form>
+
+            <!-- LOGIN -->
+            <p
+              style="
+                margin-top: 22px;
+                text-align: center;
+                font-size: 13px;
+                color: #6b7c71;
+              "
+            >
+              Sudah punya akun? <a href="login.html">Masuk</a>
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
+
+<script src="../api-fetch-backend/register.js"></script>
