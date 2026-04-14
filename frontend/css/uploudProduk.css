@@ -1,0 +1,218 @@
+/* Warna Background Gelap Custom */
+.bg-dark-custom {
+    background-color: #262626 !important;
+}
+
+/* Membuat Lingkaran Hitam */
+.logo-circle {
+    width: 30px;
+    height: 30px;
+    background-color: #000;
+    border-radius: 50%;
+}
+
+/* Search Bar */
+.search-container {
+    border: 2px solid #52b759; 
+    border-radius: 5px;
+    overflow: hidden;
+}
+
+.search-container .form-control:focus {
+    box-shadow: none;
+    border-color: transparent;
+}
+
+.search-container .input-group-text {
+    border: none;
+}
+
+/* Foto Profil */
+.profile-frame {
+    width: 35px;
+    height: 35px;
+    border-radius: 50%;
+    overflow: hidden;
+    border: 1px solid #ddd;
+}
+
+.profile-frame img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+
+
+
+
+
+/* ========================= */
+/* CARD */
+/* ========================= */
+
+/* Container Utama */
+.container-main {
+    margin-top: 3rem;
+    margin-bottom: 3rem;
+    max-width: 1100px;
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: 15px;
+    padding-right: 15px;
+}
+
+/* Card */
+.card-border {
+    border-radius: 20px !important;
+    border: none;
+    overflow: hidden;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+    background-color: #fff;
+}
+
+.card-header {
+    background-color: #dcf3c2;
+    border-bottom: none;
+    padding: 1.5rem;
+    font-size: 1.25rem;
+    font-weight: 700;
+}
+
+.header-subtitle {
+    margin-bottom: 0;
+    padding-top: 0.5rem;
+    font-size: 1rem;
+    font-weight: 400;
+}
+
+.card-body {
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* Label Area */
+.label-container {
+    width: 100%;
+    margin-bottom: 1rem;
+}
+
+.label-text {
+    font-weight: 700;
+}
+
+.label-count {
+    color: #6c757d;
+    font-size: 0.875rem;
+}
+
+/* AREA KOTAK UPLOUD PUTUS PUTUS */
+
+.upload-area {
+    border: 2px dashed #cecece;
+    border-radius: 20px;
+    padding: 60px 20px;
+    width: 100%;
+    margin-bottom: 1.5rem;
+}
+
+/* perubahan warna ketika kursor di arahin ke kotak uploud */
+.upload-area:hover {
+    background-color: rgb(237, 237, 237);
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+/* Posisi gambar yang di uploud */
+.preview-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    width: 100%;
+    justify-content: flex-start;
+}
+
+.upload-instructions {
+    text-align: center;
+}
+
+.file-input {
+    display: none;
+}
+
+
+/* Tanda Plus */
+.icon-plus {
+    width: 70px;
+    height: 70px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #e0e0e0;
+    margin-left: auto;
+    margin-right: auto;
+    margin-bottom: 1rem;
+}
+
+.icon-plus i {
+    font-size: 2rem;
+    color: #6c757d;
+}
+
+/* Teks dibawah tanda plus */
+.instruction-title {
+    margin-bottom: 0.25rem;
+    font-weight: 700;
+}
+
+.instruction-subtitle {
+    margin-bottom: 0;
+    font-size: 0.875rem;
+    color: #6c757d;
+}
+
+.instruction-format {
+    font-size: 0.75rem;
+    color: #6c757d;
+}
+
+/* AREA KOTAK UPLOUD PUTUS PUTUS */
+
+
+
+/* Kotak Tips */
+.tips-box {
+    background-color: #e8f5e9;
+    border-radius: 12px;
+    width: 100%;
+    margin-bottom: 1.5rem;
+}
+
+.tips-text {
+    color: #4caf50;
+    padding: 15px;
+    font-size: 0.9rem;
+    margin-bottom: 0;
+}
+
+/* Tombol Kirim */
+.btn-kirim {
+    background-color: #52b759;
+    color: white;
+    border: none;
+    border-radius: 10px;
+    padding: 12px;
+    width: 60%; 
+    transition: 0.3s;
+    font-weight: 700;
+}
+
+.btn-kirim:hover {
+    background-color: #45a049;
+    transform: translateY(-2px);
+}
