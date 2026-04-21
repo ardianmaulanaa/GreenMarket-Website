@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Keranjang - GreenMarket</title>
+    
+    <link rel="stylesheet" href="../bootstrap-5.0.2-dist/css/bootstrap.css" />
+    
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+    
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #f1f8e9;
+            color: #1a2e1f;
+            padding-top: 100px;
+            padding-bottom: 50px;
+        }
+
+        /* NAVBAR */
+        #navbar {
+            background-color: white;
+            box-shadow: 0 4px 25px rgba(30, 80, 40, 0.05);
+            border-bottom: 1px solid #e0e6e2;
+            padding: 15px 0;
+        }
+
+        .navbar-brand {
+            color: #2fa84f !important;
+            font-size: 24px;
+            font-weight: 800;
+        }
+
+        /* TOMBOL BACK BERLOGO */
+        .btn-back-home {
+            position: fixed;
+            top: 100px;
+            left: 40px;
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 45px;
+            height: 45px;
+            background-color: white;
+            color: #2fa84f;
+            border-radius: 12px;
+            text-decoration: none;
+            box-shadow: 0 4px 15px rgba(30, 80, 40, 0.1);
+            transition: all 0.3s ease;
+            border: 1px solid #e0e6e2;
+        }
+
+        .btn-back-home:hover {
+            background-color: #2fa84f;
+            color: white;
+            transform: translateX(-5px);
+            box-shadow: 0 8px 20px rgba(47, 168, 79, 0.2);
+        }
+
+        /* CART CONTAINER */
+        .cart-card {
+            background: white;
+            border-radius: 24px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(30, 80, 40, 0.04);
+            margin-bottom: 25px;
+        }
+
+        .cart-title {
+            font-size: 22px;
+            font-weight: 700;
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        /* ITEM ROW */
+        .cart-item {
+            display: flex;
+            align-items: center;
+            padding: 20px 0;
+            border-bottom: 1px solid #f1f8e9;
+        }
+
+        .cart-item:last-child { border-bottom: none; }
+
+        .item-img {
+            width: 100px;
+            height: 100px;
+            border-radius: 16px;
+            object-fit: cover;
+            margin-right: 20px;
+        }
+
+        .item-details { flex-grow: 1; }
+        .item-name { font-weight: 700; font-size: 16px; margin-bottom: 5px; }
+        .item-seller { font-size: 12px; color: #6b7c71; margin-bottom: 10px; }
+        .item-price { font-weight: 800; color: #2fa84f; font-size: 18px; }
+
+        /* QUANTITY CONTROL */
+        .qty-control {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            background: #f8faf9;
+            padding: 5px 12px;
+            border-radius: 12px;
+            border: 1px solid #e0e6e2;
+        }
+
+        .qty-btn {
+            background: none;
+            border: none;
+            color: #2fa84f;
+            font-weight: 800;
+            font-size: 18px;
+            cursor: pointer;
+        }
+
+        .remove-btn {
+            color: #ff5252;
+            font-size: 20px;
+            margin-left: 20px;
+            cursor: pointer;
+            transition: opacity 0.3s;
+        }
+
+        /* SUMMARY CARD */
+        .summary-card {
+            background: white;
+            border-radius: 24px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(30, 80, 40, 0.04);
+            position: sticky;
+            top: 100px;
+        }
+
+        .btn-checkout {
+            background-color: #2fa84f;
+            color: white;
+            border: none;
+            border-radius: 14px;
+            padding: 16px;
+            width: 100%;
+            font-weight: 700;
+            margin-top: 25px;
+            transition: all 0.3s;
+        }
+
+        .btn-checkout:hover {
+            background-color: #268c41;
+            transform: translateY(-2px);
+        }
+
+        /* Responsive */
+        @media (max-width: 991px) {
+            .btn-back-home {
+                left: 15px;
+                top: 85px;
+                width: 40px;
+                height: 40px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <nav id="navbar" class="navbar navbar-expand-lg fixed-top px-4">
+      <div class="container-fluid">
+        <a href="berandaDashboard.html" class="navbar-brand">GreenMarket</a>
+        <div class="ms-auto d-flex align-items-center">
+            <a href="#" class="icon-link text-dark"><i class="bi bi-person-circle" style="font-size: 24px;"></i></a>
+        </div>
+      </div>
+    </nav>
+
+    <a href="berandaDashboard.html" class="btn-back-home" title="Kembali ke Beranda">
+        <i class="bi bi-arrow-left"></i>
+    </a>
+
+    <div class="container mt-4">
+        <div class="row g-4">
+            
+            <div class="col-lg-8">
+                <div class="cart-card">
+                    <div class="cart-title">
+                        <i class="bi bi-bag-check text-success"></i>
+                        Keranjang Belanja
+                    </div>
+
+                    <div class="cart-item">
+                        <img src="https://images.unsplash.com/photo-1583394838336-acd977736f90?w=300&h=300&fit=crop" class="item-img" alt="">
+                        <div class="item-details">
+                            <div class="item-name">Tempat Pensil Organik</div>
+                            <div class="item-seller">EcoFriendy Bandung</div>
+                            <div class="item-price">Rp 10.000</div>
+                        </div>
+                        <div class="qty-control">
+                            <button class="qty-btn">-</button>
+                            <span class="fw-bold">1</span>
+                            <button class="qty-btn">+</button>
+                        </div>
+                        <i class="bi bi-trash remove-btn"></i>
+                    </div>
+
+                    <div class="cart-item">
+                        <img src="https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=300&h=300&fit=crop" class="item-img" alt="">
+                        <div class="item-details">
+                            <div class="item-name">Buku Catatan Linen</div>
+                            <div class="item-seller">GreenStation Jakarta</div>
+                            <div class="item-price">Rp 45.000</div>
+                        </div>
+                        <div class="qty-control">
+                            <button class="qty-btn">-</button>
+                            <span class="fw-bold">1</span>
+                            <button class="qty-btn">+</button>
+                        </div>
+                        <i class="bi bi-trash remove-btn"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-4">
+                <div class="summary-card">
+                    <h5 class="fw-bold mb-4">Ringkasan Pesanan</h5>
+                    
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-muted">Total Harga</span>
+                        <span class="fw-bold">Rp 55.000</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-muted">Biaya Kirim</span>
+                        <span class="fw-bold">Rp 10.000</span>
+                    </div>
+                    <hr>
+                    <div class="d-flex justify-content-between mb-4">
+                        <span class="fw-bold">Total Bayar</span>
+                        <span class="fw-bold text-success" style="font-size: 20px;">Rp 65.000</span>
+                    </div>
+
+                    <button class="btn-checkout">Checkout Sekarang</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+</body>
+</html>
