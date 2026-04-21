@@ -3,139 +3,156 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Login - GreenMarket</title>
 
-    <title>Login</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
 
-    <!-- FONT -->
-    <link
-      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600&display=swap"
-      rel="stylesheet"
-    />
-
-    <!-- BOOTSTRAP -->
     <link rel="stylesheet" href="../bootstrap-5.0.2-dist/css/bootstrap.css" />
 
-    <!-- CSS -->
-    <link rel="stylesheet" href="../css/halamanDepan.css" />
+    <style>
+      body {
+        font-family: 'Plus Jakarta Sans', sans-serif;
+        background-color: #f1f8e9; /* Background hijau sangat muda */
+        height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0;
+      }
+
+      /* Tombol Kembali */
+      .btn-back {
+        position: absolute;
+        top: 30px;
+        left: 30px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: #6b7c71;
+        text-decoration: none;
+        font-size: 14px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        padding: 8px 16px;
+        border-radius: 50px;
+        background: white;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+      }
+
+      .btn-back:hover {
+        color: #2fa84f;
+        transform: translateX(-5px);
+        box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+      }
+
+      /* Card Login */
+      .login-card {
+        background: white;
+        padding: 45px;
+        border-radius: 28px;
+        width: 100%;
+        max-width: 440px;
+        box-shadow: 0 15px 50px rgba(30, 80, 40, 0.08);
+        text-align: center;
+      }
+
+      .logo-brand {
+        font-size: 24px;
+        font-weight: 700;
+        color: #2fa84f;
+        margin-bottom: 30px;
+        display: inline-block;
+      }
+
+      .form-control {
+        border-radius: 12px;
+        height: 50px;
+        border: 1px solid #e0e6e2;
+        padding-left: 15px;
+        background-color: #fcfdfc;
+      }
+
+      .form-control:focus {
+        border-color: #2fa84f;
+        box-shadow: 0 0 0 0.25rem rgba(47, 168, 79, 0.1);
+        background-color: #fff;
+      }
+
+      .btn-login {
+        background-color: #2fa84f;
+        color: white;
+        border: none;
+        border-radius: 12px;
+        padding: 14px;
+        font-weight: 700;
+        font-size: 16px;
+        margin-top: 10px;
+        transition: all 0.3s ease;
+      }
+
+      .btn-login:hover {
+        background-color: #268c41;
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(47, 168, 79, 0.25);
+      }
+
+      .register-link {
+        margin-top: 25px;
+        font-size: 14px;
+        color: #6b7c71;
+      }
+
+      .register-link a {
+        color: #2fa84f;
+        text-decoration: none;
+        font-weight: 700;
+      }
+    </style>
   </head>
 
-  <body style="font-family: &quot;Plus Jakarta Sans&quot;, sans-serif">
-    <div class="container-fluid">
-      <div class="row">
-        <!-- LEFT IMAGE -->
-        <div class="col-md-5 d-none d-md-block position-relative p-0">
-          <img
-            src="../assets/daun.jpeg"
-            style="
-              width: 100%;
-              height: 100vh;
-              object-fit: cover;
-              object-position: left center;
-            "
-          />
+  <body>
+    <a href="LandingPage.html" class="btn-back">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="19" y1="12" x2="5" y2="12"></line>
+        <polyline points="12 19 5 12 12 5"></polyline>
+      </svg>
+      Kembali
+    </a>
 
-          <div
-            style="
-              position: absolute;
-              bottom: 50px;
-              left: 35px;
-              color: white;
-              font-size: 34px;
-              font-weight: 700;
-              line-height: 1.25;
-              letter-spacing: -0.5px;
-            "
-          >
-            Mulai perjalanan <br />
-            ramah <br />
-            lingkunganmu.
-          </div>
+    <div class="login-card">
+      <div class="logo-brand">🌿 GreenMarket</div>
+
+      <h1 style="font-size: 26px; font-weight: 700; color: #1a2e1f; margin-bottom: 8px">
+        Selamat Datang
+      </h1>
+      <p style="font-size: 15px; color: #6b7c71; margin-bottom: 35px">
+        Masuk untuk melanjutkan aksi hijau Anda.
+      </p>
+
+      <form>
+        <div class="text-start mb-3">
+          <label style="font-size: 12px; font-weight: 700; color: #6b7c71; margin-left: 5px; text-transform: uppercase;">Email</label>
+          <input type="email" class="form-control" placeholder="nama@email.com" required />
         </div>
 
-        <!-- RIGHT FORM -->
-        <div
-          class="col-md-7 d-flex flex-column justify-content-center align-items-center"
-          style="background: #f1f8e9; height: 100vh"
-        >
-          <!-- LOGO -->
-          <div class="logo mb-4" style="font-size: 21px">GreenMarket</div>
-
-          <!-- CARD -->
-          <div
-            style="
-              background: white;
-              padding: 40px 36px;
-              border-radius: 18px;
-              width: 100%;
-              max-width: 440px;
-              box-shadow: 0 6px 30px rgba(30, 80, 40, 0.08);
-            "
-          >
-            <!-- TITLE -->
-            <h1 style="font-size: 26px; font-weight: 600; margin-bottom: 10px">
-              Selamat Datang Kembali
-            </h1>
-
-            <p style="font-size: 14px; color: #6b7c71; margin-bottom: 24px">
-              Masuk untuk melanjutkan perjalanan hijau Anda.
-            </p>
-
-            <!-- FORM -->
-            <form>
-              <!-- EMAIL -->
-              <div style="margin-bottom: 18px">
-                <label
-                  style="font-size: 11px; font-weight: 600; color: #6b7c71"
-                >
-                  EMAIL
-                </label>
-                <input
-                  type="email"
-                  class="form-control"
-                  style="height: 44px; margin-top: 6px"
-                />
-              </div>
-
-              <!-- PASSWORD -->
-              <div style="margin-bottom: 22px">
-                <label
-                  style="font-size: 11px; font-weight: 600; color: #6b7c71"
-                >
-                  KATA SANDI
-                </label>
-                <input
-                  type="password"
-                  class="form-control"
-                  style="height: 44px; margin-top: 6px"
-                />
-              </div>
-
-              <!-- BUTTON -->
-              <button
-                class="btn-green w-100"
-                style="font-size: 15px; padding: 13px"
-              >
-                Masuk
-              </button>
-            </form>
-
-            <!-- REGISTER LINK -->
-            <p
-              style="
-                margin-top: 22px;
-                text-align: center;
-                font-size: 13px;
-                color: #6b7c71;
-              "
-            >
-              Belum memiliki akun? <a href="register.html">Daftar</a>
-            </p>
+        <div class="text-start mb-4">
+          <div class="d-flex justify-content-between">
+            <label style="font-size: 12px; font-weight: 700; color: #6b7c71; margin-left: 5px; text-transform: uppercase;">Kata Sandi</label>
+            <a href="#" style="font-size: 12px; color: #2fa84f; text-decoration: none; font-weight: 600;">Lupa?</a>
           </div>
+          <input type="password" class="form-control" placeholder="••••••••" style="margin-top: 5px;" required />
         </div>
-      </div>
+
+        <button type="submit" class="btn-login w-100">
+          Masuk Sekarang
+        </button>
+      </form>
+
+      <p class="register-link">
+        Belum punya akun? <a href="register.html">Daftar Gratis</a>
+      </p>
     </div>
+
+    <script src="../api-fetch-backend/login.js"></script>
   </body>
 </html>
-
-<script src="../api-fetch-backend/login.js"></script>
-
