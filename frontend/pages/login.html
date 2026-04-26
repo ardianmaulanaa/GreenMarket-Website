@@ -129,10 +129,10 @@
         Masuk untuk melanjutkan aksi hijau Anda.
       </p>
 
-      <form>
+      <form id="loginForm">
         <div class="text-start mb-3">
           <label style="font-size: 12px; font-weight: 700; color: #6b7c71; margin-left: 5px; text-transform: uppercase;">Email</label>
-          <input type="email" class="form-control" placeholder="nama@email.com" required />
+         <input id="email" name="email" type="email" class="form-control" placeholder="nama@email.com" required />
         </div>
 
         <div class="text-start mb-4">
@@ -140,7 +140,7 @@
             <label style="font-size: 12px; font-weight: 700; color: #6b7c71; margin-left: 5px; text-transform: uppercase;">Kata Sandi</label>
             <a href="#" style="font-size: 12px; color: #2fa84f; text-decoration: none; font-weight: 600;">Lupa?</a>
           </div>
-          <input type="password" class="form-control" placeholder="••••••••" style="margin-top: 5px;" required />
+          <input id="password" name="password" type="password" class="form-control" placeholder="••••••••" style="margin-top: 5px;" required />
         </div>
 
         <button type="submit" class="btn-login w-100">
@@ -153,6 +153,6 @@
       </p>
     </div>
 
-    <script src="../api-fetch-backend/login.js"></script>
+    <script type="module" src="../api-fetch/login.js"></script>
   </body>
 </html>
