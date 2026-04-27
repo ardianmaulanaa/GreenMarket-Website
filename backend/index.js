@@ -106,6 +106,7 @@ app.post("/login", async (req, res) => {
   }
 });
 
+//Untuk kelola akun
 app.use("/profile", userRoutes);
 
 const PORT = process.env.PORT || 3000;
