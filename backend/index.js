@@ -2,6 +2,8 @@ const express = require('express')
 const cors = require('cors')
 const { Pool } = require('pg')
 const bcrypt = require('bcrypt')
+const userRoutes = require("./routes/user");
+require('dotenv').config();
 
 const app = express()
 app.use(cors({ origin: "http://127.0.0.1:5500" }))
@@ -22,6 +24,7 @@ app.get("/", (req, res) => {
 
 app.post("/register", async (req, res) => {
   try {
+
     const { username, email, password } = req.body;
 
     if (!username || !email || !password) {
@@ -102,6 +105,8 @@ app.post("/login", async (req, res) => {
     });
   }
 });
+
+app.use("/profile", userRoutes);
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
