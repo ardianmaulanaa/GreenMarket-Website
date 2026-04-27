@@ -1,0 +1,254 @@
+
+body {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    color: #333;
+    padding-top: 100px;
+    background-color: #f8faf9;
+}
+
+main.container {
+    margin-top: 20px;
+}
+
+.main-card, .side-card {
+    border: none;
+    height: 100%; 
+}
+
+input[type="radio"] {
+    accent-color: #5ba562; 
+}
+
+@media (max-width: 991px) {
+    body {
+        padding-top: 140px; 
+    }
+}
+
+/* NAVBAR */
+#navbar {
+    background-color: white;
+    box-shadow: 0 4px 25px rgba(30, 80, 40, 0.05);
+    padding: 15px 0;
+}
+
+.navbar-brand {
+    color: #5ba562 !important;
+    font-size: 24px;
+    font-weight: 800;
+}
+
+.nav-link {
+    color: #6b7c71 !important;
+    font-size: 14px;
+}
+
+.search-bar {
+    background: #f8faf9;
+    border-radius: 12px;
+    padding: 8px 18px;
+    border: 1px solid #e0e6e2;
+    display: flex;
+    align-items: center;
+    width: 300px;
+}
+
+.search-bar input {
+    background: transparent;
+    border: none;
+    outline: none;
+    margin-left: 10px;
+    font-size: 13px;
+    width: 100%;
+}
+
+.icon-link i {
+            font-size: 20px;
+            color: #6b7c71;
+            transition: color 0.3s;
+        }
+
+        .icon-link i:hover {
+            color: #2fa84f;
+        }
+
+.card-pembayaran {
+    background: white;
+    border-radius: 15px;
+    padding: 25px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+
+/* Shop Section */
+.shop-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 20px;
+    font-weight: 700;
+}
+
+/* Product Section */
+.product-info {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 20px;
+    position: relative;
+}
+
+.product-image {
+    width: 80px;
+    height: 80px;
+    border-radius: 10px;
+    object-fit: cover;
+}
+
+.product-title {
+    font-size: 1rem;
+    font-weight: 700;
+    margin-bottom: 5px;
+}
+
+.product-price {
+    font-weight: 800;
+    font-size: 1.1rem;
+}
+
+.protection-option {
+    font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.quantity-control {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    border: 1px solid #ddd;
+    border-radius: 20px;
+    padding: 2px 10px;
+    height: fit-content;
+    position: absolute;
+    right: 0;
+}
+
+.btn-qty {
+    border: none;
+    background: none;
+    color: #4CAF50;
+    font-weight: bold;
+}
+
+/* Shipping Card */
+.shipping-card {
+    background: #f9f9f9;
+    border: 1px solid #eee;
+    border-radius: 12px;
+    padding: 15px;
+    margin-left: 95px; 
+}
+
+.shipping-header {
+    display: flex;
+    justify-content: space-between;
+    font-weight: 600;
+}
+
+.shipping-estimate {
+    font-size: 0.85rem;
+    color: #666;
+}
+
+.insurance-option {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.9rem;
+}
+
+/* Payment Methods */
+.section-title {
+    font-weight: 700;
+    margin-bottom: 20px;
+}
+
+.payment-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.payment-label {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 0.95rem;
+}
+
+.payment-icon {
+    width: 40px;
+}
+
+.payment-icon-cod {
+    font-size: 1.5rem;
+    color: #2c3e50;
+}
+
+/* Promo Box */
+.promo-box {
+    background: #e8f5e9;
+    border: 1px solid #4CAF50;
+    border-radius: 10px;
+    padding: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 25px;
+    color: #2e7d32;
+    cursor: pointer;
+}
+
+.promo-content {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+/* Summary Section */
+.summary-section {
+    margin-top: 30px;
+}
+
+.summary-title {
+    font-size: 0.9rem;
+    font-weight: 700;
+    margin-bottom: 15px;
+}
+
+.summary-total {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 20px;
+}
+
+.total-amount {
+    font-weight: 800;
+}
+
+.btn-pay {
+    width: 100%;
+    background: #4CAF50;
+    color: white;
+    border: none;
+    padding: 12px;
+    border-radius: 10px;
+    font-weight: 700;
+    transition: 0.3s;
+}
+
+.btn-pay:hover {
+    background: #45a049;
+}
