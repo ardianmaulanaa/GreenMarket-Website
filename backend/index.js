@@ -6,8 +6,11 @@ const userRoutes = require("./routes/user");
 require('dotenv').config();
 
 const app = express()
-app.use(cors({ origin: "http://127.0.0.1:5500" }))
-app.use(express.json())
+app.use(cors({
+  origin: "http://localhost:3000", // Mengizinkan Next.js kamu
+  methods: ["GET", "POST", "PUT", "DELETE"],
+  credentials: true
+}));app.use(express.json())
 
 // koneksi PostgreSQL
 const pool = new Pool({
@@ -106,9 +109,18 @@ app.post("/login", async (req, res) => {
   }
 });
 
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('Unhandled Rejection:', reason);
+});
+
+process.on('uncaughtException', (err) => {
+  console.error('Uncaught Exception:', err);
+});
+
 app.use("/profile", userRoutes);
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 5050;
 app.listen(PORT, () => {
   console.log(`Server GreenMarket berjalan di http://localhost:${PORT}`);
 });
+

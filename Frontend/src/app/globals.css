@@ -1,0 +1,25 @@
+@import "tailwindcss";
+
+@theme {
+  --color-background: #f1f8e9;
+  --color-foreground: #1a2e1f;
+  --color-primary: #2fa84f;
+  --color-secondary: #268c41;
+  --color-muted: #6b7c71;
+  --color-border: #e0e6e2;
+}
+
+body {
+  background-color: #f1f8e9;
+  color: #1a2e1f;
+  margin: 0;
+  padding: 0;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+}
+
+@layer components {
+  /* Masukkan class custom kamu di sini tanpa @apply m-0 */
+  .navbar-custom {
+    @apply fixed top-0 w-full z-50 transition-all duration-300 py-5 bg-transparent;
+  }
+}
