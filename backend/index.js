@@ -1,6 +1,6 @@
 const express = require('express')
 const cors = require('cors')
-const { Pool } = require('pg')
+const { pool } = require('./config/db');
 const bcrypt = require('bcrypt')
 const userRoutes = require("./routes/user");
 require('dotenv').config();
@@ -19,14 +19,6 @@ app.use(cors({
   credentials: true
 }));app.use(express.json())
 
-// koneksi PostgreSQL
-const pool = new Pool({
-  user: 'ardian',
-  host: 'localhost',
-  database: 'greenmarket',
-  password: 'ardian123',
-  port: 5434,
-})
 
 app.get("/", (req, res) => {
   res.send("Backend GreenMarket running");
