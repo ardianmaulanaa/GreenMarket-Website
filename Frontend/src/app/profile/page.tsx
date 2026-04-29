@@ -58,6 +58,9 @@ export default function ProfilePage() {
                 <Link href="/pesanan" className="flex items-center gap-3 p-3.5 rounded-xl text-[#6b7c71] hover:bg-[#f8faf9] hover:text-[#1a2e1f] no-underline font-medium transition">
                   🛍️ Pesanan Saya
                 </Link>
+                <Link href="/register-penjual" className="flex items-center gap-3 p-3.5 rounded-xl text-[#6b7c71] hover:bg-[#f8faf9] hover:text-[#1a2e1f] no-underline font-medium transition">
+                  Mulai Berjualan
+                </Link>
                 <Link href="/login" className="flex items-center gap-3 p-3.5 rounded-xl text-[#e53e3e] hover:bg-[#fff5f5] no-underline font-bold transition mt-4">
                   🚪 Keluar
                 </Link>

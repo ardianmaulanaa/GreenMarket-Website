@@ -3,6 +3,7 @@
 
 // Get a free hosted Postgres database in seconds: `npx create-db`
 
+
 generator client {
   provider = "prisma-client-js"
 }
@@ -11,12 +12,19 @@ datasource db {
   provider = "postgresql"
 }
 
+enum Role {
+  BUYER
+  SELLER
+  ADMIN
+}
+
 model User {
   id        Int      @id @default(autoincrement()) 
   username  String                                
   email     String   @unique                      
   password  String                                
-  createdAt DateTime @default(now())          
+  createdAt DateTime @default(now())       
+  role      Role     @default(BUYER)   
 
   // TAMBAHKAN INI: Agar User bisa punya banyak produk
   products   Produk[]    
