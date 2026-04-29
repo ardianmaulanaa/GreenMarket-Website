@@ -4,8 +4,15 @@ const { Pool } = require('pg')
 const bcrypt = require('bcrypt')
 const userRoutes = require("./routes/user");
 require('dotenv').config();
+const { PrismaPg } = require('@prisma/adapter-pg');
+const { PrismaClient } = require('@prisma/client');
 
+// Gunakan koneksi dari .env
+const poolConnection = new Pool({ connectionString: process.env.DATABASE_URL });
+const adapter = new PrismaPg(poolConnection);
+const prisma = new PrismaClient({ adapter });
 const app = express()
+
 app.use(cors({
   origin: "http://localhost:3000", // Mengizinkan Next.js kamu
   methods: ["GET", "POST", "PUT", "DELETE"],
@@ -108,6 +115,31 @@ app.post("/login", async (req, res) => {
     });
   }
 });
+
+// Route untuk mengambil semua produk
+app.get('/api/products', async (req, res) => {
+  try {
+    const products = await prisma.produk.findMany({
+      include: {
+        kategori: true, // Mengambil nama kategori (Alat Tulis)
+        fotos: true,    // Mengambil daftar foto produk
+        seller: {       // Mengambil info penjual (Ardian)
+          select: {
+            username: true,
+            email: true
+          }
+        }
+      }
+    });
+    
+    res.status(200).json(products);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Gagal mengambil data produk" });
+  }
+});
+
+
 
 process.on('unhandledRejection', (reason, promise) => {
   console.error('Unhandled Rejection:', reason);
