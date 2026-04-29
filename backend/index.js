@@ -4,8 +4,10 @@ const { pool } = require('./config/db');
 const bcrypt = require('bcrypt')
 const userRoutes = require("./routes/user");
 require('dotenv').config();
+const { Pool } = require('pg');
 const { PrismaPg } = require('@prisma/adapter-pg');
 const { PrismaClient } = require('@prisma/client');
+const alamatRoutes = require("./routes/alamat");
 
 // Gunakan koneksi dari .env
 const poolConnection = new Pool({ connectionString: process.env.DATABASE_URL });
@@ -142,6 +144,8 @@ process.on('uncaughtException', (err) => {
 });
 
 app.use("/profile", userRoutes);
+
+app.use("/address", alamatRoutes);
 
 const PORT = process.env.PORT || 5050;
 app.listen(PORT, () => {
