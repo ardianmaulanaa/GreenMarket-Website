@@ -26,6 +26,8 @@
     "@types/bcrypt": "^6.0.0",
     "@types/node": "^25.6.0",
     "@types/pg": "^8.20.0",
-    "prisma": "^7.8.0"
+    "prisma": "^7.8.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^6.0.3"
   }
 }

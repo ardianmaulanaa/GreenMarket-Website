@@ -41,6 +41,8 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
       // 1. Simpan data user ke LocalStorage agar bisa dipakai di halaman Profil/Dashboard
       localStorage.setItem("user", JSON.stringify(data.user));
       
+      localStorage.setItem("userId", data.user.id);
+
       alert("Login Berhasil! Selamat datang kembali.");
       
       // 2. Lempar user ke halaman Dashboard
