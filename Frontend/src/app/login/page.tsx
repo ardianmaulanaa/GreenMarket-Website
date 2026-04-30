@@ -44,7 +44,10 @@ export default function LoginPage() {
 
         alert("Login Berhasil! Selamat datang kembali.");
         
-        if (data.user.role === "SELLER") {
+        if (data.user.role === "ADMIN") {
+          router.push("/admin-panel");
+        }
+        else if (data.user.role === "SELLER") {
           router.push("/beranda-dashboard-seller");
         } else {
           router.push("/beranda-dashboard");

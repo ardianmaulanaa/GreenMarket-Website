@@ -155,7 +155,7 @@ export default function PanelPenjual() {
       {/* ── NAVBAR ── */}
       <nav className="fixed top-0 left-0 right-0 z-[100] bg-[#1a1f1b]/85 backdrop-blur-md border-b border-white/5 shadow-lg py-3 px-8 flex items-center justify-between h-[68px]">
         <div className="flex items-center gap-8 text-white">
-          <Link href="/" className="flex items-center gap-2 no-underline group">
+          <Link href="/beranda-dashboard-seller" className="flex items-center gap-2 no-underline group">
             <div className="w-[34px] h-[34px] rounded-[10px] bg-gradient-to-br from-[#2fa84f] to-[#1a7a35] flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.2"><path d="M12 2L3 7v9c0 5 9 7 9 7s9-2 9-7V7l-9-5z"/></svg>
             </div>

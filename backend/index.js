@@ -32,6 +32,31 @@ app.get("/", (req, res) => {
   res.send("Backend GreenMarket running");
 });
 
+app.get("/admin/users", async (req, res) => {
+  // Mengambil role dari query string (misal: /admin/users?role=ADMIN)
+  const { role } = req.query; 
+
+  if (role !== "ADMIN") {
+    return res.status(403).json({ 
+      message: "Akses ditolak! Kamu bukan Admin." 
+    });
+  }
+
+  try {
+    // Mengambil semua user dari tabel 'User' sesuai schema.prisma kamu
+    const users = await prisma.user.findMany({
+      orderBy: {
+        createdAt: 'desc' // Mengurutkan dari yang terbaru
+      }
+    });
+    
+    res.json(users);
+  } catch (error) {
+    console.error("Error fetching users:", error);
+    res.status(500).json({ message: "Gagal mengambil data dari database" });
+  }
+});
+
 // Endpoint Register
 app.post("/register", async (req, res) => {
   try {
