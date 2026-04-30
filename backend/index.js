@@ -6,7 +6,6 @@ require('dotenv').config();
 const { Pool } = require('pg');
 const { PrismaPg } = require('@prisma/adapter-pg');
 const { PrismaClient } = require('@prisma/client');
-const alamatRoutes = require("./routes/alamat");
 
 // Setup Prisma dengan Adapter untuk Supabase agar koneksi lebih stabil
 const poolConnection = new Pool({ 
@@ -18,6 +17,7 @@ const prisma = new PrismaClient({ adapter });
 
 const app = express();
 
+// Middleware CORS - pastikan mengarah ke port frontend Anda
 app.use(cors({
   origin: "http://localhost:3000",
   methods: ["GET", "POST", "PUT", "DELETE"],
@@ -32,6 +32,7 @@ app.get("/", (req, res) => {
   res.send("Backend GreenMarket running");
 });
 
+// Endpoint Register
 app.post("/register", async (req, res) => {
   try {
     const { username, email, password } = req.body;
@@ -54,6 +55,7 @@ app.post("/register", async (req, res) => {
   }
 });
 
+// Endpoint Login
 app.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -67,7 +69,7 @@ app.post("/login", async (req, res) => {
     res.json({
       message: "Login berhasil",
       user: {
-        id: user.id, // Pastikan ini 'id' sesuai schema Supabase kamu
+        id: user.id,
         username: user.username,
         email: user.email,
         role: user.role
@@ -79,11 +81,9 @@ app.post("/login", async (req, res) => {
   }
 });
 
-// Endpoint Upgrade Role (Fixing id_user & NaN error)
+// Endpoint Upgrade Role
 app.put('/api/users/upgrade/:id', async (req, res) => {
   const { id } = req.params;
-  
-  // Konversi string ke integer dan validasi
   const userIdInt = parseInt(id);
 
   if (!id || id === "undefined" || isNaN(userIdInt)) {
@@ -94,7 +94,7 @@ app.put('/api/users/upgrade/:id', async (req, res) => {
 
   try {
     const updatedUser = await prisma.user.update({
-      where: { id: userIdInt }, // Menggunakan 'id' sesuai saran error Prisma sebelumnya
+      where: { id: userIdInt },
       data: { role: 'SELLER' },
     });
 
@@ -108,6 +108,18 @@ app.put('/api/users/upgrade/:id', async (req, res) => {
   }
 });
 
+// Endpoint Get Categories - Menggunakan Nama Model Sesuai Schema
+app.get('/api/categories', async (req, res) => {
+  try {
+    const categories = await prisma.kategori_Produk.findMany();
+    res.status(200).json(categories);
+  } catch (error) {
+    console.error("Error Get Categories:", error);
+    res.status(500).json({ message: "Gagal mengambil kategori", detail: error.message });
+  }
+});
+
+// Endpoint Get Products
 app.get('/api/products', async (req, res) => {
   try {
     const products = await prisma.produk.findMany({
@@ -119,16 +131,78 @@ app.get('/api/products', async (req, res) => {
     });
     res.status(200).json(products);
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Gagal mengambil data produk" });
+    console.error("Error Get Products:", error);
+    res.status(500).json({ message: "Gagal mengambil data produk", detail: error.message });
   }
 });
 
+// Endpoint Post Products - Penyesuaian UUID & Foreign Key
+app.post('/api/products', async (req, res) => {
+  try {
+    const { nama_produk, harga, stok, image_url, id_kategori, id_user } = req.body;
+
+    // Log untuk memastikan data yang masuk sudah benar
+    console.log("Payload diterima:", { nama_produk, id_kategori, id_user });
+
+    // 1. Validasi Input Dasar
+    if (!nama_produk || !harga || !id_user || !id_kategori) {
+      return res.status(400).json({ message: "Data produk atau kategori tidak lengkap." });
+    }
+
+    // 2. Simpan ke Database
+    const newProduct = await prisma.produk.create({
+      data: {
+        nama_produk: nama_produk,
+        harga: Number(harga),
+        stok: Number(stok) || 0,
+        deskripsi: req.body.deskripsi || "Produk ramah lingkungan.", 
+        status_produk: "AKTIF",
+        
+        // id_user_seller adalah Int di schema
+        id_user_seller: Number(id_user), 
+
+        // id_kategori adalah String (UUID) di schema, jangan di-parseInt
+        id_kategori: id_kategori, 
+
+        // Create nested untuk foto
+        fotos: {
+          create: [
+            { url_foto: image_url || "https://via.placeholder.com/150" }
+          ]
+        }
+      },
+      include: {
+        fotos: true 
+      }
+    });
+
+    res.status(201).json({ 
+      message: "Produk berhasil diunggah!", 
+      product: newProduct 
+    });
+
+  } catch (error) {
+    console.error("Error detail:", error);
+    
+    // Error P2003 = Foreign key constraint failed
+    if (error.code === 'P2003') {
+      return res.status(400).json({ 
+        message: "Gagal: Kategori atau Penjual tidak terdaftar di database." 
+      });
+    }
+
+    res.status(500).json({ 
+      message: "Gagal menyimpan produk ke database.", 
+      detail: error.message 
+    });
+  }
+});
+
+// Route Profil
 app.use("/profile", userRoutes);
 
-// --- ERROR HANDLING & LISTENER ---
+// --- LISTENER ---
 const PORT = process.env.PORT || 5050;
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
-  console.log("DATABASE_URL TERDETEKSI:", process.env.DATABASE_URL);
 });

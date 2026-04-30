@@ -72,7 +72,7 @@ export default function BerandaDashboardSeller() {
           </Link>
 
           <div className="hidden lg:flex items-center gap-6">
-            <Link href="/seller/dashboard" className="bg-[#2fa84f] text-white px-5 py-2 rounded-xl text-[11px] font-bold no-underline hover:bg-[#268c41] transition-all shadow-lg flex items-center gap-2">
+            <Link href="/panel-penjual" className="bg-[#2fa84f] text-white px-5 py-2 rounded-xl text-[11px] font-bold no-underline hover:bg-[#268c41] transition-all shadow-lg flex items-center gap-2">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
               Panel Penjual
             </Link>

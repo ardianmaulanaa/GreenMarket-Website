@@ -9,36 +9,38 @@ export default function RegisterPenjual() {
   const [loading, setLoading] = useState(false);
 
   const handleFinalSubmit = async () => {
-    const storedUserId = localStorage.getItem("userId");
+  const storedUserId = localStorage.getItem("userId");
+  if (!storedUserId) return;
 
-    if (!storedUserId) {
-      alert("Silakan login terlebih dahulu!");
-      window.location.href = "/login";
-      return;
+  setLoading(true);
+  try {
+    const response = await fetch(`http://localhost:5050/api/users/upgrade/${storedUserId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' }
+    });
+
+    if (response.ok) {
+      // --- TAMBAHKAN BARIS INI ---
+      const currentData = JSON.parse(localStorage.getItem("user") || "{}");
+      const updatedUser = { ...currentData, role: "SELLER" };
+      
+      localStorage.setItem("user", JSON.stringify(updatedUser)); // Update objek user
+      localStorage.setItem("userRole", "SELLER");               // Update string role
+      // ---------------------------
+
+      alert("Selamat! Anda sekarang menjadi Penjual.");
+      
+      // Gunakan ini agar halaman refresh total dan membaca data baru
+      window.location.href = "/beranda-dashboard-seller"; 
+    } else {
+      alert("Gagal daftar.");
     }
-
-    setLoading(true);
-
-    try {
-      const response = await fetch(`http://localhost:5050/api/users/upgrade/${storedUserId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' }
-      });
-
-      if (response.ok) {
-        const result = await response.json();
-        alert(result.message);
-        window.location.href = "/profile"; 
-      } else {
-        alert("Terjadi kesalahan saat mendaftar. Pastikan Backend menyala.");
-      }
-    } catch (error) {
-      console.error("Gagal upgrade role:", error);
-      alert("Koneksi ke server backend gagal.");
-    } finally {
-      setLoading(false);
-    }
-  };
+  } catch (error) {
+    console.error(error);
+  } finally {
+    setLoading(false);
+  }
+};
 
   const renderStepIndicator = () => (
     <div className="flex justify-center items-center gap-10 mb-12">

@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -12,89 +6,63 @@ datasource db {
   provider = "postgresql"
 }
 
+model User {
+  id        Int      @id @default(autoincrement())
+  username  String
+  email     String   @unique
+  password  String
+  createdAt DateTime @default(now())
+  role      Role     @default(BUYER)
+  products  Produk[]
+}
+
+model Kategori_Produk {
+  id_kategori   String   @id @default(uuid())
+  nama_kategori String
+  products      Produk[]
+}
+
+model Produk {
+  id_produk      String          @id @default(uuid())
+  id_user_seller Int
+  id_kategori    String
+  nama_produk    String
+  deskripsi      String
+  harga          Int
+  stok           Int
+  status_produk  String
+  created_at     DateTime        @default(now())
+  kategori       Kategori_Produk @relation(fields: [id_kategori], references: [id_kategori])
+  seller         User            @relation(fields: [id_user_seller], references: [id])
+  fotos          Produk_Foto[]
+  wishlists      Wishlist[]
+}
+
+model Produk_Foto {
+  id_foto   String @id @default(uuid())
+  id_produk String
+  url_foto  String
+  produk    Produk @relation(fields: [id_produk], references: [id_produk], onDelete: Cascade)
+}
+
+model Wishlist {
+  id_wishlist String   @id @default(uuid())
+  id_user     Int
+  id_produk   String
+  created_at  DateTime @default(now())
+  produk      Produk   @relation(fields: [id_produk], references: [id_produk], onDelete: Cascade)
+}
+
+model Alamat {
+  id_alamat      String @id @default(uuid())
+  id_user        Int
+  nama_penerima  String
+  nomor_hp       String
+  alamat_lengkap String
+}
+
 enum Role {
   BUYER
   SELLER
   ADMIN
-}
-
-model User {
-  id        Int      @id @default(autoincrement()) 
-  username  String                                
-  email     String   @unique                      
-  password  String                                
-  createdAt DateTime @default(now())       
-  role      Role     @default(BUYER)   
-
-  // TAMBAHKAN INI: Agar User bisa punya banyak produk
-  products   Produk[]    
-}
-
-// 1. Model Kategori Produk
-model Kategori_Produk {
-  id_kategori   String   @id @default(uuid())
-  nama_kategori String
-
-  // Relasi: Satu kategori bisa memiliki banyak produk
-  products      Produk[]
-}
-
-// 2. Model Produk
-model Produk {
-  id_produk      String           @id @default(uuid())
-  id_user_seller Int           // FK ke User (Seller)
-  id_kategori    String           // FK ke Kategori_Produk
-  nama_produk    String
-  deskripsi      String           @db.Text
-  harga          Int
-  stok           Int
-  status_produk  String
-  created_at     DateTime         @default(now())
-
-
-  seller         User             @relation(fields: [id_user_seller], references: [id])
-
-  // Definisi Relasi
-  kategori       Kategori_Produk  @relation(fields: [id_kategori], references: [id_kategori])
-  fotos          Produk_Foto[]    // Relasi ke Produk_Foto
-  
-  // Relasi tambahan jika nanti kamu buat (contoh):
-  wishlists      Wishlist[]
-  // transaksi_item Transaksi_Detail[]
-}
-
-// 3. Model Foto Produk
-model Produk_Foto {
-  id_foto    String @id @default(uuid())
-  id_produk  String // FK ke Produk
-  url_foto   String
-
-  // Relasi balik ke Produk
-  // onDelete: Cascade memastikan jika produk dihapus, fotonya otomatis hilang dari DB
-  produk     Produk @relation(fields: [id_produk], references: [id_produk], onDelete: Cascade)
-}
-
-// 4. Model Wishlist
-model Wishlist {
-  id_wishlist String   @id @default(uuid())
-  id_user     Int      // Sesuai dengan tipe data User.id kamu (Int)
-  id_produk   String   // FK ke Produk
-  created_at  DateTime @default(now())
-
-  // Relasi
-  // User: Jika kamu ingin menghubungkan ke model User, aktifkan baris di bawah:
-  // user    User   @relation(fields: [id_user], references: [id])
-  produk     Produk @relation(fields: [id_produk], references: [id_produk], onDelete: Cascade)
-}
-
-// 5. Model Alamat
-model Alamat {
-  id_alamat      String   @id @default(uuid())
-  id_user        Int      // Sesuai dengan tipe data User.id kamu (Int)
-  nama_penerima  String
-  nomor_hp       String
-  alamat_lengkap String   @db.Text
-
-  // Relasi balik ke Transaksi nanti
-  //transaksi      Transaksi[]
 }
