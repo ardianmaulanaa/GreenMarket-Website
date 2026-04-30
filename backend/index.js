@@ -126,12 +126,7 @@ app.get('/api/products', async (req, res) => {
 
 app.use("/profile", userRoutes);
 
-<<<<<<< HEAD
 // --- ERROR HANDLING & LISTENER ---
-=======
-app.use("/address", alamatRoutes);
-
->>>>>>> f88a1dbf4c2c468c93ed963b773d7f40a50a6f65
 const PORT = process.env.PORT || 5050;
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
