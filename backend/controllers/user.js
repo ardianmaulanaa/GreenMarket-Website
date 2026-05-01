@@ -1,20 +1,21 @@
-const { pool } = require('../config/db');
+const prisma = require("../lib/prisma");
 
 //GET User untuk menampilkan info user di profile
 const getProfile = async (req, res) => {
   try {
     const userId = parseInt(req.params.id);
     
-    const result = await pool.query(
-      'SELECT * FROM "User" WHERE id = $1',
-      [userId]
-    );
+    const result = await prisma.user.findUnique({
+      where: {
+        id: userId
+      }
+    });
 
-    if (result.rows.length === 0) {
+    if (!result) {
       return res.status(404).json({ message: "User tidak ditemukan" });
     }
 
-    res.json(result.rows[0]);
+    res.json(result);
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Error server" });
@@ -27,18 +28,19 @@ const updateProfile = async (req, res) => {
     const userId = parseInt(req.params.id);
     const { username, email } = req.body;
 
-    const result = await pool.query(
-      'UPDATE "User" SET username = $1, email = $2 WHERE id = $3 RETURNING *',
-      [username, email, userId]
-    );
-
-    if (result.rows.length === 0) {
-      return res.status(404).json({ message: "User tidak ditemukan" });
-    }
+    const result = await prisma.user.update({
+      where: {
+        id: userId
+      },
+      data: {
+        username: username,
+        email: email
+      }
+    });
 
     res.json({
       message: "Profile berhasil diupdate",
-      user: result.rows[0],
+      user: result,
     });
   } catch (error) {
     console.error(error);
@@ -46,4 +48,32 @@ const updateProfile = async (req, res) => {
   }
 };
 
-module.exports = { getProfile, updateProfile };
+const upgradeUserRole = async (req, res) => {
+  const { id } = req.params;
+  const userIdInt = parseInt(id);
+
+  if (!id || id === "undefined" || isNaN(userIdInt)) {
+    return res.status(400).json({
+      error: "ID User tidak valid (NaN). Pastikan kamu sudah login ulang di browser.",
+    });
+  }
+
+  try {
+    const updatedUser = await prisma.user.update({
+      where: { id: userIdInt },
+      data: { role: "SELLER" },
+    });
+
+    res.status(200).json({
+      message: "Selamat! Akun kamu berhasil ditingkatkan menjadi Penjual!",
+      user: updatedUser,
+    });
+  } catch (error) {
+    console.error("Error upgrade role:", error);
+    res.status(500).json({
+      error: "Gagal memproses pendaftaran penjual ke database.",
+    });
+  }
+};
+
+module.exports = { getProfile, updateProfile, upgradeUserRole };

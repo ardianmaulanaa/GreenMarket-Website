@@ -5,7 +5,7 @@ const {
   addAddress,
   updateAddress,
   deleteAddress
-} = require('../controllers/alamat');
+} = require('../controllers/address');
 
 router.get('/:id_user',           getAddresses);
 router.post('/:id_user',          addAddress);

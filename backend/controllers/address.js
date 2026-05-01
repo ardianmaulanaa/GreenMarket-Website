@@ -1,16 +1,17 @@
-const { pool } = require('../config/db');
+const prisma = require('../lib/prisma');
 
 // GET semua alamat milik user
 const getAddresses = async (req, res) => {
   try {
     const id_user = parseInt(req.params.id_user);
 
-    const result = await pool.query(
-      'SELECT * FROM "Alamat" WHERE id_user = $1',
-      [id_user]
-    );
+    const result = await prisma.address.findMany({
+      where: {
+        id_user: id_user
+      }
+    });
 
-    res.json(result.rows);
+    res.json(result);
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Error server" });
@@ -27,16 +28,18 @@ const addAddress = async (req, res) => {
       return res.status(400).json({ message: "Data tidak boleh kosong" });
     }
 
-    const result = await pool.query(
-      `INSERT INTO "Alamat" (id_user, nama_penerima, nomor_hp, alamat_lengkap)
-       VALUES ($1, $2, $3, $4)
-       RETURNING *`,
-      [id_user, nama_penerima, nomor_hp, alamat_lengkap]
-    );
+    const result = await prisma.address.create({
+      data: {
+        id_user: id_user,
+        nama_penerima: nama_penerima,
+        nomor_hp: nomor_hp,
+        alamat_lengkap: alamat_lengkap
+      }
+    });
 
     res.status(201).json({
       message: "Alamat berhasil ditambahkan",
-      alamat: result.rows[0]
+      alamat: result
     });
   } catch (error) {
     console.error(error);
@@ -55,21 +58,31 @@ const updateAddress = async (req, res) => {
       return res.status(400).json({ message: "Data tidak boleh kosong" });
     }
 
-    const result = await pool.query(
-      `UPDATE "Alamat"
-       SET nama_penerima = $1, nomor_hp = $2, alamat_lengkap = $3
-       WHERE id_alamat = $4 AND id_user = $5
-       RETURNING *`,
-      [nama_penerima, nomor_hp, alamat_lengkap, id_alamat, id_user]
-    );
+    // Pastikan alamat milik user yang benar
+    const alamat = await prisma.address.findUnique({
+      where: {
+        id_alamat: id_alamat
+      }
+    });
 
-    if (result.rows.length === 0) {
+    if (!alamat || alamat.id_user !== id_user) {
       return res.status(404).json({ message: "Alamat tidak ditemukan" });
     }
 
+    const result = await prisma.address.update({
+      where: {
+        id_alamat: id_alamat
+      },
+      data: {
+        nama_penerima: nama_penerima,
+        nomor_hp: nomor_hp,
+        alamat_lengkap: alamat_lengkap
+      }
+    });
+
     res.json({
       message: "Alamat berhasil diperbarui",
-      alamat: result.rows[0]
+      alamat: result
     });
   } catch (error) {
     console.error(error);
@@ -83,14 +96,22 @@ const deleteAddress = async (req, res) => {
     const id_alamat = parseInt(req.params.id_alamat);
     const id_user   = parseInt(req.params.id_user);
 
-    const result = await pool.query(
-      'DELETE FROM "Alamat" WHERE id_alamat = $1 AND id_user = $2 RETURNING id_alamat',
-      [id_alamat, id_user]
-    );
+    // Pastikan alamat milik user yang benar
+    const alamat = await prisma.address.findUnique({
+      where: {
+        id_alamat: id_alamat
+      }
+    });
 
-    if (result.rows.length === 0) {
+    if (!alamat || alamat.id_user !== id_user) {
       return res.status(404).json({ message: "Alamat tidak ditemukan" });
     }
+
+    await prisma.address.delete({
+      where: {
+        id_alamat: id_alamat
+      }
+    });
 
     res.json({ message: "Alamat berhasil dihapus" });
   } catch (error) {
