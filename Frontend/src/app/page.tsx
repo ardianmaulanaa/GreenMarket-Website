@@ -53,7 +53,7 @@ export default function LandingPage() {
               <Link href="/login" className={`font-bold text-[14px] no-underline hover:text-[#2fa84f] transition ${scrolled ? "text-white" : "text-[#1a2e1f]"}`}>Masuk</Link>
               <Link
                 href="/register"
-                className="bg-[#2fa84f] text-white px-6 py-2.5 rounded-xl font-bold no-underline hover:bg-[#268c41] transition shadow-lg shadow-[#2fa84f]/20"
+                className="bg-primary text-white px-6 py-2.5 rounded-xl font-bold no-underline hover:bg-secondary transition shadow-lg shadow-[#2fa84f]/20"
               >
                 Daftar
               </Link>
@@ -79,7 +79,7 @@ export default function LandingPage() {
             </p>
             <Link
               href="/beranda-dashboard"
-              className="bg-[#1a2e1f] text-white px-10 py-4 rounded-2xl font-bold no-underline inline-block hover:-translate-y-1 hover:shadow-[0_12px_30px_rgba(0,0,0,0.3)] hover:bg-[#2fa84f] transition-all duration-300"
+              className="bg-primary text-white px-10 py-4 rounded-2xl font-bold no-underline inline-block hover:-translate-y-1 hover:shadow-[0_12px_30px_rgba(0,0,0,0.3)] hover:bg-secondary transition-all duration-300"
             >
               Mulai Jelajahi Produk
             </Link>
