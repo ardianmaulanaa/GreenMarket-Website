@@ -5,7 +5,7 @@ const getAddresses = async (req, res) => {
   try {
     const id_user = parseInt(req.params.id_user);
 
-    const result = await prisma.address.findMany({
+    const result = await prisma.alamat.findMany({
       where: {
         id_user: id_user
       }
@@ -28,7 +28,7 @@ const addAddress = async (req, res) => {
       return res.status(400).json({ message: "Data tidak boleh kosong" });
     }
 
-    const result = await prisma.address.create({
+    const result = await prisma.alamat.create({
       data: {
         id_user: id_user,
         nama_penerima: nama_penerima,
@@ -59,7 +59,7 @@ const updateAddress = async (req, res) => {
     }
 
     // Pastikan alamat milik user yang benar
-    const alamat = await prisma.address.findUnique({
+    const alamat = await prisma.alamat.findUnique({
       where: {
         id_alamat: id_alamat
       }
@@ -69,7 +69,7 @@ const updateAddress = async (req, res) => {
       return res.status(404).json({ message: "Alamat tidak ditemukan" });
     }
 
-    const result = await prisma.address.update({
+    const result = await prisma.alamat.update({
       where: {
         id_alamat: id_alamat
       },
@@ -97,7 +97,7 @@ const deleteAddress = async (req, res) => {
     const id_user   = parseInt(req.params.id_user);
 
     // Pastikan alamat milik user yang benar
-    const alamat = await prisma.address.findUnique({
+    const alamat = await prisma.alamat.findUnique({
       where: {
         id_alamat: id_alamat
       }
@@ -107,7 +107,7 @@ const deleteAddress = async (req, res) => {
       return res.status(404).json({ message: "Alamat tidak ditemukan" });
     }
 
-    await prisma.address.delete({
+    await prisma.alamat.delete({
       where: {
         id_alamat: id_alamat
       }
