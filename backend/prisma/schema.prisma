@@ -29,6 +29,7 @@ model Produk {
   nama_produk    String
   deskripsi      String
   harga          Int
+  detail         Produk_Detail?
   stok           Int
   status_produk  String
   created_at     DateTime        @default(now())
@@ -36,6 +37,14 @@ model Produk {
   seller         User            @relation(fields: [id_user_seller], references: [id])
   fotos          Produk_Foto[]
   wishlists      Wishlist[]
+}
+
+model Produk_Detail {
+  id_detail        String   @id @default(uuid())
+  id_produk        String   @unique
+  konten_deskripsi String   @db.Text // Tempat teks ketikan manual Anda
+  catatan_penjual  String?
+  produk           Produk   @relation(fields: [id_produk], references: [id_produk])
 }
 
 model Produk_Foto {
