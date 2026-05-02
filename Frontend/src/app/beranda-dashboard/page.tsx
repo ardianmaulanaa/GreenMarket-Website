@@ -23,6 +23,7 @@ interface Produk {
 }
 
 export default function BerandaDashboard() {
+  const [isPageLoading, setIsPageLoading] = useState(true);
   const [dbProducts, setDbProducts] = useState<Produk[]>([]);
   const [loading, setLoading] = useState(true);
   const [userRole, setUserRole] = useState<string | null>(null);
@@ -38,6 +39,11 @@ export default function BerandaDashboard() {
   const produkMenipis = myProducts.filter(p => p.stok < 5).length;
 
   useEffect(() => {
+    // Efek loading saat memuat halaman
+    const timer = setTimeout(() => {
+      setIsPageLoading(false);
+    }, 800);
+
     const storedRole = localStorage.getItem("userRole");
     const storedUser = localStorage.getItem("user");
     
@@ -68,6 +74,8 @@ export default function BerandaDashboard() {
     };
 
     fetchProducts();
+
+    return () => clearTimeout(timer);
   }, []);
 
   const resetFilters = () => {
@@ -80,8 +88,20 @@ export default function BerandaDashboard() {
     router.push("/login");
   };
 
+  // ── TAMPILAN LOADING SCREEN ──
+  if (isPageLoading) {
+    return (
+      <div className="min-h-screen bg-[#0a110b] flex flex-col items-center justify-center font-sans">
+        <div className="w-12 h-12 border-4 border-[#2fa84f]/20 border-t-[#2fa84f] rounded-full animate-spin mb-4"></div>
+        <p className="text-[#2fa84f] font-bold text-[11px] tracking-[3px] uppercase animate-pulse">
+          Menyiapkan Ekosistem...
+        </p>
+      </div>
+    );
+  }
+
+  // ── TAMPILAN UTAMA ──
   return (
-    // BACKGROUND DIKEMBALIKAN KE GRADASI TERANG-GELAP
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-[#f1f8e9] via-[#2fa84f]/15 to-[#0a110b] font-sans text-[#1a2e1f] relative overflow-hidden">
       
       {/* ── EFEK DEKORASI GLOW BACKGROUND ── */}
@@ -127,10 +147,19 @@ export default function BerandaDashboard() {
         </div>
 
         <div className="flex items-center gap-4">
-          <button onClick={handleLogout} className="text-gray-400 hover:text-red-500 text-xs font-bold uppercase transition-colors bg-transparent border-none cursor-pointer mr-2">
+          
+          {/* ── IKON WISHLIST DITAMBAHKAN KEMBALI ── */}
+          <Link href="/wishlist" className="w-[42px] h-[42px] rounded-xl border border-white/10 bg-white/5 flex items-center justify-center text-white/70 hover:text-[#2fa84f] transition-all">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/>
+            </svg>
+          </Link>
+
+          <button onClick={handleLogout} className="text-gray-400 hover:text-red-500 text-xs font-bold uppercase transition-colors bg-transparent border-none cursor-pointer mx-2">
             Logout
           </button>
-          <Link href="/profile" className="flex items-center gap-3 group no-underline">
+
+          <Link href="/profile" className="flex items-center gap-3 group no-underline border-l border-white/10 pl-4">
                <div className="text-right hidden sm:block">
                   <p className="text-xs font-bold text-white m-0 group-hover:text-[#2fa84f] transition-colors">{userName}</p>
                   <p className="text-[10px] text-[#2fa84f] m-0 font-black uppercase">{userRole === "SELLER" ? "Seller Hub" : "Buyer"}</p>
@@ -221,7 +250,6 @@ export default function BerandaDashboard() {
           {/* PRODUCT GRID */}
           <section className="flex-1">
             <div className="flex justify-between items-end mb-8">
-              {/* Heading diubah menjadi gelap agar kontras dengan background gradient terang */}
               <h3 className="text-2xl font-[800] text-[#1a2e1f] tracking-tight m-0">
                 Eksplorasi Katalog Hijau
               </h3>

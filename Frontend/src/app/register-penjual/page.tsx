@@ -2,14 +2,22 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 export default function RegisterPenjual() {
+  const [isPageLoading, setIsPageLoading] = useState(true);
   const [step, setStep] = useState(1);
   const [umur, setUmur] = useState("");
   const [loading, setLoading] = useState(false);
   const [user, setUser] = useState({ nama: "", role: "" });
+  const router = useRouter();
 
   useEffect(() => {
+    // Efek loading saat memuat halaman
+    const timer = setTimeout(() => {
+      setIsPageLoading(false);
+    }, 800);
+
     const savedUser = localStorage.getItem("user");
     if (savedUser) {
       const userData = JSON.parse(savedUser);
@@ -18,6 +26,8 @@ export default function RegisterPenjual() {
         role: userData.role || "BUYER"
       });
     }
+
+    return () => clearTimeout(timer);
   }, []);
 
   const handleFinalSubmit = async () => {
@@ -52,28 +62,28 @@ export default function RegisterPenjual() {
   };
 
   const renderStepIndicator = () => (
-    <div className="flex justify-center items-center gap-10 mb-12 relative z-10">
+    <div className="flex justify-center items-center gap-6 sm:gap-10 mb-10 relative z-10 w-full max-w-sm mx-auto">
       {[
         { id: 1, label: "Identitas" },
-        { id: 2, label: "Informasi Toko" },
-        { id: 3, label: "Barang" },
+        { id: 2, label: "Info Toko" },
+        { id: 3, label: "Produk" },
       ].map((s) => (
-        <div key={s.id} className="flex flex-col items-center gap-3 relative">
-          <div className={`w-12 h-12 rounded-2xl flex items-center justify-center font-bold text-[15px] border-2 transition-all duration-300 ${
+        <div key={s.id} className="flex flex-col items-center gap-3 relative z-10">
+          <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-2xl flex items-center justify-center font-black text-[14px] sm:text-[15px] border-2 transition-all duration-500 ${
             step >= s.id 
-            ? "bg-[#2fa84f]/20 border-[#2fa84f] text-[#2fa84f] shadow-[0_0_15px_rgba(47,168,79,0.3)]" 
-            : "bg-white/5 border-white/10 text-gray-500"
+            ? "bg-[#2fa84f] border-[#2fa84f] text-white shadow-[0_0_20px_rgba(47,168,79,0.4)]" 
+            : "bg-[#1a1f1b]/80 border-white/10 text-gray-500"
           }`}>
             {s.id}
           </div>
-          <span className={`text-[10px] font-[800] uppercase tracking-[2px] ${
+          <span className={`text-[9px] sm:text-[10px] font-[800] uppercase tracking-[1px] sm:tracking-[2px] transition-colors duration-500 ${
             step >= s.id ? "text-[#2fa84f]" : "text-gray-500"
           }`}>
             {s.label}
           </span>
           {s.id < 3 && (
-            <div className={`absolute top-6 -right-16 w-12 h-[2px] hidden lg:block ${
-              step > s.id ? "bg-[#2fa84f]" : "bg-white/10"
+            <div className={`absolute top-5 sm:top-6 -right-[40px] sm:-right-[55px] w-8 sm:w-10 h-[2px] transition-colors duration-500 ${
+              step > s.id ? "bg-[#2fa84f] shadow-[0_0_8px_#2fa84f]" : "bg-white/10"
             }`}></div>
           )}
         </div>
@@ -81,86 +91,120 @@ export default function RegisterPenjual() {
     </div>
   );
 
+  // ── TAMPILAN LOADING SCREEN ──
+  if (isPageLoading) {
+    return (
+      <div className="min-h-screen bg-[#0a110b] flex flex-col items-center justify-center font-sans">
+        <div className="w-12 h-12 border-4 border-[#2fa84f]/20 border-t-[#2fa84f] rounded-full animate-spin mb-4"></div>
+        <p className="text-[#2fa84f] font-bold text-[11px] tracking-[3px] uppercase animate-pulse">
+          Menyiapkan Ruang Toko...
+        </p>
+      </div>
+    );
+  }
+
+  // ── TAMPILAN UTAMA ──
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#f1f8e9] via-[#2fa84f]/15 to-[#0a110b] font-sans relative overflow-hidden flex flex-col">
+    <main className="min-h-screen flex bg-[#0a110b] font-sans m-0 overflow-hidden">
       
-      {/* ── Latar Belakang Glow Hijau ── */}
-      <div className="absolute top-[-10%] right-[-5%] w-[600px] h-[600px] bg-[#2fa84f] opacity-10 blur-[150px] rounded-full pointer-events-none"></div>
-      <div className="absolute bottom-[-15%] left-[-5%] w-[500px] h-[500px] bg-[#2fa84f] opacity-15 blur-[120px] rounded-full pointer-events-none"></div>
-
-      {/* ── NAVBAR (Sesuai Layout Terbaru max-w-1600px) ── */}
-      <nav className="fixed top-0 left-0 right-0 z-[100] bg-[#1a1f1b]/85 backdrop-blur-xl border-b border-white/5 h-[72px]">
-        <div className="max-w-[1600px] mx-auto h-full px-6 flex items-center justify-between">
-          <Link href="/beranda-dashboard" className="flex items-center gap-2.5 group no-underline">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#2fa84f] to-[#1a7a35] flex items-center justify-center shadow-[0_0_20px_rgba(47,168,79,0.3)] group-hover:scale-105 transition-all">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5"><path d="M12 2L3 7v9c0 5 9 7 9 7s9-2 9-7V7l-9-5z"/></svg>
-            </div>
-            <span className="text-xl font-black text-white tracking-tight uppercase hidden sm:block">Green<span className="text-[#2fa84f]">Market</span></span>
-          </Link>
-
-          <div className="flex items-center gap-4">
-            <Link href="/komunitas" className="text-white/70 font-bold text-sm no-underline hover:text-[#2fa84f] transition-colors flex items-center gap-2 px-2 mr-4">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-              Komunitas
-            </Link>
-            
-            <Link href="/profile" className="flex items-center gap-3 pl-2 group no-underline border-l border-white/10 pt-1 pb-1">
-               <div className="text-right hidden sm:block">
-                  <p className="text-xs font-bold text-white m-0 group-hover:text-[#2fa84f] transition-colors">Profil Saya</p>
-                  <p className="text-[10px] text-gray-400 m-0 uppercase">{user.role}</p>
-               </div>
-               <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-[#2fa84f] to-[#1a7a35] p-[2px] shadow-lg group-hover:scale-105 transition-transform ml-2">
-                 <div className="w-full h-full rounded-full bg-[#0d130e] flex items-center justify-center">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                 </div>
-               </div>
-            </Link>
-          </div>
+      {/* ── BAGIAN KIRI: GAMBAR DAUN AI ── */}
+      <div className="hidden lg:block relative w-1/2 min-h-screen bg-[#1a2e1f] overflow-hidden">
+        <img 
+          src="https://images.unsplash.com/photo-1536882240095-0379873feb4e?q=80&w=1000&auto=format&fit=crop" 
+          alt="AI Generated Leaf"
+          className="w-full h-full object-cover opacity-80"
+        />
+        
+        {/* OVERLAY: Memudarkan sisi kanan gambar ke hitam pekat agar menyatu dengan form */}
+        <div className="absolute inset-0 bg-[#0a110b]/20"></div> 
+        <div className="absolute inset-y-0 right-0 w-[250px] bg-gradient-to-l from-[#0a110b] via-[#0a110b]/90 to-transparent z-10"></div>
+        
+        {/* Teks Sambutan di atas gambar */}
+        <div className="absolute bottom-20 left-16 max-w-md z-20">
+          <h2 className="text-4xl font-black text-white leading-tight mb-4 tracking-tight shadow-black drop-shadow-lg">
+            Buka Peluang Baru, <br />
+            <span className="text-[#2fa84f]">Jadilah Penjual Hijau.</span>
+          </h2>
+          <p className="text-white/80 text-sm font-medium leading-relaxed drop-shadow-md">
+            Halo {user.nama}, saatnya mengubah inisiatif hijau Anda menjadi bisnis. Jangkau ribuan pembeli yang peduli pada bumi.
+          </p>
         </div>
-      </nav>
+      </div>
 
-      {/* ── MAIN CONTENT (Dark Glassmorphism) ── */}
-      <main className="flex-grow container max-w-[1600px] mx-auto pt-32 pb-20 px-4 relative z-10 flex flex-col items-center">
-        <div className="bg-[#1a1f1b]/60 backdrop-blur-md rounded-[40px] p-8 lg:p-12 shadow-[0_20px_50px_rgba(0,0,0,0.5)] border border-white/10 w-full max-w-2xl relative overflow-hidden">
+      {/* ── BAGIAN KANAN: FORM MULTI-STEP ── */}
+      <div className="w-full lg:w-1/2 flex items-center justify-center relative p-6 sm:p-10 bg-gradient-to-br from-[#0a110b] via-[#1a1f1b] to-[#0a110b] z-20 [box-shadow:-40px_0_60px_10px_#0a110b] overflow-y-auto h-screen">
+        
+        {/* Dekorasi Glow Hijau Khusus Form */}
+        <div className="absolute top-[-10%] right-[-10%] w-[400px] h-[400px] bg-[#2fa84f] opacity-[0.1] blur-[120px] rounded-full pointer-events-none"></div>
+        <div className="absolute bottom-[-10%] left-[-10%] w-[300px] h-[300px] bg-[#2fa84f] opacity-[0.08] blur-[100px] rounded-full pointer-events-none"></div>
+
+        {/* TOMBOL KEMBALI */}
+        <Link
+          href="/beranda-dashboard"
+          className="absolute top-8 left-8 flex items-center gap-2 text-gray-400 no-underline text-sm font-bold px-4 py-2 rounded-full border border-white/10 hover:text-white hover:bg-white/5 transition-all duration-300 z-30"
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="19" y1="12" x2="5" y2="12"></line>
+            <polyline points="12 19 5 12 12 5"></polyline>
+          </svg>
+          Kembali
+        </Link>
+
+        {/* CARD CONTENT */}
+        <div className="w-full max-w-[460px] relative z-10 py-16 my-auto">
           
-          <div className="absolute top-0 right-0 w-48 h-48 bg-[#2fa84f] rounded-bl-full opacity-10 blur-3xl -z-0 pointer-events-none"></div>
+          <div className="flex justify-center mb-6">
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#2fa84f] to-[#1a7a35] flex items-center justify-center shadow-[0_4px_15px_rgba(47,168,79,0.4)]">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 2L3 7v9c0 5 9 7 9 7s9-2 9-7V7l-9-5z"/>
+              </svg>
+            </div>
+          </div>
 
-          <div className="relative z-10">
-            <header className="text-center mb-10">
-                <h1 className="text-[28px] lg:text-[32px] font-[800] text-white mb-2 tracking-tight">Menjadi Penjual Hijau</h1>
-                <p className="text-gray-400 text-sm font-medium">Bantu selamatkan bumi dengan barang berkualitas Anda.</p>
-            </header>
+          <div className="text-center mb-10">
+            <h1 className="text-3xl font-black text-white mb-2 tracking-tight">
+              Buka Toko Anda
+            </h1>
+            <p className="text-sm text-gray-400 font-medium">
+              Tiga langkah mudah untuk mulai berjualan.
+            </p>
+          </div>
+
+          {renderStepIndicator()}
+
+          <div className="bg-[#1a1f1b]/40 backdrop-blur-md border border-white/5 p-8 rounded-[32px] shadow-2xl relative">
             
-            {renderStepIndicator()}
-
             {/* STEP 1 */}
             {step === 1 && (
               <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
                 <div className="space-y-5">
                   <div className="space-y-2">
                     <label className="text-[11px] font-bold text-gray-400 uppercase tracking-widest ml-1">Nama Sesuai KTP</label>
-                    <input type="text" placeholder="Masukkan nama lengkap" className="w-full px-5 py-4 bg-black/20 border border-white/10 rounded-2xl outline-none focus:border-[#2fa84f] focus:ring-1 focus:ring-[#2fa84f] text-white text-[15px] transition-all placeholder-gray-600" />
+                    <input type="text" placeholder="Masukkan nama lengkap" className="w-full px-5 py-4 border border-white/10 rounded-2xl outline-none focus:border-[#2fa84f] focus:ring-1 focus:ring-[#2fa84f] focus:bg-[#1a1f1b] text-sm text-white bg-[#1a1f1b]/50 shadow-inner transition-all placeholder:text-gray-600" />
                   </div>
                   <div className="space-y-2">
                     <label className="text-[11px] font-bold text-gray-400 uppercase tracking-widest ml-1">Umur Anda</label>
                     <select 
                       value={umur}
                       onChange={(e) => setUmur(e.target.value)}
-                      className={`w-full px-5 py-4 bg-black/20 border rounded-2xl outline-none focus:ring-1 transition-all text-[15px] cursor-pointer appearance-none ${
-                        umur && parseInt(umur) < 18 ? "border-red-500 text-red-400 focus:border-red-500 focus:ring-red-500" : "border-white/10 text-white focus:border-[#2fa84f] focus:ring-[#2fa84f]"
+                      className={`w-full px-5 py-4 border rounded-2xl outline-none focus:bg-[#1a1f1b] transition-all text-sm shadow-inner cursor-pointer appearance-none ${
+                        umur && parseInt(umur) < 18 ? "bg-[#1a1f1b]/50 border-red-500/50 text-red-400 focus:border-red-500 focus:ring-1 focus:ring-red-500" : "bg-[#1a1f1b]/50 border-white/10 text-white focus:border-[#2fa84f] focus:ring-1 focus:ring-[#2fa84f]"
                       }`}
                     >
-                      <option value="" disabled className="bg-[#1a1f1b] text-gray-500">Pilih Umur Anda</option>
+                      <option value="" disabled className="text-gray-500">Pilih Umur Anda</option>
                       {Array.from({ length: 61 }, (_, i) => i + 10).map((val) => (
                         <option key={val} value={val.toString()} className="bg-[#1a1f1b] text-white">{val} Tahun</option>
                       ))}
                     </select>
                     {umur && parseInt(umur) < 18 && (
-                      <p className="text-[10px] font-[800] text-red-400 uppercase tracking-widest mt-2 ml-1">⚠️ Maaf, pendaftaran minimal berusia 18 tahun.</p>
+                      <p className="text-[10px] font-bold text-red-400 uppercase tracking-widest mt-2 ml-1 flex items-center gap-1">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                        Minimal berusia 18 tahun.
+                      </p>
                     )}
                   </div>
                 </div>
-                <button onClick={() => setStep(2)} disabled={!umur || parseInt(umur) < 18} className={`w-full py-4 rounded-2xl font-[800] text-sm uppercase tracking-widest transition-all ${!umur || parseInt(umur) < 18 ? "bg-white/5 text-gray-600 cursor-not-allowed border border-white/5" : "bg-[#2fa84f] text-white hover:bg-[#268c41] shadow-[0_10px_20px_rgba(47,168,79,0.2)] hover:-translate-y-0.5 border-none"}`}>
+                <button onClick={() => setStep(2)} disabled={!umur || parseInt(umur) < 18} className={`w-full py-4 rounded-2xl font-[800] text-sm uppercase tracking-widest transition-all mt-4 ${!umur || parseInt(umur) < 18 ? "bg-white/5 text-gray-600 cursor-not-allowed border border-white/5" : "bg-[#2fa84f] text-white hover:bg-[#268c41] shadow-[0_10px_25px_rgba(47,168,79,0.3)] hover:-translate-y-1 border-none"}`}>
                   Langkah Berikutnya
                 </button>
               </div>
@@ -172,72 +216,55 @@ export default function RegisterPenjual() {
                 <div className="space-y-5">
                   <div className="space-y-2">
                     <label className="text-[11px] font-bold text-gray-400 uppercase tracking-widest ml-1">Nama Toko</label>
-                    <input type="text" placeholder="Contoh: Green Solutions" className="w-full px-5 py-4 bg-black/20 border border-white/10 rounded-2xl outline-none focus:border-[#2fa84f] focus:ring-1 focus:ring-[#2fa84f] text-white text-[15px] transition-all placeholder-gray-600" />
+                    <input type="text" placeholder="Contoh: Green Solutions" className="w-full px-5 py-4 border border-white/10 rounded-2xl outline-none focus:border-[#2fa84f] focus:ring-1 focus:ring-[#2fa84f] focus:bg-[#1a1f1b] text-sm text-white bg-[#1a1f1b]/50 shadow-inner transition-all placeholder:text-gray-600" />
                   </div>
                   <div className="space-y-2">
                     <label className="text-[11px] font-bold text-gray-400 uppercase tracking-widest ml-1">Email Bisnis</label>
-                    <input type="email" placeholder="toko@greenmarket.id" className="w-full px-5 py-4 bg-black/20 border border-white/10 rounded-2xl outline-none focus:border-[#2fa84f] focus:ring-1 focus:ring-[#2fa84f] text-white text-[15px] transition-all placeholder-gray-600" />
+                    <input type="email" placeholder="toko@greenmarket.id" className="w-full px-5 py-4 border border-white/10 rounded-2xl outline-none focus:border-[#2fa84f] focus:ring-1 focus:ring-[#2fa84f] focus:bg-[#1a1f1b] text-sm text-white bg-[#1a1f1b]/50 shadow-inner transition-all placeholder:text-gray-600" />
                   </div>
                 </div>
-                <div className="flex gap-4">
-                  <button onClick={() => setStep(1)} className="flex-1 py-4 text-gray-400 font-bold text-sm bg-white/5 border border-white/10 rounded-2xl hover:bg-white/10 hover:text-white transition-colors uppercase tracking-widest cursor-pointer">Kembali</button>
-                  <button onClick={() => setStep(3)} className="flex-1 bg-[#2fa84f] text-white py-4 rounded-2xl font-[800] text-sm uppercase tracking-widest shadow-[0_10px_20px_rgba(47,168,79,0.2)] hover:bg-[#268c41] transition-all hover:-translate-y-0.5 border-none cursor-pointer">Lanjut</button>
+                <div className="flex gap-4 mt-4">
+                  <button onClick={() => setStep(1)} className="flex-1 py-4 text-gray-400 font-bold text-xs bg-white/5 border border-white/10 rounded-2xl hover:bg-white/10 hover:text-white transition-colors uppercase tracking-widest cursor-pointer">Kembali</button>
+                  <button onClick={() => setStep(3)} className="flex-[2] bg-[#2fa84f] text-white py-4 rounded-2xl font-[800] text-xs uppercase tracking-widest shadow-[0_10px_25px_rgba(47,168,79,0.3)] hover:bg-[#268c41] transition-all hover:-translate-y-1 border-none cursor-pointer">Lanjut</button>
                 </div>
               </div>
             )}
 
-            {/* STEP 3 */}
+            {/* STEP 3 (Telah diubah menjadi input URL Gambar) */}
             {step === 3 && (
               <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-500">
-                <div className="flex items-center gap-6 bg-white/5 p-6 rounded-[24px] border border-white/10 group hover:border-[#2fa84f]/50 hover:bg-white/10 transition-all cursor-pointer">
-                   <div className="w-20 h-20 bg-gradient-to-br from-[#2fa84f] to-[#1a7a35] rounded-2xl flex items-center justify-center text-white text-3xl shadow-xl">+</div>
-                   <div>
-                       <span className="text-[11px] font-bold text-[#2fa84f] uppercase tracking-[2px]">Unggah Foto</span>
-                       <p className="text-[13px] text-gray-400 mt-1 m-0">Produk pertama toko Anda.</p>
-                   </div>
-                </div>
-                <div className="space-y-4">
+                <div className="space-y-5">
+                  <div className="space-y-2">
+                    <label className="text-[11px] font-bold text-gray-400 uppercase tracking-widest ml-1">URL Gambar Produk</label>
+                    <input type="url" placeholder="https://contoh.com/gambar.jpg" className="w-full px-5 py-4 border border-white/10 rounded-2xl outline-none focus:border-[#2fa84f] focus:ring-1 focus:ring-[#2fa84f] focus:bg-[#1a1f1b] text-sm text-white bg-[#1a1f1b]/50 shadow-inner transition-all placeholder:text-gray-600" />
+                  </div>
                   <div className="space-y-2">
                     <label className="text-[11px] font-bold text-gray-400 uppercase tracking-widest ml-1">Harga Produk (Rp)</label>
-                    <input type="number" placeholder="0" className="w-full px-5 py-4 bg-black/20 border border-white/10 rounded-2xl outline-none focus:border-[#2fa84f] focus:ring-1 focus:ring-[#2fa84f] text-white transition-all placeholder-gray-600" />
+                    <input type="number" placeholder="0" className="w-full px-5 py-4 border border-white/10 rounded-2xl outline-none focus:border-[#2fa84f] focus:ring-1 focus:ring-[#2fa84f] focus:bg-[#1a1f1b] text-sm text-white bg-[#1a1f1b]/50 shadow-inner transition-all placeholder:text-gray-600" />
                   </div>
                   <div className="space-y-2">
                     <label className="text-[11px] font-bold text-gray-400 uppercase tracking-widest ml-1">Deskripsi Singkat</label>
-                    <textarea placeholder="Contoh: Produk daur ulang dari ban bekas..." className="w-full px-5 py-4 bg-black/20 border border-white/10 rounded-2xl outline-none focus:border-[#2fa84f] focus:ring-1 focus:ring-[#2fa84f] text-white h-28 resize-none transition-all placeholder-gray-600"></textarea>
+                    <textarea placeholder="Contoh: Produk daur ulang dari ban bekas..." className="w-full px-5 py-4 border border-white/10 rounded-2xl outline-none focus:border-[#2fa84f] focus:ring-1 focus:ring-[#2fa84f] focus:bg-[#1a1f1b] text-sm text-white bg-[#1a1f1b]/50 shadow-inner h-24 resize-none transition-all placeholder:text-gray-600"></textarea>
                   </div>
                 </div>
-                <div className="flex gap-4">
-                  <button onClick={() => setStep(2)} className="flex-1 py-4 text-gray-400 font-bold text-sm bg-white/5 border border-white/10 rounded-2xl hover:bg-white/10 hover:text-white transition-colors uppercase tracking-widest cursor-pointer" disabled={loading}>Kembali</button>
+                <div className="flex gap-4 mt-4">
+                  <button onClick={() => setStep(2)} className="flex-1 py-4 text-gray-400 font-bold text-xs bg-white/5 border border-white/10 rounded-2xl hover:bg-white/10 hover:text-white transition-colors uppercase tracking-widest cursor-pointer" disabled={loading}>Kembali</button>
                   <button 
                     onClick={handleFinalSubmit} 
                     disabled={loading}
-                    className={`flex-1 py-4 rounded-2xl font-[800] text-[13px] uppercase tracking-[2px] transition-all border-none ${
-                      loading ? "bg-white/5 text-gray-600 cursor-not-allowed border border-white/5" : "bg-[#2fa84f] text-white hover:bg-[#268c41] shadow-[0_10px_20px_rgba(47,168,79,0.3)] hover:-translate-y-0.5 cursor-pointer"
+                    className={`flex-[2] py-4 rounded-2xl font-[800] text-xs uppercase tracking-widest transition-all border-none ${
+                      loading ? "bg-white/5 text-gray-600 cursor-not-allowed border border-white/5" : "bg-[#2fa84f] text-white hover:bg-[#268c41] shadow-[0_10px_25px_rgba(47,168,79,0.3)] hover:-translate-y-1 cursor-pointer"
                     }`}
                   >
-                    {loading ? "Memproses..." : "Kirim Pendaftaran"}
+                    {loading ? "Memproses..." : "Selesaikan"}
                   </button>
                 </div>
               </div>
             )}
           </div>
+          
         </div>
-      </main>
-
-      {/* ── FOOTER (Sesuai Dashboard) ── */}
-      <footer className="bg-[#0a110b] pt-10 pb-6 px-8 text-white relative z-10 border-t border-white/5 text-center mt-auto">
-         <div className="max-w-6xl mx-auto flex flex-col items-center">
-            <div className="flex items-center gap-2 mb-3 opacity-50 grayscale hover:grayscale-0 hover:opacity-100 transition-all cursor-pointer">
-               <div className="w-6 h-6 rounded-lg bg-white/20 flex items-center justify-center">
-                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5"><path d="M12 2L3 7v9c0 5 9 7 9 7s9-2 9-7V7l-9-5z"/></svg>
-               </div>
-               <span className="text-sm font-black text-white tracking-tighter uppercase">GreenMarket</span>
-            </div>
-            <p className="text-white/20 text-[10px] font-bold tracking-[3px] uppercase m-0">
-               © 2026 GREENMARKET INC. Seller Onboarding.
-            </p>
-         </div>
-      </footer>
-    </div>
+      </div>
+    </main>
   );
 }
