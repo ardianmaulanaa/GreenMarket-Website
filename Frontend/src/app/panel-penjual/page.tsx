@@ -16,7 +16,6 @@ interface Produk {
   image_url: string;
   id_kategori: string;
   id_user?: number;
-  // Tambahan field untuk mendukung tabel Produk_Detail dan label kategori
   deskripsi: string; 
   konten_deskripsi: string; 
 }
@@ -35,19 +34,29 @@ export default function PanelPenjual() {
     stok: 0,
     image_url: "",
     id_kategori: "",
-    deskripsi: "Produk ramah lingkungan.", // Default untuk label
-    konten_deskripsi: "", // Default untuk deskripsi manual
+    deskripsi: "Produk ramah lingkungan.",
+    konten_deskripsi: "",
   });
 
   useEffect(() => {
+    // Validasi Login di awal
+    const storedUserId = localStorage.getItem("userId");
+    if (!storedUserId) {
+      alert("Silakan login terlebih dahulu");
+      window.location.href = "/login";
+      return;
+    }
     fetchInitialData();
   }, []);
 
   const fetchInitialData = async () => {
     try {
+      const storedUserId = localStorage.getItem("userId");
+      
+      // Mengirim userId sebagai query parameter agar backend melakukan filter
       const [catRes, prodRes] = await Promise.all([
         fetch("http://localhost:5050/api/categories"),
-        fetch("http://localhost:5050/api/products")
+        fetch(`http://localhost:5050/api/products?userId=${storedUserId}`)
       ]);
 
       if (!catRes.ok || !prodRes.ok) throw new Error("Gagal mengambil data dari server");
@@ -57,7 +66,6 @@ export default function PanelPenjual() {
 
       setCategories(catData);
       
-      // Map data produk agar field detail.konten_deskripsi naik ke level atas (flatten)
       const mappedProducts = prodData.map((p: any) => ({
         ...p,
         konten_deskripsi: p.detail?.konten_deskripsi || ""
@@ -80,7 +88,6 @@ export default function PanelPenjual() {
       setEditingProduct(product);
       setFormData({
         ...product,
-        // Pastikan konten_deskripsi terisi saat edit
         konten_deskripsi: product.konten_deskripsi || ""
       });
     } else {
@@ -112,13 +119,14 @@ export default function PanelPenjual() {
     const url = editingProduct 
       ? `http://localhost:5050/api/products/${editingProduct.id_produk}` 
       : "http://localhost:5050/api/products";
+    
     const method = editingProduct ? "PUT" : "POST";
 
     const payload = {
       ...formData,
       harga: Number(formData.harga),
       stok: Number(formData.stok),
-      id_user: Number(storedUserId)
+      id_user: Number(storedUserId) // id_user dikirim untuk identifikasi pemilik
     };
 
     try {
@@ -144,10 +152,21 @@ export default function PanelPenjual() {
   };
 
   const handleDelete = async (id: string) => {
+    const storedUserId = localStorage.getItem("userId");
+    
     if (confirm("Hapus produk ini secara permanen?")) {
       try {
-        const response = await fetch(`http://localhost:5050/api/products/${id}`, { method: "DELETE" });
-        if(response.ok) fetchInitialData();
+        // Mengirim userId sebagai query param agar backend memverifikasi kepemilikan
+        const response = await fetch(`http://localhost:5050/api/products/${id}?userId=${storedUserId}`, { 
+          method: "DELETE" 
+        });
+        
+        if(response.ok) {
+          fetchInitialData();
+        } else {
+          const err = await response.json();
+          alert(err.message || "Gagal menghapus produk");
+        }
       } catch (error) {
         console.error("Gagal menghapus:", error);
       }
@@ -155,20 +174,20 @@ export default function PanelPenjual() {
   };
 
   return (
+    /* ... (Sisa kode UI tetap sama seperti sebelumnya) ... */
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-[#f1f8e9] via-[#2fa84f]/15 to-[#0a110b] font-sans text-[#1a2e1f] relative overflow-hidden">
-      
-      {/* Dekorasi Background */}
+      {/* Kode UI Anda di sini */}
       <div className="absolute top-[-10%] right-[-5%] w-[600px] h-[600px] bg-[#2fa84f] opacity-10 blur-[150px] rounded-full pointer-events-none"></div>
       
       <nav className="fixed top-0 left-0 right-0 z-[100] bg-[#1a1f1b]/85 backdrop-blur-xl border-b border-white/5 h-[72px]">
         <div className="max-w-[1600px] mx-auto h-full px-6 flex items-center justify-between">
-          <Link href="/beranda-dashboard-seller" className="flex items-center gap-2.5 group no-underline">
+          <Link href="/beranda-dashboard" className="flex items-center gap-2.5 group no-underline">
             <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#2fa84f] to-[#1a7a35] flex items-center justify-center shadow-[0_0_20px_rgba(47,168,79,0.3)]">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5"><path d="M12 2L3 7v9c0 5 9 7 9 7s9-2 9-7V7l-9-5z"/></svg>
             </div>
             <span className="text-xl font-black text-white uppercase sm:block hidden">Green<span className="text-[#2fa84f]">Market</span></span>
           </Link>
-          <Link href="/beranda-dashboard-seller" className="px-4 py-2 rounded-lg bg-white/5 text-gray-300 text-sm font-bold no-underline border border-transparent hover:border-white/10">
+          <Link href="/beranda-dashboard" className="px-4 py-2 rounded-lg bg-white/5 text-gray-300 text-sm font-bold no-underline border border-transparent hover:border-white/10">
             Kembali
           </Link>
         </div>
@@ -201,6 +220,8 @@ export default function PanelPenjual() {
             <tbody className="divide-y divide-white/5 text-white">
               {loading ? (
                 <tr><td colSpan={4} className="p-20 text-center text-[#2fa84f]">Loading...</td></tr>
+              ) : products.length === 0 ? (
+                <tr><td colSpan={4} className="p-20 text-center text-gray-500">Belum ada produk. Klik Unggah Produk untuk memulai.</td></tr>
               ) : products.map((p) => (
                 <tr key={p.id_produk} className="hover:bg-white/[0.03]">
                   <td className="p-6">
@@ -225,7 +246,7 @@ export default function PanelPenjual() {
         </div>
       </main>
 
-      {/* MODAL FORM */}
+      {/* MODAL FORM TETAP SAMA */}
       {showModal && (
         <div className="fixed inset-0 z-[250] flex items-center justify-center p-6 bg-black/80 backdrop-blur-sm">
           <div className="bg-[#1a1f1b] w-full max-w-2xl rounded-[40px] p-8 border border-white/10 shadow-2xl max-h-[90vh] overflow-y-auto">
@@ -265,7 +286,7 @@ export default function PanelPenjual() {
               </div>
 
               <div>
-                <label className="text-[10px] text-gray-400 uppercase font-bold block mb-1">Deskripsi Manual (Ketikan Anda)</label>
+                <label className="text-[10px] text-gray-400 uppercase font-bold block mb-1">Deskripsi Manual</label>
                 <textarea 
                   required 
                   rows={4}

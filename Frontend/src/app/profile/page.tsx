@@ -38,7 +38,7 @@ export default function ProfilePage() {
       {/* ── NAVBAR (Sesuai Dashboard) ── */}
       <nav className="fixed top-0 left-0 right-0 z-[100] bg-[#1a1f1b]/85 backdrop-blur-xl border-b border-white/5 h-[72px]">
         <div className="max-w-[1600px] mx-auto h-full px-6 flex items-center justify-between">
-          <Link href="/beranda-dashboard-seller" className="flex items-center gap-2.5 group no-underline">
+          <Link href="/beranda-dashboard" className="flex items-center gap-2.5 group no-underline">
             <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#2fa84f] to-[#1a7a35] flex items-center justify-center shadow-[0_0_20px_rgba(47,168,79,0.3)] group-hover:scale-105 transition-all">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5"><path d="M12 2L3 7v9c0 5 9 7 9 7s9-2 9-7V7l-9-5z"/></svg>
             </div>
@@ -104,7 +104,7 @@ export default function ProfilePage() {
                   <span className="text-[13px]">Mulai Berjualan</span>
                 </Link>
               ) : (
-                <Link href="/seller/dashboard" className="flex items-center gap-3 p-3.5 rounded-xl text-[#2fa84f] border border-[#2fa84f]/20 bg-[#2fa84f]/10 hover:bg-[#2fa84f]/20 transition no-underline font-bold mt-2">
+                <Link href="panel-penjual" className="flex items-center gap-3 p-3.5 rounded-xl text-[#2fa84f] border border-[#2fa84f]/20 bg-[#2fa84f]/10 hover:bg-[#2fa84f]/20 transition no-underline font-bold mt-2">
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
                   <span className="text-[13px]">Dashboard Toko</span>
                 </Link>

@@ -15,8 +15,7 @@ export default function AdminPanel() {
 
     if (role !== "ADMIN") {
       alert("Akses ditolak!");
-      if (role === "SELLER") router.push("/beranda-dashboard-seller");
-      else router.push("/beranda-dashboard");
+      if (role === "SELLER" && role == "BUYER") router.push("/beranda-dashboard");
       return;
     }
 

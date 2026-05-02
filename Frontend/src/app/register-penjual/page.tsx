@@ -40,7 +40,7 @@ export default function RegisterPenjual() {
 
         alert("Selamat! Anda sekarang menjadi Penjual.");
         
-        window.location.href = "/beranda-dashboard-seller"; 
+        window.location.href = "/beranda-dashboard"; 
       } else {
         alert("Gagal daftar.");
       }
