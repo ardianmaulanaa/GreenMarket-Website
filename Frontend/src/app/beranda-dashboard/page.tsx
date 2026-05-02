@@ -39,7 +39,6 @@ export default function BerandaDashboard() {
   const produkMenipis = myProducts.filter(p => p.stok < 5).length;
 
   useEffect(() => {
-    // Efek loading saat memuat halaman
     const timer = setTimeout(() => {
       setIsPageLoading(false);
     }, 800);
@@ -88,7 +87,6 @@ export default function BerandaDashboard() {
     router.push("/login");
   };
 
-  // ── TAMPILAN LOADING SCREEN ──
   if (isPageLoading) {
     return (
       <div className="min-h-screen bg-[#0a110b] flex flex-col items-center justify-center font-sans">
@@ -100,14 +98,11 @@ export default function BerandaDashboard() {
     );
   }
 
-  // ── TAMPILAN UTAMA ──
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-[#f1f8e9] via-[#2fa84f]/15 to-[#0a110b] font-sans text-[#1a2e1f] relative overflow-hidden">
       
-      {/* ── EFEK DEKORASI GLOW BACKGROUND ── */}
       <div className="absolute top-[-10%] right-[-5%] w-[600px] h-[600px] bg-[#2fa84f] opacity-20 blur-[150px] rounded-full pointer-events-none"></div>
 
-      {/* ── NAVBAR ── */}
       <nav className="fixed top-0 left-0 right-0 z-[100] bg-[#1a1f1b]/90 backdrop-blur-xl border-b border-white/10 shadow-lg h-[72px] px-8 flex items-center justify-between">
         <div className="flex items-center gap-8">
           <Link href="/" className="flex items-center gap-2 no-underline group">
@@ -132,7 +127,6 @@ export default function BerandaDashboard() {
           </div>
         </div>
 
-        {/* SEARCH BAR */}
         <div className="flex-1 max-w-xl mx-10">
           <div className="relative group">
             <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
@@ -147,8 +141,6 @@ export default function BerandaDashboard() {
         </div>
 
         <div className="flex items-center gap-4">
-          
-          {/* ── IKON WISHLIST DITAMBAHKAN KEMBALI ── */}
           <Link href="/wishlist" className="w-[42px] h-[42px] rounded-xl border border-white/10 bg-white/5 flex items-center justify-center text-white/70 hover:text-[#2fa84f] transition-all">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
               <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/>
@@ -173,17 +165,14 @@ export default function BerandaDashboard() {
         </div>
       </nav>
 
-      {/* ── MAIN CONTENT ── */}
       <main className="flex-grow container max-w-[1600px] mx-auto pt-24 px-6 pb-20 relative z-10 w-full">
         
-        {/* ── HERO BANNER GAMBAR DAUN AI ── */}
         <div className="w-full h-[240px] md:h-[280px] rounded-[32px] overflow-hidden relative mb-8 shadow-2xl border border-white/10">
           <img 
             src="https://images.unsplash.com/photo-1536882240095-0379873feb4e?q=80&w=1000&auto=format&fit=crop" 
             alt="AI Generated Leaf"
             className="w-full h-full object-cover opacity-90"
           />
-          {/* Overlay Gradient agar teks terbaca */}
           <div className="absolute inset-0 bg-gradient-to-r from-[#1a2e1f]/95 via-[#1a2e1f]/60 to-transparent"></div>
           
           <div className="absolute inset-0 flex flex-col justify-center px-8 md:px-14">
@@ -201,10 +190,10 @@ export default function BerandaDashboard() {
           </div>
         </div>
 
-        {/* STATS AREA (Tampil hanya jika Seller) */}
         {userRole === "SELLER" && (
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-10">
-            <div className="bg-[#1a1f1b]/80 backdrop-blur-md p-5 rounded-[24px] border border-white/5 shadow-xl">
+             {/* Stats Items */}
+             <div className="bg-[#1a1f1b]/80 backdrop-blur-md p-5 rounded-[24px] border border-white/5 shadow-xl">
               <p className="text-gray-400 text-[10px] uppercase font-black tracking-widest mb-1">Produk Saya</p>
               <h4 className="text-2xl font-black text-white">{totalProduk} <span className="text-[12px] text-gray-500 font-medium">Item</span></h4>
             </div>
@@ -228,7 +217,8 @@ export default function BerandaDashboard() {
 
         <div className="flex flex-col lg:flex-row gap-8">
           <aside className="w-full lg:w-[280px] shrink-0">
-            <div className="bg-[#1a1f1b]/80 backdrop-blur-xl rounded-[32px] p-6 border border-white/5 shadow-2xl sticky top-28">
+             {/* Filter Area */}
+             <div className="bg-[#1a1f1b]/80 backdrop-blur-xl rounded-[32px] p-6 border border-white/5 shadow-2xl sticky top-28">
               <div className="flex items-center gap-3 mb-8">
                 <div className="w-1.5 h-6 bg-[#2fa84f] rounded-full shadow-[0_0_8px_#2fa84f]"></div>
                 <h2 className="text-lg font-[800] text-white m-0 tracking-tight">Filter Pasar</h2>
@@ -247,7 +237,6 @@ export default function BerandaDashboard() {
             </div>
           </aside>
 
-          {/* PRODUCT GRID */}
           <section className="flex-1">
             <div className="flex justify-between items-end mb-8">
               <h3 className="text-2xl font-[800] text-[#1a2e1f] tracking-tight m-0">
@@ -267,42 +256,49 @@ export default function BerandaDashboard() {
             ) : (
               <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-5">
                 {dbProducts.map((p) => (
-                  <div key={p.id_produk} className="group bg-[#1a1f1b]/90 backdrop-blur-md border border-white/5 rounded-[28px] overflow-hidden hover:border-[#2fa84f]/50 transition-all duration-500 flex flex-col relative shadow-xl hover:-translate-y-1">
-                    
-                    <div className="relative aspect-square bg-[#0a110b] overflow-hidden">
-                      <Image 
-                        src={p.fotos?.[0]?.url_foto || "https://via.placeholder.com/500"} 
-                        alt={p.nama_produk} 
-                        fill 
-                        className="object-cover group-hover:scale-110 transition-transform duration-700 opacity-90 group-hover:opacity-100" 
-                      />
-                      <div className="absolute top-4 left-4 bg-[#2fa84f] text-white text-[9px] font-black px-3 py-1.5 rounded-full uppercase tracking-wider shadow-lg">
-                        {p.deskripsi}
+                  /* 🟡 [DIUBAH DISINI]: Link sekarang MEMBUNGKUS div kartu produk agar bisa diklik seutuhnya */
+                  <Link 
+                    key={p.id_produk} 
+                    href={`/katalog-detail/${p.id_produk}`} 
+                    className="no-underline block group"
+                  >
+                    <div className="bg-[#1a1f1b]/90 backdrop-blur-md border border-white/5 rounded-[28px] overflow-hidden hover:border-[#2fa84f]/50 transition-all duration-500 flex flex-col relative shadow-xl hover:-translate-y-1 h-full">
+                      
+                      <div className="relative aspect-square bg-[#0a110b] overflow-hidden">
+                        <Image 
+                          src={p.fotos?.[0]?.url_foto || "https://via.placeholder.com/500"} 
+                          alt={p.nama_produk} 
+                          fill 
+                          className="object-cover group-hover:scale-110 transition-transform duration-700 opacity-90 group-hover:opacity-100" 
+                        />
+                        <div className="absolute top-4 left-4 bg-[#2fa84f] text-white text-[9px] font-black px-3 py-1.5 rounded-full uppercase tracking-wider shadow-lg">
+                          {p.kategori?.nama_kategori || "Eco Product"}
+                        </div>
                       </div>
-                    </div>
 
-                    <div className="p-5 flex flex-col flex-grow">
-                      <h4 className="font-bold text-[14px] text-white mb-1.5 line-clamp-1 leading-snug group-hover:text-[#2fa84f] transition-colors">
-                        {p.nama_produk}
-                      </h4>
-                      <p className="text-gray-400 text-[11px] mb-4 line-clamp-2 italic opacity-70 leading-relaxed">
-                        {p.detail?.konten_deskripsi || "Tanpa deskripsi tambahan..."}
-                      </p>
-                      <div className="text-[#2fa84f] font-[900] text-lg mb-4 mt-auto tracking-tight">
-                        <span className="text-[11px] mr-0.5">Rp</span>
-                        {p.harga?.toLocaleString('id-ID')}
-                      </div>
-                      <div className="flex justify-between items-center pt-4 border-t border-white/5">
-                        <span className="text-[9px] text-gray-500 uppercase font-black truncate max-w-[100px] flex items-center gap-1.5">
-                          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                          {p.seller?.username || "Toko Hijau"}
-                        </span>
-                        <span className="text-[9px] text-[#2fa84f] bg-[#2fa84f]/10 px-2 py-1 rounded font-black uppercase">
-                          {p.stok} Unit
-                        </span>
+                      <div className="p-5 flex flex-col flex-grow">
+                        <h4 className="font-bold text-[14px] text-white mb-1.5 line-clamp-1 leading-snug group-hover:text-[#2fa84f] transition-colors">
+                          {p.nama_produk}
+                        </h4>
+                        <p className="text-gray-400 text-[11px] mb-4 line-clamp-2 italic opacity-70 leading-relaxed">
+                          {p.deskripsi}
+                        </p>
+                        <div className="text-[#2fa84f] font-[900] text-lg mb-4 mt-auto tracking-tight">
+                          <span className="text-[11px] mr-0.5">Rp</span>
+                          {p.harga?.toLocaleString('id-ID')}
+                        </div>
+                        <div className="flex justify-between items-center pt-4 border-t border-white/5">
+                          <span className="text-[9px] text-gray-500 uppercase font-black truncate max-w-[100px] flex items-center gap-1.5">
+                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                            {p.seller?.username || "Toko Hijau"}
+                          </span>
+                          <span className="text-[9px] text-[#2fa84f] bg-[#2fa84f]/10 px-2 py-1 rounded font-black uppercase">
+                            {p.stok} Unit
+                          </span>
+                        </div>
                       </div>
                     </div>
-                  </div>
+                  </Link>
                 ))}
               </div>
             )}
@@ -311,7 +307,7 @@ export default function BerandaDashboard() {
       </main>
 
       <footer className="bg-transparent py-8 text-center border-t border-[#1a2e1f]/10 mt-auto relative z-10">
-         <p className="text-[#1a2e1f]/50 text-[10px] font-black tracking-[4px] uppercase">
+         <p className="text-[#1a2e1f]/50 text-[10px] font-black tracking-[4px] uppercase m-0">
             © 2026 GREENMARKET. ALL SELLER & BUYER CATALOG.
          </p>
       </footer>

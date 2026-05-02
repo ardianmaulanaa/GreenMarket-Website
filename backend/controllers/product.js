@@ -27,6 +27,35 @@ const getProducts = async (req, res) => {
   }
 };
 
+const getProductById = async (req, res) => {
+  try {
+    const { id } = req.params; 
+
+    const product = await prisma.produk.findUnique({
+      where: {
+        id_produk: id,
+      },
+      include: {
+        kategori: true,
+        fotos: true,
+        detail: true,
+        seller: {
+          select: { username: true, email: true },
+        },
+      },
+    });
+
+    if (!product) {
+      return res.status(404).json({ message: "Produk tidak ditemukan." });
+    }
+
+    res.status(200).json(product);
+  } catch (error) {
+    console.error("Error Get Product By ID:", error);
+    res.status(500).json({ message: "Gagal mengambil detail produk." });
+  }
+};
+
 // 2. POST: Membuat produk baru
 const createProduct = async (req, res) => {
   try {
@@ -138,4 +167,4 @@ const deleteProduct = async (req, res) => {
   }
 };
 
-module.exports = { getProducts, createProduct, updateProduct, deleteProduct };
+module.exports = { getProducts, getProductById, createProduct, updateProduct, deleteProduct };
