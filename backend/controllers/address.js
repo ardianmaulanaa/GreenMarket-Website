@@ -50,7 +50,7 @@ const addAddress = async (req, res) => {
 // PUT update alamat
 const updateAddress = async (req, res) => {
   try {
-    const id_alamat = parseInt(req.params.id_alamat);
+    const id_alamat = req.params.id_alamat;
     const id_user   = parseInt(req.params.id_user);
     const { nama_penerima, nomor_hp, alamat_lengkap } = req.body;
 
@@ -93,7 +93,7 @@ const updateAddress = async (req, res) => {
 // DELETE hapus alamat
 const deleteAddress = async (req, res) => {
   try {
-    const id_alamat = parseInt(req.params.id_alamat);
+    const id_alamat = req.params.id_alamat;
     const id_user   = parseInt(req.params.id_user);
 
     // Pastikan alamat milik user yang benar
