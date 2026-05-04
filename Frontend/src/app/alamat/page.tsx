@@ -11,26 +11,47 @@ export default function AlamatPage() {
   const [isPageLoading, setIsPageLoading] = useState(true);
   const [user, setUser] = useState({ nama: "", role: "" });
   const [showForm, setShowForm] = useState(false);
-  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
   
-  const [addresses, setAddresses] = useState([
-    {
-      id: 1,
-      label: "Rumah",
-      name: "Muhammad Ardian",
-      phone: "08123456789",
-      province: "DKI Jakarta",
-      city: "Jakarta Selatan",
-      district: "Kebayoran Baru",
-      postalCode: "12120",
-      fullAddress: "Jl. Merdeka No. 123",
-      detail: "Depan Masjid Al-Ikhlas",
-    }
-  ]);
+  interface Address {
+    id_alamat: string;
+    id_user: number;
+    nama_penerima: string;
+    nomor_hp: string;
+    alamat_lengkap: string;
+  }
+
+  const [addresses, setAddresses] = useState<Address[]>([]);
   
   const [formData, setFormData] = useState({
-    label: "", name: "", phone: "", province: "", city: "", district: "", postalCode: "", fullAddress: "", detail: "",
+    nama_penerima: "",
+    nomor_hp: "",
+    alamat_lengkap: "",
   });
+
+  const fetchAddresses = async () => {
+    const userId = localStorage.getItem("userId");
+
+    if (!userId) {
+      router.push("/login");
+      return;
+    }
+
+    try {
+      const response = await fetch(`http://localhost:5050/api/alamat/${userId}`);
+      const data = await response.json();
+
+      if (!response.ok) {
+        alert(data.message || "Gagal mengambil data alamat");
+        return;
+      }
+
+      setAddresses(data);
+    } catch (error) {
+      console.error("Gagal mengambil alamat:", error);
+      alert("Terjadi kesalahan saat mengambil alamat");
+    }
+  };
 
   useEffect(() => {
     // Efek loading transisi halaman
@@ -46,6 +67,7 @@ export default function AlamatPage() {
         role: userData.role || "BUYER"
       });
     }
+    fetchAddresses();
 
     return () => clearTimeout(timer);
   }, []);
@@ -61,31 +83,102 @@ export default function AlamatPage() {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (editingId) {
-      setAddresses(addresses.map(addr => addr.id === editingId ? { ...formData, id: editingId } : addr));
-      setEditingId(null);
-    } else {
-      setAddresses([...addresses, { ...formData, id: Date.now() }]);
+
+    const userId = localStorage.getItem("userId");
+
+    if (!userId) {
+      alert("Silakan login terlebih dahulu");
+      router.push("/login");
+      return;
     }
-    resetForm();
-    setShowForm(false);
+
+    try {
+      const url = editingId
+        ? `http://localhost:5050/api/alamat/${userId}/${editingId}`
+        : `http://localhost:5050/api/alamat/${userId}`;
+
+      const method = editingId ? "PUT" : "POST";
+
+      const response = await fetch(url, {
+        method,
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(formData),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        alert(data.message || "Gagal menyimpan alamat");
+        return;
+      }
+
+      alert(data.message || "Alamat berhasil disimpan");
+
+      await fetchAddresses();
+
+      resetForm();
+      setEditingId(null);
+      setShowForm(false);
+    } catch (error) {
+      console.error("Gagal menyimpan alamat:", error);
+      alert("Terjadi kesalahan saat menyimpan alamat");
+    }
   };
 
   const resetForm = () => {
-    setFormData({ label: "", name: "", phone: "", province: "", city: "", district: "", postalCode: "", fullAddress: "", detail: "" });
+    setFormData({
+      nama_penerima: "",
+      nomor_hp: "",
+      alamat_lengkap: "",
+    });
   };
 
-  const handleEdit = (address: any) => {
-    setFormData(address);
-    setEditingId(address.id);
+  const handleEdit = (address: Address) => {
+    setFormData({
+      nama_penerima: address.nama_penerima,
+      nomor_hp: address.nomor_hp,
+      alamat_lengkap: address.alamat_lengkap,
+    });
+
+    setEditingId(address.id_alamat);
     setShowForm(true);
   };
 
-  const handleDelete = (id: number) => {
-    if (confirm("Apakah Anda yakin ingin menghapus alamat ini?")) {
-      setAddresses(addresses.filter(addr => addr.id !== id));
+  const handleDelete = async (id_alamat: string) => {
+    const userId = localStorage.getItem("userId");
+
+    if (!userId) {
+      alert("Silakan login terlebih dahulu");
+      router.push("/login");
+      return;
+    }
+
+    if (!confirm("Apakah Anda yakin ingin menghapus alamat ini?")) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`http://localhost:5050/api/alamat/${userId}/${id_alamat}`, {
+        method: "DELETE",
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        alert(data.message || "Gagal menghapus alamat");
+        return;
+      }
+
+      alert(data.message || "Alamat berhasil dihapus");
+
+      await fetchAddresses();
+    } catch (error) {
+      console.error("Gagal menghapus alamat:", error);
+      alert("Terjadi kesalahan saat menghapus alamat");
     }
   };
 
@@ -230,24 +323,21 @@ export default function AlamatPage() {
             
             <div className="grid grid-cols-1 gap-5 relative z-10">
               {addresses.map((address) => (
-                <div key={address.id} className="border border-white/10 rounded-[24px] p-7 bg-[#1a1f1b]/50 hover:border-[#2fa84f]/40 hover:bg-white/5 transition-all group shadow-lg">
+                <div key={address.id_alamat} className="border border-white/10 rounded-[24px] p-7 bg-[#1a1f1b]/50 hover:border-[#2fa84f]/40 hover:bg-white/5 transition-all group shadow-lg">
                   <div className="flex flex-col md:flex-row justify-between items-start gap-4">
                     <div className="flex-1">
                       <div className="flex items-center gap-3 mb-4">
-                        <span className="px-3.5 py-1.5 bg-[#2fa84f] text-white text-[10px] font-black rounded-full uppercase tracking-widest shadow-md">{address.label}</span>
-                        <span className="font-bold text-white text-lg">{address.name}</span>
+                        <span className="px-3.5 py-1.5 bg-[#2fa84f] text-white text-[10px] font-black rounded-full uppercase tracking-widest shadow-md">Alamat</span>
+                        <span className="font-bold text-white text-lg">{address.nama_penerima}</span>
                       </div>
-                      <p className="text-[14px] text-white/90 font-bold mb-1 tracking-wide">{address.phone}</p>
-                      <p className="text-sm text-gray-400 leading-relaxed max-w-2xl mt-2 font-medium">
-                        {address.fullAddress}, {address.district}, {address.city}, {address.province} ({address.postalCode})
-                      </p>
-                      {address.detail && <p className="text-[12px] text-[#2fa84f] mt-3 font-bold italic bg-[#2fa84f]/10 inline-block px-3 py-1.5 rounded-lg">Catatan: {address.detail}</p>}
+                      <p className="text-[14px] text-white/90 font-bold mb-1 tracking-wide">{address.nomor_hp}</p>
+                      <p className="text-sm text-gray-400 leading-relaxed max-w-2xl mt-2 font-medium">{address.alamat_lengkap}</p>
                     </div>
                     
                     {/* Tombol Aksi di dalam Kartu Alamat */}
                     <div className="flex gap-2 w-full md:w-auto opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity mt-4 md:mt-0">
                       <button onClick={() => handleEdit(address)} className="flex-1 md:flex-none px-4 py-2.5 text-white text-xs font-bold bg-white/10 rounded-xl hover:bg-[#2fa84f] transition-all border border-white/5 hover:border-transparent">Edit</button>
-                      <button onClick={() => handleDelete(address.id)} className="flex-1 md:flex-none px-4 py-2.5 text-red-400 text-xs font-bold bg-red-500/10 rounded-xl hover:bg-red-500 hover:text-white transition-all border border-red-500/20 hover:border-transparent">Hapus</button>
+                      <button onClick={() => handleDelete(address.id_alamat)} className="flex-1 md:flex-none px-4 py-2.5 text-red-400 text-xs font-bold bg-red-500/10 rounded-xl hover:bg-red-500 hover:text-white transition-all border border-red-500/20 hover:border-transparent">Hapus</button>
                     </div>
                   </div>
                 </div>
@@ -272,49 +362,18 @@ export default function AlamatPage() {
               </h3>
               
               <form onSubmit={handleSubmit} className="grid grid-cols-2 gap-5">
-                <div className="col-span-2">
-                  <label className="text-[11px] font-bold text-gray-400 uppercase tracking-widest ml-1 mb-2 block">Label Alamat (Rumah / Kantor)</label>
-                  <input name="label" value={formData.label} onChange={handleInputChange} className="w-full px-5 py-4 border border-white/10 rounded-2xl outline-none focus:border-[#2fa84f] focus:ring-1 focus:ring-[#2fa84f] focus:bg-[#1a1f1b] text-sm text-white bg-[#1a1f1b]/50 shadow-inner transition-all" placeholder="Misal: Rumah" required />
-                </div>
                 <div className="col-span-2 md:col-span-1">
                   <label className="text-[11px] font-bold text-gray-400 uppercase tracking-widest ml-1 mb-2 block">Nama Penerima</label>
-                  <input name="name" value={formData.name} onChange={handleInputChange} className="w-full px-5 py-4 border border-white/10 rounded-2xl outline-none focus:border-[#2fa84f] focus:ring-1 focus:ring-[#2fa84f] focus:bg-[#1a1f1b] text-sm text-white bg-[#1a1f1b]/50 shadow-inner transition-all" required />
+                  <input name="nama_penerima" value={formData.nama_penerima} onChange={handleInputChange} className="w-full px-5 py-4 border border-white/10 rounded-2xl outline-none focus:border-[#2fa84f] focus:ring-1 focus:ring-[#2fa84f] focus:bg-[#1a1f1b] text-sm text-white bg-[#1a1f1b]/50 shadow-inner transition-all" required />
                 </div>
                 <div className="col-span-2 md:col-span-1">
                   <label className="text-[11px] font-bold text-gray-400 uppercase tracking-widest ml-1 mb-2 block">Nomor Telepon</label>
-                  <input name="phone" value={formData.phone} onChange={handleInputChange} className="w-full px-5 py-4 border border-white/10 rounded-2xl outline-none focus:border-[#2fa84f] focus:ring-1 focus:ring-[#2fa84f] focus:bg-[#1a1f1b] text-sm text-white bg-[#1a1f1b]/50 shadow-inner transition-all" required />
+                  <input name="nomor_hp" value={formData.nomor_hp} onChange={handleInputChange} className="w-full px-5 py-4 border border-white/10 rounded-2xl outline-none focus:border-[#2fa84f] focus:ring-1 focus:ring-[#2fa84f] focus:bg-[#1a1f1b] text-sm text-white bg-[#1a1f1b]/50 shadow-inner transition-all" required />
                 </div>
-                
-                {/* Baris Lokasi (Provinsi, Kota) */}
-                <div className="col-span-2 md:col-span-1">
-                  <label className="text-[11px] font-bold text-gray-400 uppercase tracking-widest ml-1 mb-2 block">Provinsi</label>
-                  <input name="province" value={formData.province} onChange={handleInputChange} className="w-full px-5 py-4 border border-white/10 rounded-2xl outline-none focus:border-[#2fa84f] focus:ring-1 focus:ring-[#2fa84f] focus:bg-[#1a1f1b] text-sm text-white bg-[#1a1f1b]/50 shadow-inner transition-all" required />
-                </div>
-                <div className="col-span-2 md:col-span-1">
-                  <label className="text-[11px] font-bold text-gray-400 uppercase tracking-widest ml-1 mb-2 block">Kota / Kabupaten</label>
-                  <input name="city" value={formData.city} onChange={handleInputChange} className="w-full px-5 py-4 border border-white/10 rounded-2xl outline-none focus:border-[#2fa84f] focus:ring-1 focus:ring-[#2fa84f] focus:bg-[#1a1f1b] text-sm text-white bg-[#1a1f1b]/50 shadow-inner transition-all" required />
-                </div>
-                
-                {/* Baris Lokasi (Kecamatan, Kode Pos) */}
-                <div className="col-span-2 md:col-span-1">
-                  <label className="text-[11px] font-bold text-gray-400 uppercase tracking-widest ml-1 mb-2 block">Kecamatan</label>
-                  <input name="district" value={formData.district} onChange={handleInputChange} className="w-full px-5 py-4 border border-white/10 rounded-2xl outline-none focus:border-[#2fa84f] focus:ring-1 focus:ring-[#2fa84f] focus:bg-[#1a1f1b] text-sm text-white bg-[#1a1f1b]/50 shadow-inner transition-all" required />
-                </div>
-                <div className="col-span-2 md:col-span-1">
-                  <label className="text-[11px] font-bold text-gray-400 uppercase tracking-widest ml-1 mb-2 block">Kode Pos</label>
-                  <input name="postalCode" value={formData.postalCode} onChange={handleInputChange} className="w-full px-5 py-4 border border-white/10 rounded-2xl outline-none focus:border-[#2fa84f] focus:ring-1 focus:ring-[#2fa84f] focus:bg-[#1a1f1b] text-sm text-white bg-[#1a1f1b]/50 shadow-inner transition-all" required />
-                </div>
-
                 <div className="col-span-2">
-                  <label className="text-[11px] font-bold text-gray-400 uppercase tracking-widest ml-1 mb-2 block">Detail Jalan / Bangunan</label>
-                  <textarea name="fullAddress" value={formData.fullAddress} onChange={handleInputChange} className="w-full px-5 py-4 border border-white/10 rounded-2xl outline-none focus:border-[#2fa84f] focus:ring-1 focus:ring-[#2fa84f] focus:bg-[#1a1f1b] text-sm text-white bg-[#1a1f1b]/50 shadow-inner transition-all min-h-[100px] resize-none" required />
+                  <label className="text-[11px] font-bold text-gray-400 uppercase tracking-widest ml-1 mb-2 block">Alamat Lengkap</label>
+                  <textarea name="alamat_lengkap" value={formData.alamat_lengkap} onChange={handleInputChange} className="w-full px-5 py-4 border border-white/10 rounded-2xl outline-none focus:border-[#2fa84f] focus:ring-1 focus:ring-[#2fa84f] focus:bg-[#1a1f1b] text-sm text-white bg-[#1a1f1b]/50 shadow-inner transition-all min-h-[100px] resize-none" required/>
                 </div>
-                
-                <div className="col-span-2">
-                  <label className="text-[11px] font-bold text-gray-400 uppercase tracking-widest ml-1 mb-2 block">Catatan Tambahan (Opsional)</label>
-                  <input name="detail" value={formData.detail} onChange={handleInputChange} className="w-full px-5 py-4 border border-white/10 rounded-2xl outline-none focus:border-[#2fa84f] focus:ring-1 focus:ring-[#2fa84f] focus:bg-[#1a1f1b] text-sm text-white bg-[#1a1f1b]/50 shadow-inner transition-all" placeholder="Warna pagar, patokan, dll" />
-                </div>
-
                 <div className="flex gap-4 col-span-2 mt-6">
                     <button type="button" onClick={() => setShowForm(false)} className="flex-1 py-4 rounded-2xl font-[800] text-sm text-gray-400 bg-white/5 border border-white/10 hover:bg-white/10 hover:text-white transition-all">Batal</button>
                     <button type="submit" className="flex-1 py-4 rounded-2xl font-[800] text-sm text-white bg-[#2fa84f] hover:bg-[#268c41] transition-all shadow-[0_10px_20px_rgba(47,168,79,0.3)] hover:-translate-y-1">Simpan Alamat</button>

@@ -8,6 +8,28 @@ export default function WishlistPage() {
   const pathname = usePathname();
   const [user, setUser] = useState({ nama: "", role: "" });
 
+  const fetchWishlist = async () => {
+    const userId = localStorage.getItem("userId");
+
+    if (!userId) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`http://localhost:5050/api/wishlist/${userId}`);
+      const data = await response.json();
+
+      if (!response.ok) {
+        alert(data.message || "Gagal mengambil wishlist");
+        return;
+      }
+
+      setWishlistItems(data);
+    } catch (error) {
+      console.error("Gagal mengambil wishlist:", error);
+    }
+  };
+
   useEffect(() => {
     const savedUser = localStorage.getItem("user");
     if (savedUser) {
@@ -17,29 +39,41 @@ export default function WishlistPage() {
         role: userData.role || ""
       });
     }
+    fetchWishlist();
   }, []);
 
-  const [wishlistItems, setWishlistItems] = useState([
-    {
-      id: 1,
-      name: "Kamera DSLR Bekas - Kondisi 95%",
-      price: 1200000,
-      location: "Jakarta Selatan",
-      category: "Elektronik",
-      image: ""
-    },
-    {
-      id: 2,
-      name: "Sepeda Gunung Wimcycle Ramah Lingkungan",
-      price: 800000,
-      location: "Bandung",
-      category: "Olahraga",
-      image: ""
-    }
-  ]);
+  const [wishlistItems, setWishlistItems] = useState<any[]>([]);
 
-  const removeItem = (id: number) => {
-    setWishlistItems(wishlistItems.filter(item => item.id !== id));
+  const removeItem = async (id_produk: string) => {
+    const userId = localStorage.getItem("userId");
+
+    if (!userId) {
+      alert("Silakan login terlebih dahulu");
+      return;
+    }
+
+    try {
+      const response = await fetch(
+        `http://localhost:5050/api/wishlist/${userId}/${id_produk}`,
+        {
+          method: "DELETE",
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        alert(data.message || "Gagal menghapus wishlist");
+        return;
+      }
+
+      setWishlistItems(wishlistItems.filter(
+        item => item.produk.id_produk !== id_produk
+      ));
+    } catch (error) {
+      console.error("Gagal menghapus wishlist:", error);
+      alert("Terjadi kesalahan saat menghapus wishlist");
+    }
   };
 
   return (
@@ -102,7 +136,7 @@ export default function WishlistPage() {
           <div className="p-6 sm:p-10 relative z-10">
             <div className="grid grid-cols-1 gap-6">
               {wishlistItems.map((item) => (
-                <div key={item.id} className="group bg-white/5 border border-white/10 rounded-[28px] p-6 flex flex-col md:flex-row items-center gap-8 hover:border-[#2fa84f]/40 hover:bg-white/10 transition-all duration-500 shadow-lg">
+                <div key={item.id_wishlist} className="group bg-white/5 border border-white/10 rounded-[28px] p-6 flex flex-col md:flex-row items-center gap-8 hover:border-[#2fa84f]/40 hover:bg-white/10 transition-all duration-500 shadow-lg">
                   
                   {/* Image Container */}
                   <div className="w-full md:w-[160px] h-[160px] bg-black/30 rounded-[24px] flex items-center justify-center border border-white/5 overflow-hidden shrink-0 group-hover:scale-105 transition-transform duration-500">
@@ -112,26 +146,26 @@ export default function WishlistPage() {
                   {/* Product Details */}
                   <div className="flex-grow text-center md:text-left">
                     <span className="inline-block px-3.5 py-1.5 bg-[#2fa84f]/10 text-[#2fa84f] text-[10px] font-[800] rounded-xl uppercase tracking-widest border border-[#2fa84f]/20 mb-3">
-                       🌿 {item.category}
+                       🌿 {item.produk?.kategori?.nama_kategori}
                     </span>
-                    <h3 className="font-[800] text-white text-[20px] mb-2 leading-tight group-hover:text-[#2fa84f] transition-colors m-0">{item.name}</h3>
-                    <p className="text-[#2fa84f] font-[800] text-[24px] mb-4 m-0 mt-1">Rp {item.price.toLocaleString('id-ID')}</p>
+                    <h3 className="font-[800] text-white text-[20px] mb-2 leading-tight group-hover:text-[#2fa84f] transition-colors m-0">{item.produk?.nama_produk}</h3>
+                    <p className="text-[#2fa84f] font-[800] text-[24px] mb-4 m-0 mt-1">Rp {item.produk?.harga?.toLocaleString('id-ID')}</p>
                     
                     <div className="flex items-center justify-center md:justify-start gap-4 text-gray-400 text-[13px] font-bold">
                         <span className="flex items-center gap-1.5">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-                            {item.location}
+                            {item.produk?.seller?.username}
                         </span>
                     </div>
                   </div>
 
                   {/* Action Buttons */}
                   <div className="flex flex-row md:flex-col gap-3 w-full md:w-[180px] shrink-0">
-                    <Link href={`/produk/${item.id}`} className="flex-1 flex items-center justify-center text-center bg-[#2fa84f] text-white font-[800] py-3.5 px-6 rounded-2xl text-[13px] hover:bg-[#268c41] shadow-[0_8px_20px_rgba(47,168,79,0.3)] transition-all hover:-translate-y-0.5 no-underline">
+                    <Link href={`/katalog-detail/${item.produk?.id_produk}`} className="flex-1 flex items-center justify-center text-center bg-[#2fa84f] text-white font-[800] py-3.5 px-6 rounded-2xl text-[13px] hover:bg-[#268c41] shadow-[0_8px_20px_rgba(47,168,79,0.3)] transition-all hover:-translate-y-0.5 no-underline">
                       Beli Sekarang
                     </Link>
                     <button 
-                      onClick={() => removeItem(item.id)}
+                      onClick={() => removeItem(item.produk.id_produk)}
                       className="flex-1 flex items-center justify-center gap-2 text-red-400 font-[800] py-3.5 px-6 rounded-2xl border border-red-500/20 bg-red-500/10 hover:bg-red-500 hover:text-white transition-all text-[13px] cursor-pointer"
                     >
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>

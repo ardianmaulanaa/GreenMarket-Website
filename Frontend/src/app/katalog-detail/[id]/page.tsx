@@ -87,7 +87,47 @@ export default function DetailProdukPage() {
     router.push("/login");
   };
 
+    const handleAddWishlist = async () => {
+      const userId = localStorage.getItem("userId");
+
+      if (!userId) {
+        alert("Silakan login terlebih dahulu");
+        router.push("/login");
+        return;
+      }
+
+      if (!product?.id_produk) {
+        alert("Produk tidak ditemukan");
+        return;
+      }
+
+      try {
+        const response = await fetch(`http://localhost:5050/api/wishlist/${userId}`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            id_produk: product.id_produk,
+          }),
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          alert(data.message || "Gagal memasukkan produk ke keranjang");
+          return;
+        }
+
+        alert("Produk berhasil dimasukkan ke keranjang");
+      } catch (error) {
+        console.error("Gagal tambah wishlist:", error);
+        alert("Terjadi kesalahan saat memasukkan keranjang");
+      }
+    };
+
   const handleQuantity = (type: 'min' | 'plus') => {
+    if (!product) return;
     if (type === 'min' && quantity > 1) setQuantity(quantity - 1);
     if (type === 'plus' && quantity < product.stok) setQuantity(quantity + 1);
   };
@@ -274,7 +314,7 @@ export default function DetailProdukPage() {
 
               {/* Tombol Aksi */}
               <div className="flex gap-4 mt-auto">
-                <button className="flex-1 lg:flex-none lg:w-[220px] py-4 rounded-2xl font-[800] text-sm text-[#2fa84f] bg-[#2fa84f]/10 border border-[#2fa84f]/30 hover:bg-[#2fa84f]/20 transition-all flex items-center justify-center gap-2">
+                <button onClick={handleAddWishlist} className="flex-1 lg:flex-none lg:w-[220px] py-4 rounded-2xl font-[800] text-sm text-[#2fa84f] bg-[#2fa84f]/10 border border-[#2fa84f]/30 hover:bg-[#2fa84f]/20 transition-all flex items-center justify-center gap-2">
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
                   Masukkan Keranjang
                 </button>

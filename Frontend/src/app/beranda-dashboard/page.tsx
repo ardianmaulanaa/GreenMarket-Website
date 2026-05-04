@@ -257,48 +257,48 @@ export default function BerandaDashboard() {
               <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-5">
                 {dbProducts.map((p) => (
                   /* 🟡 [DIUBAH DISINI]: Link sekarang MEMBUNGKUS div kartu produk agar bisa diklik seutuhnya */
-                  <Link 
-                    key={p.id_produk} 
-                    href={`/katalog-detail/${p.id_produk}`} 
-                    className="no-underline block group"
-                  >
-                    <div className="bg-[#1a1f1b]/90 backdrop-blur-md border border-white/5 rounded-[28px] overflow-hidden hover:border-[#2fa84f]/50 transition-all duration-500 flex flex-col relative shadow-xl hover:-translate-y-1 h-full">
-                      
-                      <div className="relative aspect-square bg-[#0a110b] overflow-hidden">
-                        <Image 
-                          src={p.fotos?.[0]?.url_foto || "https://via.placeholder.com/500"} 
-                          alt={p.nama_produk} 
-                          fill 
-                          className="object-cover group-hover:scale-110 transition-transform duration-700 opacity-90 group-hover:opacity-100" 
-                        />
-                        <div className="absolute top-4 left-4 bg-[#2fa84f] text-white text-[9px] font-black px-3 py-1.5 rounded-full uppercase tracking-wider shadow-lg">
-                          {p.kategori?.nama_kategori || "Eco Product"}
+                  <div key={p.id_produk} className="relative group">
+                    <Link 
+                      href={`/katalog-detail/${p.id_produk}`} 
+                      className="no-underline block h-full"
+                    >
+                      <div className="bg-[#1a1f1b]/90 backdrop-blur-md border border-white/5 rounded-[28px] overflow-hidden hover:border-[#2fa84f]/50 transition-all duration-500 flex flex-col relative shadow-xl hover:-translate-y-1 h-full">              
+                        <div className="relative aspect-square bg-[#0a110b] overflow-hidden">
+                          <Image 
+                            src={p.fotos?.[0]?.url_foto || "https://via.placeholder.com/500"} 
+                            alt={p.nama_produk} 
+                            fill 
+                            className="object-cover group-hover:scale-110 transition-transform duration-700 opacity-90 group-hover:opacity-100" 
+                          />
+                          <div className="absolute top-4 left-4 bg-[#2fa84f] text-white text-[9px] font-black px-3 py-1.5 rounded-full uppercase tracking-wider shadow-lg">
+                            {p.kategori?.nama_kategori || "Eco Product"}
+                          </div>
                         </div>
-                      </div>
 
-                      <div className="p-5 flex flex-col flex-grow">
-                        <h4 className="font-bold text-[14px] text-white mb-1.5 line-clamp-1 leading-snug group-hover:text-[#2fa84f] transition-colors">
-                          {p.nama_produk}
-                        </h4>
-                        <p className="text-gray-400 text-[11px] mb-4 line-clamp-2 italic opacity-70 leading-relaxed">
-                          {p.deskripsi}
-                        </p>
-                        <div className="text-[#2fa84f] font-[900] text-lg mb-4 mt-auto tracking-tight">
-                          <span className="text-[11px] mr-0.5">Rp</span>
-                          {p.harga?.toLocaleString('id-ID')}
-                        </div>
-                        <div className="flex justify-between items-center pt-4 border-t border-white/5">
-                          <span className="text-[9px] text-gray-500 uppercase font-black truncate max-w-[100px] flex items-center gap-1.5">
-                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                            {p.seller?.username || "Toko Hijau"}
-                          </span>
-                          <span className="text-[9px] text-[#2fa84f] bg-[#2fa84f]/10 px-2 py-1 rounded font-black uppercase">
-                            {p.stok} Unit
-                          </span>
+                        <div className="p-5 flex flex-col flex-grow">
+                          <h4 className="font-bold text-[14px] text-white mb-1.5 line-clamp-1 leading-snug group-hover:text-[#2fa84f] transition-colors">
+                            {p.nama_produk}
+                          </h4>
+                          <p className="text-gray-400 text-[11px] mb-4 line-clamp-2 italic opacity-70 leading-relaxed">
+                            {p.deskripsi}
+                          </p>
+                          <div className="text-[#2fa84f] font-[900] text-lg mb-4 mt-auto tracking-tight">
+                            <span className="text-[11px] mr-0.5">Rp</span>
+                            {p.harga?.toLocaleString('id-ID')}
+                          </div>
+                          <div className="flex justify-between items-center pt-4 border-t border-white/5">
+                            <span className="text-[9px] text-gray-500 uppercase font-black truncate max-w-[100px] flex items-center gap-1.5">
+                              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                              {p.seller?.username || "Toko Hijau"}
+                            </span>
+                            <span className="text-[9px] text-[#2fa84f] bg-[#2fa84f]/10 px-2 py-1 rounded font-black uppercase">
+                              {p.stok} Unit
+                            </span>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  </Link>
+                    </Link>
+                  </div>
                 ))}
               </div>
             )}

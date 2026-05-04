@@ -160,42 +160,8 @@ const deleteWishlist = async (req, res) => {
   }
 };
 
-// GET cek apakah produk sudah ada di wishlist user
-const checkWishlist = async (req, res) => {
-  try {
-    const id_user = parseInt(req.params.id_user);
-    const { id_produk } = req.params;
-
-    if (!id_user || !id_produk) {
-      return res.status(400).json({
-        message: "ID user dan ID produk wajib diisi.",
-      });
-    }
-
-    const wishlist = await prisma.wishlist.findUnique({
-      where: {
-        id_user_id_produk: {
-          id_user: id_user,
-          id_produk: id_produk,
-        },
-      },
-    });
-
-    res.status(200).json({
-      isWishlisted: !!wishlist,
-    });
-  } catch (error) {
-    console.error("Error Check Wishlist:", error);
-    res.status(500).json({
-      message: "Gagal mengecek wishlist.",
-      detail: error.message,
-    });
-  }
-};
-
 module.exports = {
   getWishlistByUser,
   addWishlist,
   deleteWishlist,
-  checkWishlist,
 };

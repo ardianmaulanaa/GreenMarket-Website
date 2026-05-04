@@ -270,11 +270,11 @@ export default function PanelPenjual() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="text-[10px] text-gray-400 uppercase font-bold block mb-1">Harga</label>
-                  <input type="number" required className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white" value={formData.harga} onChange={(e) => setFormData({...formData, harga: parseInt(e.target.value)})} />
+                  <input type="number" required className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white" value={Number.isNaN(formData.harga) ? "" : formData.harga} onChange={(e) => setFormData({...formData, harga: e.target.value === "" ? 0 : Number(e.target.value)})} />
                 </div>
                 <div>
                   <label className="text-[10px] text-gray-400 uppercase font-bold block mb-1">Stok</label>
-                  <input type="number" required className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white" value={formData.stok} onChange={(e) => setFormData({...formData, stok: parseInt(e.target.value)})} />
+                  <input type="number" required className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white" value={Number.isNaN(formData.stok) ? "" : formData.stok} onChange={(e) => setFormData({...formData, stok: e.target.value === "" ? 0 : Number(e.target.value)})} />
                 </div>
               </div>
 
