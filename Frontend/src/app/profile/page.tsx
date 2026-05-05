@@ -16,33 +16,123 @@ export default function ProfilePage() {
     role: "", 
   });
 
+  const [profile, setProfile] = useState({
+    nama: "",
+    email: "",
+    role: "",
+  });
+
+  const fetchProfile = async () => {
+    const userId = localStorage.getItem("userId");
+
+    if (!userId) {
+      router.push("/login");
+      return;
+    }
+
+    try {
+      const response = await fetch(`http://localhost:5050/api/users/${userId}`);
+      const data = await response.json();
+
+      if (!response.ok) {
+        alert(data.message || "Gagal mengambil data profile");
+        return;
+      }
+
+      setProfile({
+        nama: data.username,
+        email: data.email,
+        role: data.role,
+      });
+
+      setForm({
+        nama: data.username,
+        email: data.email,
+        password: "",
+        role: data.role,
+      });
+
+      localStorage.setItem("user", JSON.stringify(data));
+      localStorage.setItem("userRole", data.role || "BUYER");
+    } catch (error) {
+      console.error("Gagal mengambil profile:", error);
+      alert("Terjadi kesalahan saat mengambil profile");
+    }
+  };
+
   useEffect(() => {
     // Efek loading saat memuat/berpindah ke halaman profil
     const timer = setTimeout(() => {
       setIsPageLoading(false);
     }, 800);
-
-    // Mengambil data user dari session
-    const savedUser = localStorage.getItem("user");
-    if (savedUser) {
-      const userData = JSON.parse(savedUser);
-      setForm({
-        nama: userData.username || userData.name || "User",
-        email: userData.email || "",
-        password: "", 
-        role: userData.role || "BUYER",
-      });
-    }
-
+    fetchProfile();
     return () => clearTimeout(timer);
   }, []);
+
+  const handleUpdateProfile = async (e: React.SyntheticEvent<HTMLFormElement>) => {
+    e.preventDefault();
+
+    const userId = localStorage.getItem("userId");
+
+    if (!userId) {
+      alert("Silakan login terlebih dahulu");
+      router.push("/login");
+      return;
+    }
+
+    if (!form.nama || !form.email) {
+      alert("Nama dan email tidak boleh kosong");
+      return;
+    }
+
+    try {
+      const response = await fetch(`http://localhost:5050/api/users/${userId}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          username: form.nama,
+          email: form.email,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        alert(data.message || "Gagal update profile");
+        return;
+      }
+
+      alert(data.message || "Profile berhasil diupdate");
+
+      setProfile({
+        nama: data.user.username,
+        email: data.user.email,
+        role: data.user.role,
+      });
+
+      setForm({
+        nama: data.user.username,
+        email: data.user.email,
+        password: "",
+        role: data.user.role,
+      });
+
+      localStorage.setItem("user", JSON.stringify(data.user));
+      localStorage.setItem("userRole", data.user.role || "BUYER");
+    } catch (error) {
+      console.error("Gagal update profile:", error);
+      alert("Terjadi kesalahan saat update profile");
+    }
+  };
 
   const handleLogout = () => {
     localStorage.clear();
     router.push("/login");
   };
 
-  const isSeller = form.role === "SELLER" || form.role === "Penjual";
+  const isSeller = profile.role === "SELLER" || profile.role === "Penjual";
 
   // ── TAMPILAN LOADING SCREEN ──
   if (isPageLoading) {
@@ -95,12 +185,12 @@ export default function ProfilePage() {
           </Link>
           <div className="flex items-center gap-3 pl-2 group">
                <div className="text-right hidden sm:block">
-                  <p className="text-xs font-bold text-white m-0 group-hover:text-[#2fa84f] transition-colors">{form.nama}</p>
-                  <p className="text-[10px] text-[#2fa84f] m-0 font-black uppercase">{form.role}</p>
+                  <p className="text-xs font-bold text-white m-0 group-hover:text-[#2fa84f] transition-colors">{profile.nama}</p>
+                  <p className="text-[10px] text-[#2fa84f] m-0 font-black uppercase">{profile.role === "SELLER" ? "SELLER HUB" : "BUYER"}</p>
                </div>
                <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-[#2fa84f] to-[#1a7a35] p-[2px]">
                  <div className="w-full h-full rounded-full bg-[#0a110b] flex items-center justify-center text-white font-bold uppercase">
-                    {form.nama ? form.nama.charAt(0) : "U"}
+                    {profile.nama ? profile.nama.charAt(0) : "U"}
                  </div>
                </div>
           </div>
@@ -115,10 +205,10 @@ export default function ProfilePage() {
           <div className="sticky top-28 bg-[#1a1f1b]/80 backdrop-blur-xl rounded-[32px] p-6 border border-white/5 shadow-2xl">
             <div className="text-center mb-8">
               <div className="relative w-20 h-20 mx-auto mb-4">
-                <img src={`https://ui-avatars.com/api/?name=${form.nama.replace(" ", "+")}&background=2fa84f&color=fff&size=128`} className="w-full h-full rounded-full border-[3px] border-[#2fa84f]/40 object-cover shadow-[0_0_15px_rgba(47,168,79,0.3)]" alt="Avatar" />
+                <img src={`https://ui-avatars.com/api/?name=${profile.nama.replace(" ", "+")}&background=2fa84f&color=fff&size=128`} className="w-full h-full rounded-full border-[3px] border-[#2fa84f]/40 object-cover shadow-[0_0_15px_rgba(47,168,79,0.3)]" alt="Avatar" />
               </div>
-              <h3 className="text-lg font-[800] text-white m-0 tracking-tight">{form.nama}</h3>
-              <p className="text-[10px] text-[#2fa84f] m-0 mt-1.5 uppercase font-black tracking-[2px]">{form.role}</p>
+              <h3 className="text-lg font-[800] text-white m-0 tracking-tight">{profile.nama}</h3>
+              <p className="text-[10px] text-[#2fa84f] m-0 mt-1.5 uppercase font-black tracking-[2px]">{profile.role}</p>
             </div>
 
             <nav className="flex flex-col gap-2">
@@ -175,7 +265,7 @@ export default function ProfilePage() {
               <p className="text-sm text-gray-400 mt-2 font-medium">Kelola informasi data diri dan keamanan akun Anda.</p>
             </div>
 
-            <form onSubmit={(e) => e.preventDefault()} className="space-y-8 relative z-10">
+            <form onSubmit={handleUpdateProfile} className="space-y-8 relative z-10">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 
                 {/* Field Nama */}

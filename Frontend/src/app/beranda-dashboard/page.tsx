@@ -28,6 +28,7 @@ export default function BerandaDashboard() {
   const [loading, setLoading] = useState(true);
   const [userRole, setUserRole] = useState<string | null>(null);
   const [userName, setUserName] = useState<string>("User");
+  const [searchTerm, setSearchTerm] = useState("");
   const router = useRouter();
 
   const storedUserId = typeof window !== 'undefined' ? localStorage.getItem("userId") : null;
@@ -98,6 +99,11 @@ export default function BerandaDashboard() {
     );
   }
 
+  const filteredProducts = dbProducts.filter((p) =>
+    p.nama_produk?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    p.kategori?.nama_kategori?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-[#f1f8e9] via-[#2fa84f]/15 to-[#0a110b] font-sans text-[#1a2e1f] relative overflow-hidden">
       
@@ -135,6 +141,8 @@ export default function BerandaDashboard() {
             <input 
               type="text" 
               placeholder="Cari produk ramah lingkungan..." 
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full bg-white/5 border border-white/10 rounded-2xl pl-12 pr-4 py-2.5 text-sm text-white focus:outline-none focus:border-[#2fa84f] transition-all placeholder:text-gray-500" 
             />
           </div>
@@ -249,13 +257,13 @@ export default function BerandaDashboard() {
                 <div className="w-12 h-12 border-4 border-[#2fa84f]/20 border-t-[#2fa84f] rounded-full animate-spin mb-4"></div>
                 <p className="font-bold text-[11px] uppercase tracking-[3px] animate-pulse text-[#1a2e1f]">Memuat Katalog...</p>
               </div>
-            ) : dbProducts.length === 0 ? (
+            ) : filteredProducts.length === 0 ? (
               <div className="text-center py-20 bg-white/50 backdrop-blur-md rounded-[40px] border border-dashed border-[#2fa84f]/30 text-[#1a2e1f] font-bold shadow-sm">
-                Belum ada produk di pasar.
+                Tidak ada produk yang sesuai dengan pencarian.
               </div>
             ) : (
               <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-5">
-                {dbProducts.map((p) => (
+                {filteredProducts.map((p) => (
                   /* 🟡 [DIUBAH DISINI]: Link sekarang MEMBUNGKUS div kartu produk agar bisa diklik seutuhnya */
                   <div key={p.id_produk} className="relative group">
                     <Link 

@@ -2,10 +2,11 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 
 export default function WishlistPage() {
   const pathname = usePathname();
+  const router = useRouter();
   const [user, setUser] = useState({ nama: "", role: "" });
 
   const fetchWishlist = async () => {
@@ -30,15 +31,38 @@ export default function WishlistPage() {
     }
   };
 
+  const fetchProfile = async () => {
+    const userId = localStorage.getItem("userId");
+
+    if (!userId) {
+      router.push("/login");
+      return;
+    }
+
+    try {
+      const response = await fetch(`http://localhost:5050/api/users/${userId}`);
+      const data = await response.json();
+
+      if (!response.ok) {
+        console.error(data.message || "Gagal mengambil profile");
+        return;
+      }
+
+      setUser({
+        nama: data.username || "User",
+        role: data.role || "BUYER",
+      });
+
+      localStorage.setItem("user", JSON.stringify(data));
+      localStorage.setItem("userRole", data.role);
+    } catch (error) {
+      console.error("Gagal mengambil profile:", error);
+    }
+  };
+
   useEffect(() => {
     const savedUser = localStorage.getItem("user");
-    if (savedUser) {
-      const userData = JSON.parse(savedUser);
-      setUser({
-        nama: userData.username || userData.name || "User",
-        role: userData.role || ""
-      });
-    }
+    fetchProfile();
     fetchWishlist();
   }, []);
 
@@ -104,13 +128,11 @@ export default function WishlistPage() {
 
             <Link href="/profile" className="flex items-center gap-3 pl-2 group no-underline border-l border-white/10 pt-1 pb-1">
                <div className="text-right hidden sm:block">
-                  <p className="text-xs font-bold text-white m-0 group-hover:text-[#2fa84f] transition-colors">Profil Saya</p>
-                  <p className="text-[10px] text-gray-400 m-0 uppercase">{user.role || 'User'}</p>
+                  <p className="text-xs font-bold text-white m-0 group-hover:text-[#2fa84f] transition-colors">{user.nama || "User"}</p>
+                  <p className="text-[10px] text-[#2fa84f] m-0 font-black uppercase">{user.role === "SELLER" ? "SELLER HUB" : "BUYER"}</p>
                </div>
                <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-[#2fa84f] to-[#1a7a35] p-[2px] shadow-lg group-hover:scale-105 transition-transform ml-2">
-                 <div className="w-full h-full rounded-full bg-[#0d130e] flex items-center justify-center">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                 </div>
+                 <div className="w-full h-full rounded-full bg-[#0d130e] flex items-center justify-center text-white font-bold uppercase">{user.nama ? user.nama.charAt(0) : "U"}</div>
                </div>
             </Link>
           </div>
