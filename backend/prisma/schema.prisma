@@ -7,14 +7,16 @@ datasource db {
 }
 
 model User {
-  id        Int      @id @default(autoincrement())
+  id        Int         @id @default(autoincrement())
   username  String
-  email     String   @unique
+  email     String      @unique
   password  String
-  createdAt DateTime @default(now())
-  role      Role     @default(BUYER)
+  createdAt DateTime    @default(now())
+  role      Role        @default(BUYER)
   products  Produk[]
   wishlists Wishlist[]
+  alamat    Alamat[]
+  transaksi Transaksi[]
 }
 
 model Kategori_Produk {
@@ -41,11 +43,11 @@ model Produk {
 }
 
 model Produk_Detail {
-  id_detail        String   @id @default(uuid())
-  id_produk        String   @unique
-  konten_deskripsi String   @db.Text // Tempat teks ketikan manual Anda
+  id_detail        String  @id @default(uuid())
+  id_produk        String  @unique
+  konten_deskripsi String  @db.Text // Tempat teks ketikan manual Anda
   catatan_penjual  String?
-  produk           Produk   @relation(fields: [id_produk], references: [id_produk])
+  produk           Produk  @relation(fields: [id_produk], references: [id_produk])
 }
 
 model Produk_Foto {
@@ -62,6 +64,7 @@ model Wishlist {
   created_at  DateTime @default(now())
   user        User     @relation(fields: [id_user], references: [id], onDelete: Cascade)
   produk      Produk   @relation(fields: [id_produk], references: [id_produk], onDelete: Cascade)
+
   @@unique([id_user, id_produk])
 }
 
@@ -71,6 +74,63 @@ model Alamat {
   nama_penerima  String
   nomor_hp       String
   alamat_lengkap String
+
+  user      User        @relation(fields: [id_user], references: [id], onDelete: Cascade)
+  transaksi Transaksi[]
+}
+
+model Jasa_Kirim {
+  id_jasa          String @id @default(uuid())
+  nama_jasa        String
+  harga_pengiriman Int
+  estimasi_waktu   String
+
+  transaksi Transaksi[]
+}
+
+model Metode_Pembayaran {
+  id_metode   String @id @default(uuid())
+  nama_metode String
+  kode_metode String
+
+  transaksi Transaksi[]
+}
+
+model Transaksi {
+  id_transaksi         String   @id @default(uuid())
+  id_user              Int
+  id_alamat            String
+  id_jasa_kirim        String
+  id_metode_pembayaran String
+  kuantitas            Int      @default(1)
+  status_transaksi     String
+  tanggal_transaksi    DateTime @default(now())
+
+  user              User              @relation(fields: [id_user], references: [id], onDelete: Cascade)
+  alamat            Alamat            @relation(fields: [id_alamat], references: [id_alamat])
+  jasa_kirim        Jasa_Kirim        @relation(fields: [id_jasa_kirim], references: [id_jasa])
+  metode_pembayaran Metode_Pembayaran @relation(fields: [id_metode_pembayaran], references: [id_metode])
+
+  pembayaran    Pembayaran?
+  tracking_logs TrackingLog[]
+}
+
+model Pembayaran {
+  id_pembayaran      String   @id @default(uuid())
+  id_transaksi       String   @unique
+  status_pembayaran  String
+  tanggal_pembayaran DateTime @default(now())
+
+  transaksi Transaksi @relation(fields: [id_transaksi], references: [id_transaksi], onDelete: Cascade)
+}
+
+model TrackingLog {
+  id_log       String   @id @default(uuid())
+  id_transaksi String
+  status       String
+  waktu        DateTime @default(now())
+
+  transaksi Transaksi @relation(fields: [id_transaksi], references: [id_transaksi], onDelete: Cascade)
 }
 
 enum Role {

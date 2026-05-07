@@ -11,15 +11,20 @@ const adminRoutes = require("./routes/adminRoutes");
 const categoryRoutes = require("./routes/categoryRoutes");
 const productRoutes = require("./routes/productRoutes");
 const wishlistRoutes = require("./routes/wishlistRoutes");
+const jasaKirimRoutes = require("./routes/jasakirimRoutes");
+const metodePembayaranRoutes = require("./routes/metodepembayaranRoutes");
+const transaksiRoutes = require("./routes/transaksiRoutes");
 
 const app = express();
 
 // Middleware CORS - pastikan mengarah ke port frontend Anda
-app.use(cors({
-  origin: "http://localhost:3000",
-  methods: ["GET", "POST", "PUT", "DELETE"],
-  credentials: true
-}));
+app.use(
+  cors({
+    origin: "http://localhost:3000",
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    credentials: true,
+  }),
+);
 
 app.use(express.json());
 
@@ -36,6 +41,9 @@ app.use("/admin", adminRoutes);
 app.use("/api/categories", categoryRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/wishlist", wishlistRoutes);
+app.use("/api/jasa-kirim", jasaKirimRoutes);
+app.use("/api/metode-pembayaran", metodePembayaranRoutes);
+app.use("/api/transaksi", transaksiRoutes);
 
 // --- LISTENER ---
 const PORT = process.env.PORT || 5050;
