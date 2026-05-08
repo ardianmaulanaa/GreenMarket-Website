@@ -40,6 +40,7 @@ model Produk {
   seller         User            @relation(fields: [id_user_seller], references: [id])
   fotos          Produk_Foto[]
   wishlists      Wishlist[]
+  transaksi      Transaksi[]
 }
 
 model Produk_Detail {
@@ -99,6 +100,7 @@ model Metode_Pembayaran {
 model Transaksi {
   id_transaksi         String   @id @default(uuid())
   id_user              Int
+  id_produk            String
   id_alamat            String
   id_jasa_kirim        String
   id_metode_pembayaran String
@@ -107,6 +109,7 @@ model Transaksi {
   tanggal_transaksi    DateTime @default(now())
 
   user              User              @relation(fields: [id_user], references: [id], onDelete: Cascade)
+  produk            Produk            @relation(fields: [id_produk], references: [id_produk])
   alamat            Alamat            @relation(fields: [id_alamat], references: [id_alamat])
   jasa_kirim        Jasa_Kirim        @relation(fields: [id_jasa_kirim], references: [id_jasa])
   metode_pembayaran Metode_Pembayaran @relation(fields: [id_metode_pembayaran], references: [id_metode])

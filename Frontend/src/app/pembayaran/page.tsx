@@ -246,6 +246,7 @@ export default function PembayaranPage() {
         },
         body: JSON.stringify({
           id_user: Number(userId),
+          id_produk: product.id_produk,
           id_alamat: selectedAddress,
           id_jasa_kirim: selectedShipping,
           id_metode_pembayaran: selectedPayment,
