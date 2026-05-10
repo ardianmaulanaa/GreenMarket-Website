@@ -1,5 +1,14 @@
 const prisma = require("../lib/prisma");
 const bcrypt = require("bcrypt");
+const usernameRegex = /^[a-zA-Z0-9_]+$/;
+const passwordRegex =/^(?=.*[A-Z])(?=.*[a-z])(?=.*\d).{8,}$/;
+const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const allowedDomains = [
+  "gmail.com",
+  "yahoo.com",
+  "outlook.com"
+];
+const emailDomain = email.split("@")[1];
 
 const register = async (req, res) => {
   try {
@@ -7,6 +16,29 @@ const register = async (req, res) => {
       if (!username || !email || !password) {
         return res.status(400).json({ message: "Field tidak lengkap" });
       }
+
+      if(username.length < 5 || username.length > 30){
+        return res.status(400).json({ message: "Username harus antara 5-30 karakter" });
+      }
+
+      if (!usernameRegex.test(username)) {
+        return res.status(400).json({ message: "Username hanya boleh mengandung huruf, angka, dan underscore" });
+      }
+
+      if(password.length < 8){
+        return res.status(400).json({ message: "Password minimal 8 karakter" });
+      }
+
+      if (!passwordRegex.test(password)) {
+        return res.status(400).json({ message: "Password harus mengandung setidaknya satu huruf besar, satu huruf kecil, dan satu angka" });
+      }
+
+      if (!emailRegex.test(email)) {
+        return res.status(400).json({ message: "Format email tidak valid" });
+      }
+      if (!allowedDomains.includes(emailDomain)) {
+        return res.status(400).json({ message: "Email harus menggunakan domain yang valid (gmail.com, yahoo.com, outlook.com)" });
+      }  
   
       const checkUser = await prisma.user.findUnique({ where: { email } });
       if (checkUser) return res.status(400).json({ message: "Email sudah terdaftar" });
