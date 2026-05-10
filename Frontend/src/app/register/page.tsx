@@ -9,6 +9,7 @@ export default function RegisterPage() {
     username: "",
     email: "",
     password: "",
+    confirmPassword: "",
     terms: false,
   });
 
@@ -190,6 +191,22 @@ export default function RegisterPage() {
                 type="password"
                 placeholder="Minimal 8 karakter"
                 value={form.password}
+                onChange={handleChange}
+                className="w-full border border-white/10 rounded-2xl h-[56px] px-5 bg-[#1a1f1b]/50 text-white text-sm focus:border-[#2fa84f] focus:ring-1 focus:ring-[#2fa84f] focus:bg-[#1a1f1b] outline-none transition-all placeholder:text-gray-600 shadow-inner"
+                required
+              />
+            </div>
+
+            {/* CONFIRM PASSWORD */}
+            <div>
+              <label className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-2 block ml-1">
+                Konfirmasi Kata Sandi
+              </label>
+              <input
+                name="confirmPassword"
+                type="password"
+                placeholder="Ulangi password anda"
+                value={form.confirmPassword}
                 onChange={handleChange}
                 className="w-full border border-white/10 rounded-2xl h-[56px] px-5 bg-[#1a1f1b]/50 text-white text-sm focus:border-[#2fa84f] focus:ring-1 focus:ring-[#2fa84f] focus:bg-[#1a1f1b] outline-none transition-all placeholder:text-gray-600 shadow-inner"
                 required

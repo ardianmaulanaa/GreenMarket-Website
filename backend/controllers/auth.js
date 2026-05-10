@@ -8,12 +8,13 @@ const allowedDomains = [
   "yahoo.com",
   "outlook.com"
 ];
-const emailDomain = email.split("@")[1];
+
 
 const register = async (req, res) => {
   try {
-      const { username, email, password } = req.body;
-      if (!username || !email || !password) {
+      const { username, email, password, confirmPassword } = req.body;
+      const emailDomain = email.split("@")[1];
+      if (!username || !email || !password || !confirmPassword) {
         return res.status(400).json({ message: "Field tidak lengkap" });
       }
 
@@ -27,6 +28,9 @@ const register = async (req, res) => {
 
       if(password.length < 8){
         return res.status(400).json({ message: "Password minimal 8 karakter" });
+      }
+      if(password !== confirmPassword){
+        return res.status(400).json({ message: "Password dan konfirmasi password tidak cocok" });
       }
 
       if (!passwordRegex.test(password)) {
