@@ -272,11 +272,10 @@ export default function BerandaDashboard() {
                     >
                       <div className="bg-[#1a1f1b]/90 backdrop-blur-md border border-white/5 rounded-[28px] overflow-hidden hover:border-[#2fa84f]/50 transition-all duration-500 flex flex-col relative shadow-xl hover:-translate-y-1 h-full">              
                         <div className="relative aspect-square bg-[#0a110b] overflow-hidden">
-                          <Image 
-                            src={p.fotos?.[0]?.url_foto || "https://via.placeholder.com/500"} 
-                            alt={p.nama_produk} 
-                            fill 
-                            className="object-cover group-hover:scale-110 transition-transform duration-700 opacity-90 group-hover:opacity-100" 
+                          <img
+                            src={p.fotos?.[0]?.url_foto?.startsWith("http") ? p.fotos[0].url_foto : "https://placehold.co/500x500/1a1f1b/2fa84f?text=No+Image"}
+                            alt={p.nama_produk}
+                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 opacity-90 group-hover:opacity-100"
                           />
                           <div className="absolute top-4 left-4 bg-[#2fa84f] text-white text-[9px] font-black px-3 py-1.5 rounded-full uppercase tracking-wider shadow-lg">
                             {p.kategori?.nama_kategori || "Eco Product"}
