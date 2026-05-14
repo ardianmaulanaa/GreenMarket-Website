@@ -2,13 +2,24 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+
+interface Post {
+  id: number;
+  user: string;
+  avatar: string;
+  time: string;
+  group: string | null;
+  content: string;
+  image: string | null;
+  likes: number;
+  comments: number;
+  isLiked: boolean;
+}
 
 export default function ForumPage() {
-  const pathname = usePathname();
   const [showPostForm, setShowPostForm] = useState(false);
   const [postContent, setPostContent] = useState("");
-  const [postImagePreview, setPostImagePreview] = useState(null);
+  const [postImagePreview, setPostImagePreview] = useState<string | null>(null);
 
   // 1. Sinkronisasi Data User
   const [user, setUser] = useState({ nama: "", role: "" });
@@ -17,14 +28,16 @@ export default function ForumPage() {
     const savedUser = localStorage.getItem("user");
     if (savedUser) {
       const userData = JSON.parse(savedUser);
-      setUser({
-        nama: userData.username || userData.name || "User",
-        role: userData.role || ""
+      queueMicrotask(() => {
+        setUser({
+          nama: userData.username || userData.name || "User",
+          role: userData.role || ""
+        });
       });
     }
   }, []);
 
-  const [posts, setPosts] = useState([
+  const [posts, setPosts] = useState<Post[]>([
     {
       id: 1,
       user: "Siti Rahma",

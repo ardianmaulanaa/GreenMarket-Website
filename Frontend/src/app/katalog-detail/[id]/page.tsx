@@ -41,9 +41,11 @@ export default function DetailProdukPage() {
     const savedUser = localStorage.getItem("user");
     if (savedUser) {
       const userData = JSON.parse(savedUser);
-      setUser({
-        nama: userData.username || userData.name || "User",
-        role: userData.role || "BUYER"
+      queueMicrotask(() => {
+        setUser({
+          nama: userData.username || userData.name || "User",
+          role: userData.role || "BUYER"
+        });
       });
     }
 

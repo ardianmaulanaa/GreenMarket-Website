@@ -4,7 +4,25 @@ import { useState } from "react";
 import { MapContainer, TileLayer, Marker, useMap, useMapEvents } from "react-leaflet";
 import L from "leaflet";
 
-delete (L.Icon.Default.prototype as any)._getIconUrl;
+type LeafletDefaultIcon = L.Icon.Default & { _getIconUrl?: unknown };
+
+interface NominatimFeature {
+  geometry: {
+    coordinates: [number, number];
+  };
+  properties: {
+    name?: string;
+    street?: string;
+    city?: string;
+    country?: string;
+  };
+}
+
+interface NominatimResponse {
+  features?: NominatimFeature[];
+}
+
+delete (L.Icon.Default.prototype as LeafletDefaultIcon)._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
   iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
@@ -28,7 +46,7 @@ function ClickHandler({ onSelect }: { onSelect: (lat: number, lng: number, alama
       const { lat, lng } = e.latlng;
       try {
         const res = await fetch(`/api/nominatim?lat=${lat}&lon=${lng}`);
-        const data = await res.json();
+        const data = (await res.json()) as NominatimResponse;
         const feature = data.features?.[0];
         const alamat = feature ? [
           feature.properties.name,
@@ -48,7 +66,7 @@ function ClickHandler({ onSelect }: { onSelect: (lat: number, lng: number, alama
 
 export default function MapPicker({ position, onSelect }: Props) {
   const [search, setSearch] = useState("");
-  const [suggestions, setSuggestions] = useState<any[]>([]);
+  const [suggestions, setSuggestions] = useState<NominatimFeature[]>([]);
   const [flyTo, setFlyTo] = useState<[number, number] | null>(null);
 
   const handleSearch = async (query: string) => {
@@ -56,14 +74,14 @@ export default function MapPicker({ position, onSelect }: Props) {
     if (query.length < 3) { setSuggestions([]); return; }
     try {
       const res = await fetch(`/api/nominatim?q=${encodeURIComponent(query)}`);
-      const data = await res.json();
+      const data = (await res.json()) as NominatimResponse;
       setSuggestions(data.features || []);
     } catch (err) {
       console.error(err);
     }
   };
 
-  const handleSelect = (item: any) => {
+  const handleSelect = (item: NominatimFeature) => {
     const lat = item.geometry.coordinates[1];
     const lng = item.geometry.coordinates[0];
     const nama = [

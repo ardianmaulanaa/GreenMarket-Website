@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { Suspense, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 
@@ -10,6 +10,8 @@ interface Produk {
   harga: number;
   stok: number;
   deskripsi: string;
+  foto_produk?: string;
+  foto_produk_list?: string[];
   fotos?: { url_foto: string }[];
   kategori?: { nama_kategori: string };
   seller?: { username: string; email: string };
@@ -36,7 +38,7 @@ interface Address {
   alamat_lengkap: string;
 }
 
-export default function PembayaranPage() {
+function PembayaranContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -173,19 +175,23 @@ export default function PembayaranPage() {
     if (savedUser) {
       try {
         const userData = JSON.parse(savedUser);
-        setUser({
-          nama: userData.username || userData.name || "User",
-          role: userData.role || "BUYER",
+        queueMicrotask(() => {
+          setUser({
+            nama: userData.username || userData.name || "User",
+            role: userData.role || "BUYER",
+          });
         });
       } catch (error) {
         console.error("Gagal membaca user:", error);
       }
     }
 
-    fetchJasaKirim();
-    fetchProduct();
-    fetchMetodePembayaran();
-    fetchAddresses();
+    queueMicrotask(() => {
+      void fetchJasaKirim();
+      void fetchProduct();
+      void fetchMetodePembayaran();
+      void fetchAddresses();
+    });
   }, [produkId, router]);
 
   const selectedShippingData = useMemo(() => {
@@ -196,6 +202,12 @@ export default function PembayaranPage() {
   const ongkir = selectedShippingData?.harga_pengiriman || 0;
   const biayaAsuransi = shippingInsurance ? 500 : 0;
   const total = subtotal + ongkir + biayaAsuransi;
+
+  const productImage =
+    product?.foto_produk ||
+    product?.foto_produk_list?.[0] ||
+    product?.fotos?.[0]?.url_foto ||
+    "https://placehold.co/120x120/e9f7ec/2fa84f?text=GreenMarket";
 
   const handleQuantity = (type: "min" | "plus") => {
     if (!product) return;
@@ -425,10 +437,7 @@ export default function PembayaranPage() {
             <div className="flex items-start justify-between gap-6 pb-7 border-b border-gray-200">
               <div className="flex items-start gap-6">
                 <img
-                  src={
-                    product.fotos?.[0]?.url_foto ||
-                    "https://via.placeholder.com/120"
-                  }
+                  src={productImage}
                   alt={product.nama_produk}
                   className="w-[120px] h-[120px] rounded-[20px] object-cover border border-gray-200 shrink-0"
                 />
@@ -751,5 +760,21 @@ export default function PembayaranPage() {
         </div>
       </main>
     </div>
+  );
+}
+
+export default function PembayaranPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-[#edf3e7] flex items-center justify-center font-sans">
+          <p className="text-[#2fa84f] font-bold text-sm">
+            Memuat pembayaran...
+          </p>
+        </div>
+      }
+    >
+      <PembayaranContent />
+    </Suspense>
   );
 }

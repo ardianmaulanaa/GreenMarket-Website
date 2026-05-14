@@ -48,16 +48,6 @@ export default function PanelPenjual() {
     catatan_penjual: "",
   });
 
-  useEffect(() => {
-    const storedUserId = localStorage.getItem("userId");
-    if (!storedUserId) {
-      alert("Silakan login terlebih dahulu");
-      window.location.href = "/login";
-      return;
-    }
-    fetchInitialData();
-  }, []);
-
   const fetchInitialData = async () => {
     try {
       const storedUserId = localStorage.getItem("userId");
@@ -69,12 +59,12 @@ export default function PanelPenjual() {
 
       if (!catRes.ok || !prodRes.ok) throw new Error("Gagal mengambil data dari server");
 
-      const catData = await catRes.json();
-      const prodData = await prodRes.json();
+      const catData = (await catRes.json()) as Kategori[];
+      const prodData = (await prodRes.json()) as Produk[];
 
       setCategories(catData);
 
-      const mappedProducts = prodData.map((p: any) => ({
+      const mappedProducts = prodData.map((p) => ({
         ...p,
         konten_deskripsi: p.konten_deskripsi || "",
         catatan_penjual: p.catatan_penjual || "",
@@ -84,8 +74,10 @@ export default function PanelPenjual() {
 
       setProducts(Array.isArray(mappedProducts) ? mappedProducts : []);
 
-      if (catData.length > 0 && !formData.id_kategori) {
-        setFormData((prev) => ({ ...prev, id_kategori: catData[0].id_kategori }));
+      if (catData.length > 0) {
+        setFormData((prev) =>
+          prev.id_kategori ? prev : { ...prev, id_kategori: catData[0].id_kategori },
+        );
       }
     } catch (error) {
       console.error("Gagal mengambil data awal:", error);
@@ -93,6 +85,18 @@ export default function PanelPenjual() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    const storedUserId = localStorage.getItem("userId");
+    if (!storedUserId) {
+      alert("Silakan login terlebih dahulu");
+      window.location.href = "/login";
+      return;
+    }
+    queueMicrotask(() => {
+      void fetchInitialData();
+    });
+  }, []);
 
   const addFiles = (files: File[]) => {
     const remaining = 4 - imagePreviews.length;

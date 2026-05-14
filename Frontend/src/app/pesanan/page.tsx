@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { useRouter, usePathname } from "next/navigation";
+import { useRouter } from "next/navigation";
 
 interface TrackingLog {
   id_log: string;
@@ -21,6 +21,8 @@ interface Transaksi {
     id_produk: string;
     nama_produk: string;
     harga: number;
+    foto_produk?: string;
+    foto_produk_list?: string[];
     fotos?: { url_foto: string }[];
     seller?: {
       username: string;
@@ -56,7 +58,6 @@ interface Transaksi {
 }
 
 export default function PesananPage() {
-  const pathname = usePathname();
   const router = useRouter();
   
   const [isPageLoading, setIsPageLoading] = useState(true);
@@ -102,12 +103,16 @@ export default function PesananPage() {
     const savedUser = localStorage.getItem("user");
     if (savedUser) {
       const userData = JSON.parse(savedUser);
-      setUser({
-        nama: userData.username || userData.name || "User",
-        role: userData.role || "BUYER"
+      queueMicrotask(() => {
+        setUser({
+          nama: userData.username || userData.name || "User",
+          role: userData.role || "BUYER"
+        });
       });
     }
-    fetchTransactions();
+    queueMicrotask(() => {
+      void fetchTransactions();
+    });
 
     return () => clearTimeout(timer);
   }, []);
@@ -302,7 +307,10 @@ export default function PesananPage() {
             <div className="space-y-6 relative z-10">
                 {filteredTransactions.map((trx) => {
                   const productImage =
-                    trx.produk?.fotos?.[0]?.url_foto || "https://via.placeholder.com/120";
+                    trx.produk?.foto_produk ||
+                    trx.produk?.foto_produk_list?.[0] ||
+                    trx.produk?.fotos?.[0]?.url_foto ||
+                    "https://placehold.co/120x120/e9f7ec/2fa84f?text=GreenMarket";
 
                   const hargaProduk = trx.produk?.harga || 0;
                   const totalProduk = hargaProduk * trx.kuantitas;

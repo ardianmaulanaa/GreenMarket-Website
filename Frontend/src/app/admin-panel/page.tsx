@@ -4,11 +4,19 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
+interface AdminUser {
+  id: number | string;
+  username?: string;
+  name?: string;
+  email?: string;
+  role?: string;
+}
+
 export default function AdminPanel() {
   const router = useRouter();
   
   const [isPageLoading, setIsPageLoading] = useState(true);
-  const [users, setUsers] = useState<any[]>([]);
+  const [users, setUsers] = useState<AdminUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [adminName, setAdminName] = useState("Admin");
 
@@ -22,8 +30,10 @@ export default function AdminPanel() {
     const savedUser = localStorage.getItem("user");
 
     if (savedUser) {
-      const userData = JSON.parse(savedUser);
-      setAdminName(userData.username || userData.name || "Admin");
+      const userData = JSON.parse(savedUser) as AdminUser;
+      queueMicrotask(() => {
+        setAdminName(userData.username || userData.name || "Admin");
+      });
     }
 
     // Pengecekan Keamanan Role Admin
@@ -42,8 +52,8 @@ export default function AdminPanel() {
         const response = await fetch(`http://localhost:5050/admin/users?role=${role}`);
         const data = await response.json();
         if (response.ok) setUsers(data);
-      } catch (err) {
-        console.error("Gagal koneksi ke API");
+      } catch (error) {
+        console.error("Gagal koneksi ke API", error);
       } finally {
         setLoading(false);
       }
@@ -191,7 +201,7 @@ export default function AdminPanel() {
                   ) : users.length === 0 ? (
                     <div className="text-center py-10 text-gray-500 font-bold text-sm border border-dashed border-white/10 rounded-2xl">Tidak ada data pengguna.</div>
                   ) : (
-                    users.slice(0, 8).map((u: any) => (
+                    users.slice(0, 8).map((u) => (
                       <div key={u.id} className="flex items-center gap-4 p-4 bg-[#0a110b]/50 rounded-[20px] border border-white/5 hover:border-[#2fa84f]/40 hover:bg-white/5 transition-all group">
                         <div className="w-10 h-10 bg-gradient-to-tr from-white/10 to-transparent rounded-full flex items-center justify-center text-white font-bold uppercase shadow-inner border border-white/5">
                           {u.username ? u.username.charAt(0) : "?"}

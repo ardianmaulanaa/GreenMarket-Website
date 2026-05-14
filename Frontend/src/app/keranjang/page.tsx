@@ -1,78 +1,182 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
+
+interface UserState {
+  nama: string;
+  role: string;
+}
+
+interface ProdukKeranjang {
+  id_produk: string;
+  nama_produk: string;
+  harga: number;
+  stok?: number;
+  foto_produk?: string;
+  foto_produk_list?: string[];
+  kategori?: {
+    nama_kategori?: string;
+  };
+  seller?: {
+    id?: number;
+    username?: string;
+    email?: string;
+  };
+}
+
+interface KeranjangItem {
+  id_keranjang: string;
+  produk: ProdukKeranjang;
+}
 
 export default function KeranjangPage() {
-  const pathname = usePathname();
   const router = useRouter();
 
-  const [user, setUser] = useState({ nama: "", role: "" });
-  const [keranjangItems, setKeranjangItems] = useState<any[]>([]);
+  const [user, setUser] = useState<UserState>({ nama: "", role: "" });
+  const [keranjangItems, setKeranjangItems] = useState<KeranjangItem[]>([]);
+  const [selectedItems, setSelectedItems] = useState<string[]>([]);
+  const [quantities, setQuantities] = useState<Record<string, number>>({});
 
   const dashboardHref =
     user.role === "SELLER" ? "/dashboard-seller" : "/dashboard-buyer";
 
-  const fetchKeranjang = async () => {
-    const userId = localStorage.getItem("userId");
+  const formatRupiah = (value = 0) => `Rp${value.toLocaleString("id-ID")}`;
 
-    if (!userId) {
-      return;
-    }
-
-    try {
-      const response = await fetch(
-        `http://localhost:5050/api/keranjang/${userId}`,
-      );
-      const data = await response.json();
-
-      if (!response.ok) {
-        alert(data.message || "Gagal mengambil keranjang");
-        return;
-      }
-
-      setKeranjangItems(data);
-    } catch (error) {
-      console.error("Gagal mengambil keranjang:", error);
-    }
-  };
-
-  const fetchProfile = async () => {
-    const userId = localStorage.getItem("userId");
-
-    if (!userId) {
-      router.push("/login");
-      return;
-    }
-
-    try {
-      const response = await fetch(`http://localhost:5050/api/users/${userId}`);
-      const data = await response.json();
-
-      if (!response.ok) {
-        console.error(data.message || "Gagal mengambil profile");
-        return;
-      }
-
-      setUser({
-        nama: data.username || "User",
-        role: data.role || "BUYER",
-      });
-
-      localStorage.setItem("user", JSON.stringify(data));
-      localStorage.setItem("userRole", data.role);
-    } catch (error) {
-      console.error("Gagal mengambil profile:", error);
-    }
-  };
+  const getProductImage = (product?: ProdukKeranjang) =>
+    product?.foto_produk ||
+    product?.foto_produk_list?.[0] ||
+    "https://placehold.co/160x160/e9f7ec/2fa84f?text=GreenMarket";
 
   useEffect(() => {
-    fetchProfile();
-    fetchKeranjang();
-  }, []);
+    let isMounted = true;
 
-  const removeItem = async (id_produk: string) => {
+    const initializePage = async () => {
+      const userId = localStorage.getItem("userId");
+
+      if (!userId) {
+        router.push("/login");
+        return;
+      }
+
+      try {
+        const [profileResponse, keranjangResponse] = await Promise.all([
+          fetch(`http://localhost:5050/api/users/${userId}`),
+          fetch(`http://localhost:5050/api/keranjang/${userId}`),
+        ]);
+
+        const profileData = await profileResponse.json();
+        const keranjangData = await keranjangResponse.json();
+
+        if (!profileResponse.ok) {
+          console.error(profileData.message || "Gagal mengambil profile");
+        }
+
+        if (!keranjangResponse.ok) {
+          alert(keranjangData.message || "Gagal mengambil keranjang");
+          return;
+        }
+
+        if (!isMounted) {
+          return;
+        }
+
+        if (profileResponse.ok) {
+          setUser({
+            nama: profileData.username || "User",
+            role: profileData.role || "BUYER",
+          });
+
+          localStorage.setItem("user", JSON.stringify(profileData));
+          localStorage.setItem("userRole", profileData.role);
+        }
+
+        setKeranjangItems(keranjangData);
+        setQuantities((currentQuantities) => {
+          const nextQuantities = { ...currentQuantities };
+
+          keranjangData.forEach((item: KeranjangItem) => {
+            if (!nextQuantities[item.id_keranjang]) {
+              nextQuantities[item.id_keranjang] = 1;
+            }
+          });
+
+          return nextQuantities;
+        });
+      } catch (error) {
+        console.error("Gagal memuat keranjang:", error);
+      }
+    };
+
+    initializePage();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [router]);
+
+  const groupedItems = useMemo(() => {
+    const groups: Record<string, KeranjangItem[]> = {};
+
+    keranjangItems.forEach((item) => {
+      const sellerName = item.produk?.seller?.username || "GreenMarket Store";
+      if (!groups[sellerName]) {
+        groups[sellerName] = [];
+      }
+      groups[sellerName].push(item);
+    });
+
+    return Object.entries(groups).map(([sellerName, items]) => ({
+      sellerName,
+      items,
+    }));
+  }, [keranjangItems]);
+
+  const selectedTotal = keranjangItems
+    .filter((item) => selectedItems.includes(item.id_keranjang))
+    .reduce((total, item) => {
+      const quantity = quantities[item.id_keranjang] || 1;
+      return total + item.produk.harga * quantity;
+    }, 0);
+
+  const isAllSelected =
+    keranjangItems.length > 0 && selectedItems.length === keranjangItems.length;
+
+  const toggleSelectAll = () => {
+    if (isAllSelected) {
+      setSelectedItems([]);
+      return;
+    }
+
+    setSelectedItems(keranjangItems.map((item) => item.id_keranjang));
+  };
+
+  const toggleItem = (idKeranjang: string) => {
+    setSelectedItems((currentItems) =>
+      currentItems.includes(idKeranjang)
+        ? currentItems.filter((itemId) => itemId !== idKeranjang)
+        : [...currentItems, idKeranjang],
+    );
+  };
+
+  const updateQuantity = (item: KeranjangItem, type: "min" | "plus") => {
+    setQuantities((currentQuantities) => {
+      const currentQuantity = currentQuantities[item.id_keranjang] || 1;
+      const stock = item.produk.stok || 99;
+      const nextQuantity =
+        type === "plus"
+          ? Math.min(currentQuantity + 1, stock)
+          : Math.max(currentQuantity - 1, 1);
+
+      return {
+        ...currentQuantities,
+        [item.id_keranjang]: nextQuantity,
+      };
+    });
+  };
+
+  const removeItem = async (idProduk: string) => {
     const userId = localStorage.getItem("userId");
 
     if (!userId) {
@@ -82,7 +186,7 @@ export default function KeranjangPage() {
 
     try {
       const response = await fetch(
-        `http://localhost:5050/api/keranjang/${userId}/${id_produk}`,
+        `http://localhost:5050/api/keranjang/${userId}/${idProduk}`,
         {
           method: "DELETE",
         },
@@ -95,8 +199,17 @@ export default function KeranjangPage() {
         return;
       }
 
-      setKeranjangItems(
-        keranjangItems.filter((item) => item.produk.id_produk !== id_produk),
+      setKeranjangItems((currentItems) =>
+        currentItems.filter((item) => item.produk.id_produk !== idProduk),
+      );
+      setSelectedItems((currentItems) =>
+        currentItems.filter((idKeranjang) =>
+          keranjangItems.some(
+            (item) =>
+              item.id_keranjang === idKeranjang &&
+              item.produk.id_produk !== idProduk,
+          ),
+        ),
       );
     } catch (error) {
       console.error("Gagal menghapus keranjang:", error);
@@ -104,245 +217,391 @@ export default function KeranjangPage() {
     }
   };
 
+  const deleteSelectedItems = () => {
+    if (selectedItems.length === 0) {
+      alert("Pilih produk yang ingin dihapus");
+      return;
+    }
+
+    const selectedProducts = keranjangItems.filter((item) =>
+      selectedItems.includes(item.id_keranjang),
+    );
+
+    selectedProducts.forEach((item) => removeItem(item.produk.id_produk));
+  };
+
+  const checkoutSelected = () => {
+    const selectedProducts = keranjangItems.filter((item) =>
+      selectedItems.includes(item.id_keranjang),
+    );
+
+    if (selectedProducts.length === 0) {
+      alert("Pilih produk yang ingin di-checkout");
+      return;
+    }
+
+    if (selectedProducts.length > 1) {
+      alert(
+        "Checkout saat ini baru mendukung satu produk dalam sekali proses.",
+      );
+      return;
+    }
+
+    const item = selectedProducts[0];
+    const quantity = quantities[item.id_keranjang] || 1;
+    router.push(`/pembayaran?produk=${item.produk.id_produk}&qty=${quantity}`);
+  };
+
+  const buyNow = (item: KeranjangItem) => {
+    const quantity = quantities[item.id_keranjang] || 1;
+    router.push(`/pembayaran?produk=${item.produk.id_produk}&qty=${quantity}`);
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#f1f8e9] via-[#2fa84f]/15 to-[#0a110b] font-sans text-[#1a2e1f] relative overflow-hidden flex flex-col">
-      <div className="absolute top-[-10%] right-[-5%] w-[600px] h-[600px] bg-[#2fa84f] opacity-10 blur-[150px] rounded-full pointer-events-none"></div>
-      <div className="absolute bottom-[-15%] left-[-5%] w-[500px] h-[500px] bg-[#2fa84f] opacity-15 blur-[120px] rounded-full pointer-events-none"></div>
+    <div className="min-h-screen bg-gradient-to-br from-[#eefbe8] via-[#c7e5c5] to-[#253229] font-sans text-white pb-32 relative overflow-hidden">
+      <div className="absolute top-0 left-0 right-0 h-[360px] bg-[radial-gradient(circle_at_20%_20%,rgba(47,168,79,0.28),transparent_35%),radial-gradient(circle_at_80%_0%,rgba(238,251,232,0.7),transparent_36%)] pointer-events-none"></div>
+      <div className="absolute right-[-160px] bottom-[80px] w-[520px] h-[520px] rounded-full bg-[#1f2a22]/45 blur-[120px] pointer-events-none"></div>
 
-      <nav className="fixed top-0 left-0 right-0 z-[100] bg-[#1a1f1b]/85 backdrop-blur-xl border-b border-white/5 h-[72px]">
-        <div className="max-w-[1600px] mx-auto h-full px-6 flex items-center justify-between">
-          <Link
-            href={dashboardHref}
-            className="flex items-center gap-2.5 group no-underline"
-          >
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#2fa84f] to-[#1a7a35] flex items-center justify-center shadow-[0_0_20px_rgba(47,168,79,0.3)] group-hover:scale-105 transition-all">
-              <svg
-                width="20"
-                height="20"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="white"
-                strokeWidth="2.5"
-              >
-                <path d="M12 2L3 7v9c0 5 9 7 9 7s9-2 9-7V7l-9-5z" />
-              </svg>
-            </div>
-            <span className="text-xl font-black text-white tracking-tight uppercase hidden sm:block">
-              Green<span className="text-[#2fa84f]">Market</span>
-            </span>
-          </Link>
-
-          <div className="flex items-center gap-4">
+      <nav className="bg-[#1f2a22]/95 backdrop-blur-xl border-b border-white/10 sticky top-0 z-40 shadow-[0_10px_30px_rgba(10,17,11,0.22)]">
+        <div className="max-w-[1500px] mx-auto px-5 sm:px-8 py-6 flex flex-col lg:flex-row lg:items-center gap-6">
+          <div className="flex items-center justify-between lg:justify-start gap-5 shrink-0">
             <Link
-              href="/keranjang"
-              className="w-[42px] h-[42px] rounded-xl border border-[#2fa84f]/40 bg-[#2fa84f]/10 flex items-center justify-center text-[#2fa84f] transition-all shadow-[0_0_15px_rgba(47,168,79,0.2)]"
+              href={dashboardHref}
+              className="flex items-center gap-3 no-underline"
             >
+              <div className="w-12 h-12 rounded-[16px] bg-[#2fa84f] flex items-center justify-center text-white shadow-[0_10px_24px_rgba(47,168,79,0.28)]">
+                <svg
+                  width="27"
+                  height="27"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
+                  <line x1="3" y1="6" x2="21" y2="6" />
+                  <path d="M16 10a4 4 0 0 1-8 0" />
+                </svg>
+              </div>
+              <span className="text-[28px] font-black text-white tracking-tight uppercase">
+                Green<span className="text-[#2fa84f]">Market</span>
+              </span>
+            </Link>
+
+            <Link
+              href="/register-penjual"
+              className="hidden sm:flex items-center gap-3 h-12 px-8 rounded-[16px] border border-white/15 bg-white/5 text-white font-bold no-underline hover:border-[#2fa84f]/60 hover:bg-[#2fa84f]/10 transition-colors"
+            >
+              <span className="text-2xl leading-none">+</span>
+              Mulai Berjualan
+            </Link>
+          </div>
+
+          <div className="flex-1 lg:ml-16">
+            <div className="h-12 border border-white/15 rounded-[14px] flex overflow-hidden bg-white/5">
+              <input
+                className="flex-1 min-w-0 px-5 text-[15px] outline-none text-white placeholder:text-slate-400 bg-transparent"
+                placeholder="Cari produk ramah lingkungan"
+                type="text"
+              />
+              <button
+                type="button"
+                className="w-20 bg-[#2fa84f] text-white flex items-center justify-center"
+                aria-label="Cari produk"
+              >
+                <svg
+                  width="22"
+                  height="22"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <circle cx="11" cy="11" r="8" />
+                  <path d="m21 21-4.3-4.3" />
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <Link
+            href="/profile"
+            className="hidden lg:flex items-center gap-3 no-underline text-right"
+          >
+            <div>
+              <p className="m-0 text-sm font-bold text-white">
+                {user.nama || "User"}
+              </p>
+              <p className="m-0 text-[11px] font-bold text-[#2fa84f] uppercase">
+                {user.role === "SELLER" ? "Seller Hub" : "Buyer"}
+              </p>
+            </div>
+            <div className="w-10 h-10 rounded-full bg-[#101a13] border-2 border-[#2fa84f] flex items-center justify-center text-white font-black uppercase">
+              {user.nama ? user.nama.charAt(0) : "U"}
+            </div>
+          </Link>
+        </div>
+      </nav>
+
+      <main className="max-w-[1500px] mx-auto px-4 sm:px-8 pt-8 relative z-10">
+        <div className="hidden lg:grid grid-cols-[56px_1.7fr_180px_180px_180px_150px] items-center bg-[#1f2a22]/90 backdrop-blur-xl rounded-[18px] shadow-[0_18px_45px_rgba(10,17,11,0.22)] border border-white/10 h-20 px-8 text-slate-300 font-semibold">
+          <input
+            checked={isAllSelected}
+            onChange={toggleSelectAll}
+            type="checkbox"
+            className="w-5 h-5 accent-[#2fa84f]"
+            aria-label="Pilih semua produk"
+          />
+          <span>Produk</span>
+          <span className="text-center">Harga Satuan</span>
+          <span className="text-center">Kuantitas</span>
+          <span className="text-center">Total Harga</span>
+          <span className="text-center">Aksi</span>
+        </div>
+
+        {keranjangItems.length === 0 ? (
+          <div className="bg-[#1f2a22]/90 backdrop-blur-xl mt-6 rounded-[24px] min-h-[420px] flex flex-col items-center justify-center text-center px-6 border border-white/10 shadow-[0_18px_45px_rgba(10,17,11,0.22)]">
+            <div className="w-24 h-24 rounded-full bg-[#2fa84f]/15 flex items-center justify-center text-[#2fa84f] mb-6 border border-[#2fa84f]/25">
               <svg
-                width="20"
-                height="20"
+                width="44"
+                height="44"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
-                strokeWidth="2.2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
+                strokeWidth="1.8"
               >
                 <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
                 <line x1="3" y1="6" x2="21" y2="6" />
                 <path d="M16 10a4 4 0 0 1-8 0" />
               </svg>
-            </Link>
-
-            <Link
-              href="/profile"
-              className="flex items-center gap-3 pl-2 group no-underline border-l border-white/10 pt-1 pb-1"
-            >
-              <div className="text-right hidden sm:block">
-                <p className="text-xs font-bold text-white m-0 group-hover:text-[#2fa84f] transition-colors">
-                  {user.nama || "User"}
-                </p>
-                <p className="text-[10px] text-[#2fa84f] m-0 font-black uppercase">
-                  {user.role === "SELLER" ? "SELLER HUB" : "BUYER"}
-                </p>
-              </div>
-              <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-[#2fa84f] to-[#1a7a35] p-[2px] shadow-lg group-hover:scale-105 transition-transform ml-2">
-                <div className="w-full h-full rounded-full bg-[#0d130e] flex items-center justify-center text-white font-bold uppercase">
-                  {user.nama ? user.nama.charAt(0) : "U"}
-                </div>
-              </div>
-            </Link>
-          </div>
-        </div>
-      </nav>
-
-      <main className="max-w-[1200px] mx-auto pt-[120px] pb-[60px] px-6 lg:px-8 relative z-10 w-full flex-1">
-        <div className="flex items-center gap-4 mb-10">
-          <div className="w-14 h-14 bg-[#1a1f1b]/80 backdrop-blur-md rounded-2xl flex items-center justify-center shadow-xl border border-[#2fa84f]/20">
-            <svg
-              width="26"
-              height="26"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="#2fa84f"
-              strokeWidth="2.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
-              <line x1="3" y1="6" x2="21" y2="6" />
-              <path d="M16 10a4 4 0 0 1-8 0" />
-            </svg>
-          </div>
-          <div>
-            <h1 className="text-[28px] lg:text-[32px] font-[800] text-white tracking-tight m-0">
-              Keranjang Saya
-            </h1>
-            <p className="text-[14px] text-gray-400 font-medium m-0 mt-1">
-              Produk pilihan yang siap kamu beli.
+            </div>
+            <h2 className="text-[24px] font-black text-white m-0">
+              Keranjangmu masih kosong
+            </h2>
+            <p className="text-slate-300 mt-2 mb-8">
+              Yuk, jelajahi produk ramah lingkungan dari GreenMarket.
             </p>
+            <Link
+              href={dashboardHref}
+              className="bg-[#2fa84f] text-white px-9 py-3 rounded-[4px] font-bold no-underline hover:bg-[#268c41] transition-colors"
+            >
+              Jelajahi Produk
+            </Link>
           </div>
-        </div>
+        ) : (
+          <div className="space-y-5 mt-5">
+            {groupedItems.map((group) => (
+              <section
+                key={group.sellerName}
+                className="bg-[#1f2a22]/92 backdrop-blur-xl rounded-[22px] border border-white/10 shadow-[0_20px_50px_rgba(10,17,11,0.25)] overflow-hidden"
+              >
+                <div className="h-[72px] px-5 sm:px-8 flex items-center gap-4 border-b border-white/10">
+                  <input
+                    checked={group.items.every((item) =>
+                      selectedItems.includes(item.id_keranjang),
+                    )}
+                    onChange={() => {
+                      const allGroupSelected = group.items.every((item) =>
+                        selectedItems.includes(item.id_keranjang),
+                      );
 
-        <div className="bg-[#1a1f1b]/60 backdrop-blur-xl rounded-[40px] border border-white/10 shadow-[0_20px_60px_rgba(0,0,0,0.5)] overflow-hidden relative">
-          <div className="absolute top-0 right-0 w-48 h-48 bg-[#2fa84f] rounded-bl-full opacity-10 blur-3xl -z-0 pointer-events-none"></div>
-
-          <div className="p-6 sm:p-10 relative z-10">
-            <div className="grid grid-cols-1 gap-6">
-              {keranjangItems.map((item) => (
-                <div
-                  key={item.id_keranjang}
-                  className="group bg-white/5 border border-white/10 rounded-[28px] p-6 flex flex-col md:flex-row items-center gap-8 hover:border-[#2fa84f]/40 hover:bg-white/10 transition-all duration-500 shadow-lg"
-                >
-                  <div className="w-full md:w-[160px] h-[160px] bg-black/30 rounded-[24px] flex items-center justify-center border border-white/5 overflow-hidden shrink-0 group-hover:scale-105 transition-transform duration-500">
+                      setSelectedItems((currentItems) =>
+                        allGroupSelected
+                          ? currentItems.filter(
+                              (idKeranjang) =>
+                                !group.items.some(
+                                  (item) => item.id_keranjang === idKeranjang,
+                                ),
+                            )
+                          : Array.from(
+                              new Set([
+                                ...currentItems,
+                                ...group.items.map((item) => item.id_keranjang),
+                              ]),
+                            ),
+                      );
+                    }}
+                    type="checkbox"
+                    className="w-5 h-5 accent-[#2fa84f]"
+                    aria-label={`Pilih semua produk dari ${group.sellerName}`}
+                  />
+                  <span className="font-bold text-white">
+                    {group.sellerName}
+                  </span>
+                  <span className="text-[#2fa84f]">
                     <svg
-                      width="48"
-                      height="48"
+                      width="20"
+                      height="20"
                       viewBox="0 0 24 24"
                       fill="none"
-                      stroke="#2fa84f"
-                      strokeWidth="1.2"
-                      className="opacity-40"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
                     >
-                      <path d="M12 2L3 7v9c0 5 9 7 9 7s9-2 9-7V7l-9-5z" />
+                      <path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z" />
                     </svg>
-                  </div>
+                  </span>
+                </div>
 
-                  <div className="flex-grow text-center md:text-left">
-                    <span className="inline-block px-3.5 py-1.5 bg-[#2fa84f]/10 text-[#2fa84f] text-[10px] font-[800] rounded-xl uppercase tracking-widest border border-[#2fa84f]/20 mb-3">
-                      🌿 {item.produk?.kategori?.nama_kategori}
-                    </span>
-                    <h3 className="font-[800] text-white text-[20px] mb-2 leading-tight group-hover:text-[#2fa84f] transition-colors m-0">
-                      {item.produk?.nama_produk}
-                    </h3>
-                    <p className="text-[#2fa84f] font-[800] text-[24px] mb-4 m-0 mt-1">
-                      Rp {item.produk?.harga?.toLocaleString("id-ID")}
-                    </p>
+                {group.items.map((item) => {
+                  const quantity = quantities[item.id_keranjang] || 1;
+                  const itemTotal = item.produk.harga * quantity;
 
-                    <div className="flex items-center justify-center md:justify-start gap-4 text-gray-400 text-[13px] font-bold">
-                      <span className="flex items-center gap-1.5">
-                        <svg
-                          width="16"
-                          height="16"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2.2"
+                  return (
+                    <div
+                      key={item.id_keranjang}
+                      className="grid grid-cols-1 lg:grid-cols-[56px_1.7fr_180px_180px_180px_150px] lg:items-center gap-5 px-5 sm:px-8 py-8 border-b border-white/10 last:border-b-0"
+                    >
+                      <div className="hidden lg:block">
+                        <input
+                          checked={selectedItems.includes(item.id_keranjang)}
+                          onChange={() => toggleItem(item.id_keranjang)}
+                          type="checkbox"
+                          className="w-5 h-5 accent-[#2fa84f]"
+                          aria-label={`Pilih ${item.produk.nama_produk}`}
+                        />
+                      </div>
+
+                      <div className="flex gap-5 min-w-0">
+                        <input
+                          checked={selectedItems.includes(item.id_keranjang)}
+                          onChange={() => toggleItem(item.id_keranjang)}
+                          type="checkbox"
+                          className="lg:hidden mt-10 w-5 h-5 accent-[#2fa84f] shrink-0"
+                          aria-label={`Pilih ${item.produk.nama_produk}`}
+                        />
+                        <img
+                          src={getProductImage(item.produk)}
+                          alt={item.produk.nama_produk}
+                          className="w-24 h-24 sm:w-28 sm:h-28 object-cover rounded-[14px] border border-white/10 bg-[#edf8e9] shrink-0"
+                        />
+                        <div className="min-w-0">
+                          <Link
+                            href={`/katalog-detail/${item.produk.id_produk}`}
+                            className="text-[16px] sm:text-[18px] font-semibold leading-snug text-white no-underline hover:text-[#2fa84f] line-clamp-2"
+                          >
+                            {item.produk.nama_produk}
+                          </Link>
+                          <p className="mt-3 mb-0 text-sm text-slate-400">
+                            {item.produk.kategori?.nama_kategori ||
+                              "Produk ramah lingkungan"}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="lg:text-center text-white font-semibold">
+                        <span className="lg:hidden text-slate-400 mr-2">
+                          Harga:
+                        </span>
+                        {formatRupiah(item.produk.harga)}
+                      </div>
+
+                      <div className="flex lg:justify-center">
+                        <div className="inline-flex h-10 border border-white/10 rounded-[8px] overflow-hidden bg-[#101a13]/70">
+                          <button
+                            type="button"
+                            onClick={() => updateQuantity(item, "min")}
+                            className="w-11 text-xl text-slate-200 hover:bg-white/10"
+                            aria-label="Kurangi kuantitas"
+                          >
+                            -
+                          </button>
+                          <span className="w-14 flex items-center justify-center border-x border-white/10 font-semibold text-white">
+                            {quantity}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => updateQuantity(item, "plus")}
+                            className="w-11 text-xl text-slate-200 hover:bg-white/10"
+                            aria-label="Tambah kuantitas"
+                          >
+                            +
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="lg:text-center text-[#2fa84f] text-[18px] font-bold">
+                        <span className="lg:hidden text-slate-400 text-base font-normal mr-2">
+                          Total:
+                        </span>
+                        {formatRupiah(itemTotal)}
+                      </div>
+
+                      <div className="flex lg:flex-col gap-3 lg:items-center">
+                        <button
+                          type="button"
+                          onClick={() => removeItem(item.produk.id_produk)}
+                          className="text-slate-200 hover:text-red-400 font-semibold"
                         >
-                          <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
-                          <circle cx="12" cy="10" r="3" />
-                        </svg>
-                        {item.produk?.seller?.username}
-                      </span>
+                          Hapus
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => buyNow(item)}
+                          className="text-[#2fa84f] hover:text-[#1d7d37] font-semibold"
+                        >
+                          Beli Sekarang
+                        </button>
+                      </div>
                     </div>
-                  </div>
-
-                  <div className="flex flex-row md:flex-col gap-3 w-full md:w-[180px] shrink-0">
-                    <Link
-                      href={`/katalog-detail/${item.produk?.id_produk}`}
-                      className="flex-1 flex items-center justify-center text-center bg-[#2fa84f] text-white font-[800] py-3.5 px-6 rounded-2xl text-[13px] hover:bg-[#268c41] shadow-[0_8px_20px_rgba(47,168,79,0.3)] transition-all hover:-translate-y-0.5 no-underline"
-                    >
-                      Beli Sekarang
-                    </Link>
-                    <button
-                      onClick={() => removeItem(item.produk.id_produk)}
-                      className="flex-1 flex items-center justify-center gap-2 text-red-400 font-[800] py-3.5 px-6 rounded-2xl border border-red-500/20 bg-red-500/10 hover:bg-red-500 hover:text-white transition-all text-[13px] cursor-pointer"
-                    >
-                      <svg
-                        width="16"
-                        height="16"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2.5"
-                      >
-                        <polyline points="3 6 5 6 21 6" />
-                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-                      </svg>
-                      Hapus
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {keranjangItems.length === 0 && (
-              <div className="text-center py-24 bg-white/5 rounded-[32px] border-2 border-dashed border-white/10 mt-2">
-                <div className="w-20 h-20 bg-[#2fa84f]/10 rounded-full flex items-center justify-center mx-auto mb-6 border border-[#2fa84f]/20 shadow-lg">
-                  <svg
-                    width="32"
-                    height="32"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="#2fa84f"
-                    strokeWidth="2"
-                  >
-                    <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
-                    <line x1="3" y1="6" x2="21" y2="6" />
-                    <path d="M16 10a4 4 0 0 1-8 0" />
-                  </svg>
-                </div>
-                <h2 className="text-[22px] font-[800] text-white mb-2 tracking-tight m-0">
-                  Keranjangmu masih kosong
-                </h2>
-                <p className="text-gray-400 mb-10 font-medium text-sm m-0 mt-1">
-                  Yuk, jelajahi ribuan produk ramah lingkungan lainnya!
-                </p>
-                <Link
-                  href={dashboardHref}
-                  className="bg-[#2fa84f] text-white px-10 py-4 rounded-2xl font-[800] shadow-[0_10px_25px_rgba(47,168,79,0.3)] hover:bg-[#268c41] transition-all hover:-translate-y-1 inline-block no-underline"
-                >
-                  Jelajahi Produk Sekarang
-                </Link>
-              </div>
-            )}
+                  );
+                })}
+              </section>
+            ))}
           </div>
-        </div>
+        )}
       </main>
 
-      <footer className="bg-[#0a110b] pt-10 pb-6 px-8 text-white relative z-10 border-t border-white/5 text-center mt-auto">
-        <div className="max-w-6xl mx-auto flex flex-col items-center">
-          <div className="flex items-center gap-2 mb-3 opacity-50 grayscale hover:grayscale-0 hover:opacity-100 transition-all cursor-pointer">
-            <div className="w-6 h-6 rounded-lg bg-white/20 flex items-center justify-center">
-              <svg
-                width="14"
-                height="14"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="white"
-                strokeWidth="2.5"
+      {keranjangItems.length > 0 && (
+        <div className="fixed bottom-0 left-0 right-0 z-50 bg-[#1f2a22]/95 backdrop-blur-xl border-t border-white/10 shadow-[0_-10px_34px_rgba(10,17,11,0.28)]">
+          <div className="max-w-[1500px] mx-auto px-4 sm:px-8 py-4 flex flex-col lg:flex-row lg:items-center gap-4">
+            <div className="flex flex-wrap items-center gap-4 sm:gap-7 text-[15px] sm:text-[17px]">
+              <label className="flex items-center gap-3 cursor-pointer">
+                <input
+                  checked={isAllSelected}
+                  onChange={toggleSelectAll}
+                  type="checkbox"
+                  className="w-5 h-5 accent-[#2fa84f]"
+                />
+                <span>Pilih Semua ({keranjangItems.length})</span>
+              </label>
+              <button
+                type="button"
+                onClick={deleteSelectedItems}
+                className="text-slate-200 hover:text-red-400"
               >
-                <path d="M12 2L3 7v9c0 5 9 7 9 7s9-2 9-7V7l-9-5z" />
-              </svg>
+                Hapus
+              </button>
+              <button type="button" className="text-[#2fa84f] font-semibold">
+                Tambahkan ke Favorit Saya
+              </button>
             </div>
-            <span className="text-sm font-black text-white tracking-tighter uppercase">
-              GreenMarket
-            </span>
+
+            <div className="lg:ml-auto flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6">
+              <div className="text-right">
+                <p className="m-0 text-[17px] font-semibold text-slate-200">
+                  Total ({selectedItems.length} produk):
+                  <span className="ml-2 text-[30px] font-black text-[#2fa84f]">
+                    {formatRupiah(selectedTotal)}
+                  </span>
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={checkoutSelected}
+                className="h-14 px-14 bg-[#2fa84f] text-white font-bold rounded-[4px] hover:bg-[#268c41] transition-colors"
+              >
+                Checkout
+              </button>
+            </div>
           </div>
-          <p className="text-white/20 text-[10px] font-bold tracking-[3px] uppercase m-0">
-            © 2026 GREENMARKET INC. All Rights Reserved.
-          </p>
         </div>
-      </footer>
+      )}
     </div>
   );
 }

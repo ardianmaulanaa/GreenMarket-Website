@@ -38,21 +38,27 @@ export default function RegisterPenjual() {
     if (savedUser) {
       try {
         const userData = JSON.parse(savedUser);
-        setUser({
-          nama: userData.username || userData.name || "User",
-          role: userData.role || storedRole || "BUYER",
+        queueMicrotask(() => {
+          setUser({
+            nama: userData.username || userData.name || "User",
+            role: userData.role || storedRole || "BUYER",
+          });
         });
       } catch (error) {
         console.error("Gagal membaca user:", error);
+        queueMicrotask(() => {
+          setUser({
+            nama: "User",
+            role: storedRole || "BUYER",
+          });
+        });
+      }
+    } else {
+      queueMicrotask(() => {
         setUser({
           nama: "User",
           role: storedRole || "BUYER",
         });
-      }
-    } else {
-      setUser({
-        nama: "User",
-        role: storedRole || "BUYER",
       });
     }
 

@@ -4,6 +4,16 @@ import { useState, ChangeEvent, FormEvent, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
+interface LoginResponse {
+  message?: string;
+  user?: {
+    id: number | string;
+    username?: string;
+    email?: string;
+    role: "ADMIN" | "SELLER" | "BUYER" | string;
+  };
+}
+
 export default function LoginPage() {
   const [form, setForm] = useState({
     email: "",
@@ -49,11 +59,11 @@ export default function LoginPage() {
         }),
       });
 
-      const data = await response.json() as any;
+      const data = (await response.json()) as LoginResponse;
 
-      if (response.ok) {
+      if (response.ok && data.user) {
         localStorage.setItem("user", JSON.stringify(data.user));
-        localStorage.setItem("userId", data.user.id);
+        localStorage.setItem("userId", String(data.user.id));
         localStorage.setItem("userRole", data.user.role); 
 
         alert("Login Berhasil! Selamat datang kembali.");
