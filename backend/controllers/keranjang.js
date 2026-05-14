@@ -1,7 +1,7 @@
 const prisma = require("../lib/prisma");
 
-// GET wishlist berdasarkan user
-const getWishlistByUser = async (req, res) => {
+// GET keranjang berdasarkan user
+const getKeranjangByUser = async (req, res) => {
   try {
     const id_user = parseInt(req.params.id_user);
 
@@ -11,7 +11,7 @@ const getWishlistByUser = async (req, res) => {
       });
     }
 
-    const wishlist = await prisma.wishlist.findMany({
+    const keranjang = await prisma.keranjang.findMany({
       where: {
         id_user: id_user,
       },
@@ -19,7 +19,6 @@ const getWishlistByUser = async (req, res) => {
         produk: {
           include: {
             kategori: true,
-            fotos: true,
             seller: {
               select: {
                 id: true,
@@ -35,18 +34,18 @@ const getWishlistByUser = async (req, res) => {
       },
     });
 
-    res.status(200).json(wishlist);
+    res.status(200).json(keranjang);
   } catch (error) {
-    console.error("Error Get Wishlist:", error);
+    console.error("Error Get Keranjang:", error);
     res.status(500).json({
-      message: "Gagal mengambil wishlist.",
+      message: "Gagal mengambil keranjang.",
       detail: error.message,
     });
   }
 };
 
-// POST tambah produk ke wishlist
-const addWishlist = async (req, res) => {
+// POST tambah produk ke keranjang
+const addKeranjang = async (req, res) => {
   try {
     const id_user = parseInt(req.params.id_user);
     const { id_produk } = req.body;
@@ -69,7 +68,7 @@ const addWishlist = async (req, res) => {
       });
     }
 
-    const existingWishlist = await prisma.wishlist.findUnique({
+    const existingKeranjang = await prisma.keranjang.findUnique({
       where: {
         id_user_id_produk: {
           id_user: id_user,
@@ -78,13 +77,13 @@ const addWishlist = async (req, res) => {
       },
     });
 
-    if (existingWishlist) {
+    if (existingKeranjang) {
       return res.status(400).json({
-        message: "Produk sudah ada di wishlist.",
+        message: "Produk sudah ada di keranjang.",
       });
     }
 
-    const wishlist = await prisma.wishlist.create({
+    const keranjang = await prisma.keranjang.create({
       data: {
         id_user: id_user,
         id_produk: id_produk,
@@ -93,27 +92,33 @@ const addWishlist = async (req, res) => {
         produk: {
           include: {
             kategori: true,
-            fotos: true,
+            seller: {
+              select: {
+                id: true,
+                username: true,
+                email: true,
+              },
+            },
           },
         },
       },
     });
 
     res.status(201).json({
-      message: "Produk berhasil ditambahkan ke wishlist.",
-      wishlist: wishlist,
+      message: "Produk berhasil ditambahkan ke keranjang.",
+      keranjang: keranjang,
     });
   } catch (error) {
-    console.error("Error Add Wishlist:", error);
+    console.error("Error Add Keranjang:", error);
     res.status(500).json({
-      message: "Gagal menambahkan wishlist.",
+      message: "Gagal menambahkan keranjang.",
       detail: error.message,
     });
   }
 };
 
-// DELETE hapus wishlist berdasarkan id produk dan id user
-const deleteWishlist = async (req, res) => {
+// DELETE hapus produk dari keranjang berdasarkan id user dan id produk
+const deleteKeranjang = async (req, res) => {
   try {
     const id_user = parseInt(req.params.id_user);
     const { id_produk } = req.params;
@@ -124,7 +129,7 @@ const deleteWishlist = async (req, res) => {
       });
     }
 
-    const existingWishlist = await prisma.wishlist.findUnique({
+    const existingKeranjang = await prisma.keranjang.findUnique({
       where: {
         id_user_id_produk: {
           id_user: id_user,
@@ -133,13 +138,13 @@ const deleteWishlist = async (req, res) => {
       },
     });
 
-    if (!existingWishlist) {
+    if (!existingKeranjang) {
       return res.status(404).json({
-        message: "Wishlist tidak ditemukan.",
+        message: "Keranjang tidak ditemukan.",
       });
     }
 
-    await prisma.wishlist.delete({
+    await prisma.keranjang.delete({
       where: {
         id_user_id_produk: {
           id_user: id_user,
@@ -149,19 +154,19 @@ const deleteWishlist = async (req, res) => {
     });
 
     res.status(200).json({
-      message: "Produk berhasil dihapus dari wishlist.",
+      message: "Produk berhasil dihapus dari keranjang.",
     });
   } catch (error) {
-    console.error("Error Delete Wishlist:", error);
+    console.error("Error Delete Keranjang:", error);
     res.status(500).json({
-      message: "Gagal menghapus wishlist.",
+      message: "Gagal menghapus keranjang.",
       detail: error.message,
     });
   }
 };
 
 module.exports = {
-  getWishlistByUser,
-  addWishlist,
-  deleteWishlist,
+  getKeranjangByUser,
+  addKeranjang,
+  deleteKeranjang,
 };

@@ -92,7 +92,7 @@ export default function AdminPanel() {
           </Link>
 
           <div className="flex items-center gap-4">
-            
+          
             <div className="flex items-center gap-3 pl-4 border-l border-white/10 group">
                <div className="text-right hidden sm:block">
                   <p className="text-xs font-bold text-white m-0">{adminName}</p>

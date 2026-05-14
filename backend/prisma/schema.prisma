@@ -13,9 +13,9 @@ model User {
   password  String
   createdAt DateTime    @default(now())
   role      Role        @default(BUYER)
-  products  Produk[]
-  wishlists Wishlist[]
   alamat    Alamat[]
+  keranjang Keranjang[]
+  products  Produk[]
   transaksi Transaksi[]
 }
 
@@ -26,114 +26,93 @@ model Kategori_Produk {
 }
 
 model Produk {
-  id_produk      String          @id @default(uuid())
-  id_user_seller Int
-  id_kategori    String
-  nama_produk    String
-  deskripsi      String
-  harga          Int
-  detail         Produk_Detail?
-  stok           Int
-  status_produk  String
-  created_at     DateTime        @default(now())
-  kategori       Kategori_Produk @relation(fields: [id_kategori], references: [id_kategori])
-  seller         User            @relation(fields: [id_user_seller], references: [id])
-  fotos          Produk_Foto[]
-  wishlists      Wishlist[]
-  transaksi      Transaksi[]
-}
-
-model Produk_Detail {
-  id_detail        String  @id @default(uuid())
-  id_produk        String  @unique
-  konten_deskripsi String  @db.Text // Tempat teks ketikan manual Anda
+  id_produk        String          @id @default(uuid())
+  id_user_seller   Int
+  id_kategori      String
+  nama_produk      String
+  deskripsi        String
+  harga            Int
+  stok             Int
+  status_produk    String
+  created_at       DateTime        @default(now())
+  foto_produk      String?
+  konten_deskripsi String?
   catatan_penjual  String?
-  produk           Produk  @relation(fields: [id_produk], references: [id_produk])
+  keranjang        Keranjang[]
+  kategori         Kategori_Produk @relation(fields: [id_kategori], references: [id_kategori])
+  seller           User            @relation(fields: [id_user_seller], references: [id])
+  transaksi        Transaksi[]
 }
 
-model Produk_Foto {
-  id_foto   String @id @default(uuid())
-  id_produk String
-  url_foto  String
-  produk    Produk @relation(fields: [id_produk], references: [id_produk], onDelete: Cascade)
-}
+model Keranjang {
+  id_keranjang String   @id(map: "Wishlist_pkey") @default(uuid())
+  id_user      Int
+  id_produk    String
+  created_at   DateTime @default(now())
+  produk       Produk   @relation(fields: [id_produk], references: [id_produk], onDelete: Cascade, map: "Wishlist_id_produk_fkey")
+  user         User     @relation(fields: [id_user], references: [id], onDelete: Cascade, map: "Wishlist_id_user_fkey")
 
-model Wishlist {
-  id_wishlist String   @id @default(uuid())
-  id_user     Int
-  id_produk   String
-  created_at  DateTime @default(now())
-  user        User     @relation(fields: [id_user], references: [id], onDelete: Cascade)
-  produk      Produk   @relation(fields: [id_produk], references: [id_produk], onDelete: Cascade)
-
-  @@unique([id_user, id_produk])
+  @@unique([id_user, id_produk], map: "Wishlist_id_user_id_produk_key")
 }
 
 model Alamat {
-  id_alamat      String @id @default(uuid())
+  id_alamat      String      @id @default(uuid())
   id_user        Int
   nama_penerima  String
   nomor_hp       String
   alamat_lengkap String
-
-  user      User        @relation(fields: [id_user], references: [id], onDelete: Cascade)
-  transaksi Transaksi[]
+  user           User        @relation(fields: [id_user], references: [id], onDelete: Cascade)
+  transaksi      Transaksi[]
 }
 
 model Jasa_Kirim {
-  id_jasa          String @id @default(uuid())
+  id_jasa          String      @id @default(uuid())
   nama_jasa        String
   harga_pengiriman Int
   estimasi_waktu   String
-
-  transaksi Transaksi[]
+  transaksi        Transaksi[]
 }
 
 model Metode_Pembayaran {
-  id_metode   String @id @default(uuid())
+  id_metode   String      @id @default(uuid())
   nama_metode String
   kode_metode String
-
-  transaksi Transaksi[]
+  transaksi   Transaksi[]
 }
 
 model Transaksi {
-  id_transaksi         String   @id @default(uuid())
+  id_transaksi         String            @id @default(uuid())
   id_user              Int
   id_produk            String
   id_alamat            String
   id_jasa_kirim        String
   id_metode_pembayaran String
-  kuantitas            Int      @default(1)
+  kuantitas            Int               @default(1)
   status_transaksi     String
-  tanggal_transaksi    DateTime @default(now())
-
-  user              User              @relation(fields: [id_user], references: [id], onDelete: Cascade)
-  produk            Produk            @relation(fields: [id_produk], references: [id_produk])
-  alamat            Alamat            @relation(fields: [id_alamat], references: [id_alamat])
-  jasa_kirim        Jasa_Kirim        @relation(fields: [id_jasa_kirim], references: [id_jasa])
-  metode_pembayaran Metode_Pembayaran @relation(fields: [id_metode_pembayaran], references: [id_metode])
-
-  pembayaran    Pembayaran?
-  tracking_logs TrackingLog[]
+  tanggal_transaksi    DateTime          @default(now())
+  pembayaran           Pembayaran?
+  tracking_logs        TrackingLog[]
+  alamat               Alamat            @relation(fields: [id_alamat], references: [id_alamat])
+  jasa_kirim           Jasa_Kirim        @relation(fields: [id_jasa_kirim], references: [id_jasa])
+  metode_pembayaran    Metode_Pembayaran @relation(fields: [id_metode_pembayaran], references: [id_metode])
+  produk               Produk            @relation(fields: [id_produk], references: [id_produk])
+  user                 User              @relation(fields: [id_user], references: [id], onDelete: Cascade)
 }
 
 model Pembayaran {
-  id_pembayaran      String   @id @default(uuid())
-  id_transaksi       String   @unique
+  id_pembayaran      String    @id @default(uuid())
+  id_transaksi       String    @unique
   status_pembayaran  String
-  tanggal_pembayaran DateTime @default(now())
-
-  transaksi Transaksi @relation(fields: [id_transaksi], references: [id_transaksi], onDelete: Cascade)
+  tanggal_pembayaran DateTime  @default(now())
+  transaksi          Transaksi @relation(fields: [id_transaksi], references: [id_transaksi], onDelete: Cascade)
 }
 
 model TrackingLog {
-  id_log       String   @id @default(uuid())
+  id_log       String    @id @default(uuid())
   id_transaksi String
   status       String
-  waktu        DateTime @default(now())
-
-  transaksi Transaksi @relation(fields: [id_transaksi], references: [id_transaksi], onDelete: Cascade)
+  waktu        DateTime  @default(now())
+  transaksi    Transaksi @relation(fields: [id_transaksi], references: [id_transaksi], onDelete: Cascade)
 }
 
 enum Role {
