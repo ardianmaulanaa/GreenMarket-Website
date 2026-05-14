@@ -4,9 +4,7 @@ const usernameRegex = /^[a-zA-Z0-9_]+$/;
 const passwordRegex =/^(?=.*[A-Z])(?=.*[a-z])(?=.*\d).{8,}$/;
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const allowedDomains = [
-  "gmail.com",
-  "yahoo.com",
-  "outlook.com"
+  "greenmarket.com"
 ];
 
 
@@ -41,7 +39,7 @@ const register = async (req, res) => {
         return res.status(400).json({ message: "Format email tidak valid" });
       }
       if (!allowedDomains.includes(emailDomain)) {
-        return res.status(400).json({ message: "Email harus menggunakan domain yang valid (gmail.com, yahoo.com, outlook.com)" });
+        return res.status(400).json({ message: "Email harus menggunakan domain yang valid" });
       }  
   
       const checkUser = await prisma.user.findUnique({ where: { email } });
