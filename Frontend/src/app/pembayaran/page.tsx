@@ -117,7 +117,7 @@ export default function PembayaranPage() {
   const fetchProduct = async () => {
     if (!produkId) {
       alert("Produk tidak ditemukan");
-      router.push("/beranda-dashboard");
+      router.push("/dashboard-buyer");
       return;
     }
 
@@ -130,7 +130,7 @@ export default function PembayaranPage() {
 
       if (!response.ok) {
         alert(data.message || "Gagal mengambil data produk");
-        router.push("/beranda-dashboard");
+        router.push("/dashboard-buyer");
         return;
       }
 
@@ -138,7 +138,7 @@ export default function PembayaranPage() {
     } catch (error) {
       console.error("Gagal mengambil produk:", error);
       alert("Terjadi kesalahan saat mengambil produk");
-      router.push("/beranda-dashboard");
+      router.push("/dashboard-buyer");
     } finally {
       setLoading(false);
     }
@@ -323,7 +323,7 @@ export default function PembayaranPage() {
       <nav className="fixed top-0 left-0 right-0 z-[100] bg-[#1a1f1b]/90 backdrop-blur-xl border-b border-white/10 shadow-lg h-[72px] px-8 flex items-center justify-between">
         <div className="flex items-center gap-8">
           <Link
-            href="/beranda-dashboard"
+            href="/dashboard-buyer"
             className="flex items-center gap-2 no-underline group"
           >
             <div className="w-[36px] h-[36px] rounded-xl bg-gradient-to-br from-[#2fa84f] to-[#1a7a35] flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform">
@@ -368,7 +368,7 @@ export default function PembayaranPage() {
 
         <div className="flex items-center gap-4">
           <Link
-            href="/wishlist"
+            href="/keranjang"
             className="w-[42px] h-[42px] rounded-xl border border-white/10 bg-white/5 flex items-center justify-center text-white/70 hover:text-[#2fa84f] transition-all"
           >
             <svg

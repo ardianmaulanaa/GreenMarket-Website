@@ -1,4 +1,37 @@
 const prisma = require("../lib/prisma");
+const supabase = require("../lib/supabase");
+
+// Upload maksimal 4 foto ke Supabase Storage bucket "produk"
+const uploadProductImages = async (files = []) => {
+  const uploadedUrls = [];
+
+  for (const file of files.slice(0, 4)) {
+    const fileExt = file.originalname.split(".").pop();
+    const fileName = `${Date.now()}-${Math.round(Math.random() * 1e9)}.${fileExt}`;
+
+    // folder di dalam bucket, boleh tetap "produk/"
+    const filePath = `produk/${fileName}`;
+
+    const { error } = await supabase.storage
+      .from("produk")
+      .upload(filePath, file.buffer, {
+        contentType: file.mimetype,
+        upsert: false,
+      });
+
+    if (error) {
+      throw new Error(`Gagal upload foto: ${error.message}`);
+    }
+
+    const { data } = supabase.storage
+      .from("produk")
+      .getPublicUrl(filePath);
+
+    uploadedUrls.push(data.publicUrl);
+  }
+
+  return uploadedUrls;
+};
 
 // 1. GET: Menampilkan produk
 const getProducts = async (req, res) => {
@@ -72,24 +105,36 @@ const getProductById = async (req, res) => {
 // 3. POST: Membuat produk baru
 const createProduct = async (req, res) => {
   try {
+    const body = req.body || {};
+
     const {
       nama_produk,
       harga,
       stok,
-      image_url,
-      foto_produk,
       id_kategori,
       id_user,
       konten_deskripsi,
       catatan_penjual,
       deskripsi,
-    } = req.body;
+    } = body;
 
     if (!nama_produk || !harga || !id_user || !id_kategori) {
       return res.status(400).json({
         message: "Data tidak lengkap.",
+        body,
       });
     }
+
+    const files = req.files || [];
+    const uploadedUrls = await uploadProductImages(files);
+
+    if (uploadedUrls.length === 0) {
+      return res.status(400).json({
+        message: "Minimal upload 1 foto produk.",
+      });
+    }
+
+    const fotoUtama = uploadedUrls[0];
 
     const newProduct = await prisma.produk.create({
       data: {
@@ -100,18 +145,13 @@ const createProduct = async (req, res) => {
         status_produk: "AKTIF",
 
         id_user_seller: Number(id_user),
-        id_kategori: id_kategori,
+        id_kategori,
 
-        foto_produk:
-          foto_produk ||
-          image_url ||
-          "https://via.placeholder.com/150",
+        foto_produk: fotoUtama,
+        foto_produk_list: uploadedUrls,
 
-        konten_deskripsi:
-          konten_deskripsi || "Belum ada detail produk.",
-
-        catatan_penjual:
-          catatan_penjual || "Belum ada catatan penjual.",
+        konten_deskripsi: konten_deskripsi || "Belum ada detail produk.",
+        catatan_penjual: catatan_penjual || "Belum ada catatan penjual.",
       },
     });
 
@@ -132,20 +172,20 @@ const createProduct = async (req, res) => {
 const updateProduct = async (req, res) => {
   try {
     const { id } = req.params;
+    const body = req.body || {};
 
     const {
       id_user,
       nama_produk,
       harga,
       stok,
-      image_url,
-      foto_produk,
       id_kategori,
       deskripsi,
       konten_deskripsi,
       catatan_penjual,
       status_produk,
-    } = req.body;
+      existing_foto_produk_list,
+    } = body;
 
     const existingProduct = await prisma.produk.findUnique({
       where: {
@@ -165,6 +205,27 @@ const updateProduct = async (req, res) => {
       });
     }
 
+    const files = req.files || [];
+    let daftarFoto = existingProduct.foto_produk_list || [];
+
+    // Kalau upload foto baru, replace semua foto lama
+    if (files.length > 0) {
+      daftarFoto = await uploadProductImages(files);
+    } else if (existing_foto_produk_list) {
+      try {
+        const parsed = JSON.parse(existing_foto_produk_list);
+
+        if (Array.isArray(parsed)) {
+          daftarFoto = parsed.slice(0, 4);
+        }
+      } catch (error) {
+        daftarFoto = existingProduct.foto_produk_list || [];
+      }
+    }
+
+    const fotoUtama =
+      daftarFoto.length > 0 ? daftarFoto[0] : existingProduct.foto_produk;
+
     const updatedProduct = await prisma.produk.update({
       where: {
         id_produk: id,
@@ -183,15 +244,11 @@ const updateProduct = async (req, res) => {
             : existingProduct.stok,
 
         deskripsi: deskripsi || existingProduct.deskripsi,
-
         status_produk: status_produk || existingProduct.status_produk,
-
         id_kategori: id_kategori || existingProduct.id_kategori,
 
-        foto_produk:
-          foto_produk ||
-          image_url ||
-          existingProduct.foto_produk,
+        foto_produk: fotoUtama,
+        foto_produk_list: daftarFoto,
 
         konten_deskripsi:
           konten_deskripsi || existingProduct.konten_deskripsi,

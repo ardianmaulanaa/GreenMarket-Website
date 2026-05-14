@@ -13,11 +13,13 @@ interface Produk {
   nama_produk: string;
   harga: number;
   stok: number;
-  image_url: string;
+  foto_produk?: string;
+  foto_produk_list?: string[];
   id_kategori: string;
   id_user?: number;
   deskripsi: string;
   konten_deskripsi: string;
+  catatan_penjual?: string;
 }
 
 export default function PanelPenjual() {
@@ -28,7 +30,6 @@ export default function PanelPenjual() {
   const [showModal, setShowModal] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Produk | null>(null);
 
-  // State untuk foto
   const [imageFiles, setImageFiles] = useState<File[]>([]);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
 
@@ -39,10 +40,12 @@ export default function PanelPenjual() {
     nama_produk: "",
     harga: 0,
     stok: 0,
-    image_url: "",
+    foto_produk: "",
+    foto_produk_list: [],
     id_kategori: "",
     deskripsi: "Produk ramah lingkungan.",
     konten_deskripsi: "",
+    catatan_penjual: "",
   });
 
   useEffect(() => {
@@ -73,7 +76,10 @@ export default function PanelPenjual() {
 
       const mappedProducts = prodData.map((p: any) => ({
         ...p,
-        konten_deskripsi: p.detail?.konten_deskripsi || "",
+        konten_deskripsi: p.konten_deskripsi || "",
+        catatan_penjual: p.catatan_penjual || "",
+        foto_produk: p.foto_produk || "",
+        foto_produk_list: p.foto_produk_list || [],
       }));
 
       setProducts(Array.isArray(mappedProducts) ? mappedProducts : []);
@@ -87,8 +93,6 @@ export default function PanelPenjual() {
       setLoading(false);
     }
   };
-
-  // ─── Foto Handlers ─────────────────────────────────────────────────────────
 
   const addFiles = (files: File[]) => {
     const remaining = 4 - imagePreviews.length;
@@ -119,14 +123,22 @@ export default function PanelPenjual() {
     setImageFiles((prev) => prev.filter((_, i) => i !== idx));
   };
 
-  // ─── Modal ─────────────────────────────────────────────────────────────────
-
   const handleOpenModal = (product: Produk | null = null) => {
     if (product) {
       setEditingProduct(product);
-      setFormData({ ...product, konten_deskripsi: product.konten_deskripsi || "" });
-      // Preload existing image as preview (URL string, bukan File)
-      setImagePreviews(product.image_url ? [product.image_url] : []);
+      setFormData({
+        ...product,
+        konten_deskripsi: product.konten_deskripsi || "",
+        catatan_penjual: product.catatan_penjual || "",
+        foto_produk_list: product.foto_produk_list || [],
+      });
+      setImagePreviews(
+        product.foto_produk_list && product.foto_produk_list.length > 0
+          ? product.foto_produk_list
+          : product.foto_produk
+            ? [product.foto_produk]
+            : []
+      );
       setImageFiles([]);
     } else {
       setEditingProduct(null);
@@ -134,18 +146,18 @@ export default function PanelPenjual() {
         nama_produk: "",
         harga: 0,
         stok: 0,
-        image_url: "",
+        foto_produk: "",
+        foto_produk_list: [],
         id_kategori: categories[0]?.id_kategori || "",
         deskripsi: "Produk ramah lingkungan.",
         konten_deskripsi: "",
+        catatan_penjual: "",
       });
       setImagePreviews([]);
       setImageFiles([]);
     }
     setShowModal(true);
   };
-
-  // ─── Submit ─────────────────────────────────────────────────────────────────
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -158,7 +170,9 @@ export default function PanelPenjual() {
       return;
     }
 
-    if (imageFiles.length === 0 && !editingProduct?.image_url) {
+    const existingFotoList = editingProduct?.foto_produk_list || [];
+
+    if (imageFiles.length === 0 && existingFotoList.length === 0 && !editingProduct?.foto_produk) {
       alert("Harap upload minimal 1 foto produk.");
       setIsSubmitting(false);
       return;
@@ -170,7 +184,6 @@ export default function PanelPenjual() {
 
     const method = editingProduct ? "PUT" : "POST";
 
-    // Kirim sebagai FormData agar bisa bawa file
     const payload = new FormData();
     payload.append("nama_produk", formData.nama_produk);
     payload.append("harga", String(Number(formData.harga)));
@@ -178,23 +191,28 @@ export default function PanelPenjual() {
     payload.append("id_kategori", formData.id_kategori);
     payload.append("deskripsi", formData.deskripsi);
     payload.append("konten_deskripsi", formData.konten_deskripsi);
+    payload.append("catatan_penjual", formData.catatan_penjual || "");
     payload.append("id_user", storedUserId);
 
-    // Lampirkan semua file foto baru
-    imageFiles.forEach((file, i) => {
-      payload.append(`foto_${i}`, file);
+    imageFiles.forEach((file) => {
+      payload.append("foto_produk_list", file);
     });
 
-    // Kalau edit dan tidak ada file baru, kirim URL lama
-    if (editingProduct && imageFiles.length === 0 && editingProduct.image_url) {
-      payload.append("existing_image_url", editingProduct.image_url);
+    if (editingProduct && imageFiles.length === 0) {
+      const existingList =
+        editingProduct.foto_produk_list && editingProduct.foto_produk_list.length > 0
+          ? editingProduct.foto_produk_list
+          : editingProduct.foto_produk
+            ? [editingProduct.foto_produk]
+            : [];
+
+      payload.append("existing_foto_produk_list", JSON.stringify(existingList));
     }
 
     try {
       const response = await fetch(url, {
         method,
         body: payload,
-        // Jangan set Content-Type — biarkan browser set boundary multipart/form-data
       });
 
       if (response.ok) {
@@ -212,8 +230,6 @@ export default function PanelPenjual() {
       setIsSubmitting(false);
     }
   };
-
-  // ─── Delete ─────────────────────────────────────────────────────────────────
 
   const handleDelete = async (id: string) => {
     const storedUserId = localStorage.getItem("userId");
@@ -237,16 +253,13 @@ export default function PanelPenjual() {
     }
   };
 
-  // ─── Render ─────────────────────────────────────────────────────────────────
-
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-[#f1f8e9] via-[#2fa84f]/15 to-[#0a110b] font-sans text-[#1a2e1f] relative overflow-hidden">
       <div className="absolute top-[-10%] right-[-5%] w-[600px] h-[600px] bg-[#2fa84f] opacity-10 blur-[150px] rounded-full pointer-events-none"></div>
 
-      {/* Navbar */}
       <nav className="fixed top-0 left-0 right-0 z-[100] bg-[#1a1f1b]/85 backdrop-blur-xl border-b border-white/5 h-[72px]">
         <div className="max-w-[1600px] mx-auto h-full px-6 flex items-center justify-between">
-          <Link href="/beranda-dashboard" className="flex items-center gap-2.5 group no-underline">
+          <Link href="/dashboard-seller" className="flex items-center gap-2.5 group no-underline">
             <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#2fa84f] to-[#1a7a35] flex items-center justify-center shadow-[0_0_20px_rgba(47,168,79,0.3)]">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5">
                 <path d="M12 2L3 7v9c0 5 9 7 9 7s9-2 9-7V7l-9-5z" />
@@ -257,7 +270,7 @@ export default function PanelPenjual() {
             </span>
           </Link>
           <Link
-            href="/beranda-dashboard"
+            href="/dashboard-seller"
             className="px-4 py-2 rounded-lg bg-white/5 text-gray-300 text-sm font-bold no-underline border border-transparent hover:border-white/10"
           >
             Kembali
@@ -265,7 +278,6 @@ export default function PanelPenjual() {
         </div>
       </nav>
 
-      {/* Main */}
       <main className="max-w-[1600px] mx-auto pt-28 pb-20 px-6 flex-1 w-full relative z-10">
         <div className="flex flex-col md:flex-row md:items-end justify-between mb-10 gap-6">
           <div>
@@ -282,7 +294,6 @@ export default function PanelPenjual() {
           </button>
         </div>
 
-        {/* Tabel Produk */}
         <div className="bg-[#1a1f1b]/60 backdrop-blur-md rounded-[32px] border border-white/10 overflow-hidden shadow-2xl">
           <table className="w-full text-left border-collapse min-w-[800px]">
             <thead className="bg-white/5 border-b border-white/10 text-gray-400 text-[10px] uppercase font-[900] tracking-[2px]">
@@ -312,8 +323,12 @@ export default function PanelPenjual() {
                     <td className="p-6">
                       <div className="flex items-center gap-4">
                         <img
-                          src={p.image_url}
-                          alt=""
+                          src={
+                            p.foto_produk ||
+                            p.foto_produk_list?.[0] ||
+                            "https://placehold.co/300x300/1a1f1b/2fa84f?text=No+Image"
+                          }
+                          alt={p.nama_produk}
                           className="w-12 h-12 rounded-xl object-cover"
                         />
                         <div>
@@ -350,7 +365,6 @@ export default function PanelPenjual() {
         </div>
       </main>
 
-      {/* ─── MODAL ─────────────────────────────────────────────────────────── */}
       {showModal && (
         <div className="fixed inset-0 z-[250] flex items-center justify-center p-6 bg-black/80 backdrop-blur-sm">
           <div className="bg-[#1a1f1b] w-full max-w-2xl rounded-[40px] p-8 border border-white/10 shadow-2xl max-h-[90vh] overflow-y-auto">
@@ -359,7 +373,6 @@ export default function PanelPenjual() {
             </h2>
 
             <form onSubmit={handleSubmit} className="space-y-4">
-              {/* Nama & Kategori Label */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="text-[10px] text-gray-400 uppercase font-bold block mb-1">
@@ -389,7 +402,6 @@ export default function PanelPenjual() {
                 </div>
               </div>
 
-              {/* Harga & Stok */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="text-[10px] text-gray-400 uppercase font-bold block mb-1">
@@ -427,7 +439,6 @@ export default function PanelPenjual() {
                 </div>
               </div>
 
-              {/* ID Kategori Database */}
               <div>
                 <label className="text-[10px] text-gray-400 uppercase font-bold block mb-1">
                   ID Kategori (Database)
@@ -445,7 +456,6 @@ export default function PanelPenjual() {
                 </select>
               </div>
 
-              {/* Deskripsi */}
               <div>
                 <label className="text-[10px] text-gray-400 uppercase font-bold block mb-1">
                   Deskripsi Manual
@@ -462,7 +472,6 @@ export default function PanelPenjual() {
                 />
               </div>
 
-              {/* ─── FOTO PRODUK ─────────────────────────────────────────── */}
               <div>
                 <label className="text-[10px] text-gray-400 uppercase font-bold block mb-1">
                   Foto Produk{" "}
@@ -471,7 +480,6 @@ export default function PanelPenjual() {
                   </span>
                 </label>
 
-                {/* Upload zone — tampil hanya saat belum ada foto */}
                 {imagePreviews.length === 0 && (
                   <label className="flex flex-col items-center justify-center w-full h-36 border-2 border-dashed border-white/20 rounded-2xl cursor-pointer hover:border-[#2fa84f]/50 transition-colors bg-white/[0.02]">
                     <svg
@@ -504,10 +512,8 @@ export default function PanelPenjual() {
                   </label>
                 )}
 
-                {/* Grid preview foto + slot kosong */}
                 {imagePreviews.length > 0 && (
                   <div className="grid grid-cols-4 gap-3">
-                    {/* Foto yang sudah dipilih */}
                     {imagePreviews.map((url, i) => (
                       <div
                         key={`photo-${i}`}
@@ -518,12 +524,10 @@ export default function PanelPenjual() {
                           alt={`foto ${i + 1}`}
                           className="w-full h-full object-cover"
                         />
-                        {/* Badge nomor foto */}
                         <span className="absolute bottom-1.5 left-1.5 bg-black/60 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-md">
                           {i + 1}
                           {i === 0 ? " · Utama" : ""}
                         </span>
-                        {/* Tombol hapus */}
                         <button
                           type="button"
                           onClick={() => removePhoto(i)}
@@ -535,7 +539,6 @@ export default function PanelPenjual() {
                       </div>
                     ))}
 
-                    {/* Slot kosong yang bisa diklik untuk tambah foto */}
                     {Array.from({ length: 4 - imagePreviews.length }).map((_, i) => (
                       <label
                         key={`slot-${i}`}
@@ -558,7 +561,6 @@ export default function PanelPenjual() {
                   </div>
                 )}
 
-                {/* Counter & info */}
                 <div className="flex items-center justify-between mt-2">
                   <span className="text-[11px] text-gray-500">
                     {imagePreviews.length} dari 4 foto dipilih
@@ -575,7 +577,6 @@ export default function PanelPenjual() {
                   )}
                 </div>
 
-                {/* Hidden input utama (untuk trigger dari tombol "Tambah foto") */}
                 <input
                   ref={fileInputRef}
                   type="file"
@@ -585,9 +586,7 @@ export default function PanelPenjual() {
                   onChange={handleFileChange}
                 />
               </div>
-              {/* ─────────────────────────────────────────────────────────── */}
 
-              {/* Tombol aksi */}
               <div className="flex gap-4 pt-4">
                 <button
                   type="button"

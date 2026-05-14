@@ -171,7 +171,7 @@ export default function PesananPage() {
       {/* ── NAVBAR ── */}
       <nav className="fixed top-0 left-0 right-0 z-[100] bg-[#1a1f1b]/90 backdrop-blur-xl border-b border-white/10 shadow-lg h-[72px] px-8 flex items-center justify-between">
         <div className="flex items-center gap-8">
-          <Link href="/beranda-dashboard" className="flex items-center gap-2 no-underline group">
+          <Link href={isSeller ? "/dashboard-seller" : "/dashboard-buyer"} className="flex items-center gap-2 no-underline group">
             <div className="w-[36px] h-[36px] rounded-xl bg-gradient-to-br from-[#2fa84f] to-[#1a7a35] flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5"><path d="M12 2L3 7v9c0 5 9 7 9 7s9-2 9-7V7l-9-5z"/></svg>
             </div>
@@ -196,7 +196,7 @@ export default function PesananPage() {
         </div>
 
         <div className="flex items-center gap-4">
-          <Link href="/beranda-dashboard" className="text-gray-400 hover:text-white text-xs font-bold transition-colors bg-transparent border-none cursor-pointer mr-2 no-underline flex items-center gap-1">
+          <Link href={isSeller ? "/dashboard-seller" : "/dashboard-buyer"} className="text-gray-400 hover:text-white text-xs font-bold transition-colors bg-transparent border-none cursor-pointer mr-2 no-underline flex items-center gap-1">
              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
              Kembali
           </Link>

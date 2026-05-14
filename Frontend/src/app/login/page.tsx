@@ -60,8 +60,10 @@ export default function LoginPage() {
         
         if (data.user.role === "ADMIN") {
           router.push("/admin-panel");
-        } else {
-          router.push("/beranda-dashboard");
+        } else if (data.user.role === "SELLER") {
+          router.push("/dashboard-seller");
+        } else if (data.user.role === "BUYER") {
+          router.push("/dashboard-buyer");
         } 
       } else {
         alert(data.message || "Login Gagal");

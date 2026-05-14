@@ -38,6 +38,7 @@ model Produk {
   foto_produk      String?
   konten_deskripsi String?
   catatan_penjual  String?
+  foto_produk_list String[]        @default([])
   keranjang        Keranjang[]
   kategori         Kategori_Produk @relation(fields: [id_kategori], references: [id_kategori])
   seller           User            @relation(fields: [id_user_seller], references: [id])
@@ -45,13 +46,14 @@ model Produk {
 }
 
 model Keranjang {
-  id_keranjang String   @id(map: "Wishlist_pkey") @default(uuid())
+  id_keranjang String   @id @default(uuid())
   id_user      Int
   id_produk    String
   created_at   DateTime @default(now())
-  produk       Produk   @relation(fields: [id_produk], references: [id_produk], onDelete: Cascade, map: "Wishlist_id_produk_fkey")
-  user         User     @relation(fields: [id_user], references: [id], onDelete: Cascade, map: "Wishlist_id_user_fkey")
+  produk       Produk   @relation(fields: [id_produk], references: [id_produk], onDelete: Cascade)
+  user         User     @relation(fields: [id_user], references: [id], onDelete: Cascade)
 
+  @@unique([id_user, id_produk])
   @@unique([id_user, id_produk], map: "Wishlist_id_user_id_produk_key")
 }
 

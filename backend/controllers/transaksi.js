@@ -1,4 +1,5 @@
 const prisma = require("../lib/prisma");
+
 const createTransaksi = async (req, res) => {
   try {
     const {
@@ -67,7 +68,6 @@ const createTransaksi = async (req, res) => {
         user: true,
         produk: {
           include: {
-            fotos: true,
             seller: {
               select: {
                 username: true,
@@ -107,11 +107,12 @@ const getTransaksiByUser = async (req, res) => {
     const id_user = parseInt(req.params.id_user);
 
     const transaksi = await prisma.transaksi.findMany({
-      where: { id_user },
+      where: {
+        id_user,
+      },
       include: {
         produk: {
           include: {
-            fotos: true,
             seller: {
               select: {
                 username: true,
