@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 
-const { getMetodePembayaran } = require("../controllers/metodePembayaran");
+const { getMetodePembayaran } = require("../controllers/metodepembayaran");
 
 router.get("/", getMetodePembayaran);
 

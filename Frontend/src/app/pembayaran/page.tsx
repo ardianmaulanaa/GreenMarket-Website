@@ -295,7 +295,7 @@ function PembayaranContent() {
       localStorage.setItem("paymentData", JSON.stringify(paymentData));
 
       alert(data.message || "Transaksi berhasil dibuat");
-      router.push("/profile");
+      router.push("/pesanan");
     } catch (error) {
       console.error("Gagal membuat transaksi:", error);
       alert("Terjadi kesalahan saat membuat transaksi");
@@ -430,6 +430,29 @@ function PembayaranContent() {
 
       {/* CONTENT */}
       <main className="max-w-[1280px] mx-auto pt-[110px] px-6 pb-16 relative z-10">
+        {/* BREADCRUMB */}
+        <div className="mb-6 flex items-center gap-2 text-[11px] font-bold tracking-[2px] uppercase">
+          <Link
+            href="/dashboard-buyer"
+            className="text-[#31405f] hover:text-[#2fa84f] transition-colors no-underline"
+          >
+            GreenMarket
+          </Link>
+
+          <span className="text-[#31405f]">/</span>
+
+          <Link
+            href={`/katalog-detail/${product.id_produk}`}
+            className="text-[#31405f] hover:text-[#2fa84f] transition-colors no-underline"
+          >
+            {product.nama_produk}
+          </Link>
+
+          <span className="text-[#31405f]">/</span>
+
+          <span className="text-[#009b36]">Pembayaran</span>
+        </div>
+
         <div className="grid grid-cols-1 lg:grid-cols-[1.6fr_0.7fr] gap-6">
           {/* LEFT */}
           <div className="bg-[#f7f7f7] rounded-[28px] shadow-lg p-6 lg:p-8">
