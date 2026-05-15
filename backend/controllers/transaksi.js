@@ -1,4 +1,5 @@
 const prisma = require("../lib/prisma");
+const snap = require("../config/midtrans");
 
 const createTransaksi = async (req, res) => {
   try {
@@ -138,6 +139,7 @@ const createTransaksi = async (req, res) => {
           },
         },
         include: {
+          user: true,
           produk: {
             include: {
               seller: {
@@ -161,23 +163,61 @@ const createTransaksi = async (req, res) => {
         },
       });
 
-      await tx.produk.update({
-        where: {
-          id_produk,
-        },
-        data: {
-          stok: {
-            decrement: jumlahBeli,
+      if (metode.kode_metode === "CASH") {
+        await tx.produk.update({
+          where: {
+            id_produk,
           },
-        },
-      });
+          data: {
+            stok: {
+              decrement: jumlahBeli,
+            },
+          },
+        });
+      }
 
       return transaksiBaru;
     });
 
+    let midtransToken = null;
+
+    if (metode.kode_metode === "QRIS") {
+      const totalProduk = transaksi.produk.harga * transaksi.kuantitas;
+      const totalPengiriman = transaksi.jasa_kirim.harga_pengiriman;
+      const totalBayar = totalProduk + totalPengiriman;
+
+      const parameter = {
+        transaction_details: {
+          order_id: transaksi.id_transaksi,
+          gross_amount: totalBayar,
+        },
+        customer_details: {
+          first_name: transaksi.user.username,
+          email: transaksi.user.email,
+        },
+        item_details: [
+          {
+            id: transaksi.produk.id_produk,
+            price: transaksi.produk.harga,
+            quantity: transaksi.kuantitas,
+            name: transaksi.produk.nama_produk,
+          },
+          {
+            id: transaksi.jasa_kirim.id_jasa,
+            price: transaksi.jasa_kirim.harga_pengiriman,
+            quantity: 1,
+            name: transaksi.jasa_kirim.nama_jasa,
+          },
+        ],
+      };
+
+      midtransToken = await snap.createTransactionToken(parameter);
+    }
+
     res.status(201).json({
       message: "Transaksi berhasil dibuat",
       transaksi,
+      midtransToken,
     });
   } catch (error) {
     console.error("Error Create Transaksi:", error);

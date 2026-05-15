@@ -3,6 +3,7 @@
 import React, { Suspense, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
+import Script from "next/script";
 
 interface Produk {
   id_produk: string;
@@ -38,6 +39,12 @@ interface Address {
   alamat_lengkap: string;
 }
 
+declare global {
+  interface Window {
+    snap: any;
+  }
+}
+
 function PembayaranContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -60,6 +67,8 @@ function PembayaranContent() {
   const [tempSelectedShipping, setTempSelectedShipping] = useState("");
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState({ nama: "User", role: "BUYER" });
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
   const fetchMetodePembayaran = async () => {
     try {
@@ -269,7 +278,7 @@ function PembayaranContent() {
       const data = await response.json();
 
       if (!response.ok) {
-        alert(data.message || "Gagal membuat transaksi");
+        setErrorMessage(data.message || "Gagal membuat transaksi");
         return;
       }
 
@@ -294,11 +303,38 @@ function PembayaranContent() {
 
       localStorage.setItem("paymentData", JSON.stringify(paymentData));
 
-      alert(data.message || "Transaksi berhasil dibuat");
-      router.push("/pesanan");
+      // Kalau backend mengirim token Midtrans, buka popup pembayaran
+      if (data.midtransToken) {
+        if (!window.snap) {
+          setErrorMessage("Midtrans belum siap. Coba klik bayar lagi.");
+          return;
+        }
+
+        window.snap.pay(data.midtransToken, {
+          onSuccess: function () {
+            setShowSuccessModal(true);
+          },
+          onPending: function () {
+            setErrorMessage(
+              "Pembayaran masih menunggu. Silakan selesaikan pembayaran.",
+            );
+          },
+          onError: function () {
+            setErrorMessage("Pembayaran gagal. Silakan coba lagi.");
+          },
+          onClose: function () {
+            setErrorMessage("Kamu menutup pembayaran sebelum selesai.");
+          },
+        });
+
+        return;
+      }
+
+      // Kalau tidak ada token, berarti metode bukan QRIS
+      setShowSuccessModal(true);
     } catch (error) {
       console.error("Gagal membuat transaksi:", error);
-      alert("Terjadi kesalahan saat membuat transaksi");
+      setErrorMessage("Terjadi kesalahan saat membuat transaksi");
     }
   };
 
@@ -330,459 +366,521 @@ function PembayaranContent() {
   }
 
   return (
-    <div className="min-h-screen bg-[#edf3e7] relative overflow-hidden font-sans">
-      {/* NAVBAR */}
-      <nav className="fixed top-0 left-0 right-0 z-[100] bg-[#1a1f1b]/90 backdrop-blur-xl border-b border-white/10 shadow-lg h-[72px] px-8 flex items-center justify-between">
-        <div className="flex items-center gap-8">
-          <Link
-            href="/dashboard-buyer"
-            className="flex items-center gap-2 no-underline group"
-          >
-            <div className="w-[36px] h-[36px] rounded-xl bg-gradient-to-br from-[#2fa84f] to-[#1a7a35] flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform">
+    <>
+      <Script
+        src="https://app.sandbox.midtrans.com/snap/snap.js"
+        data-client-key={process.env.NEXT_PUBLIC_MIDTRANS_CLIENT_KEY}
+        strategy="afterInteractive"
+      />
+      <div className="min-h-screen bg-[#edf3e7] relative overflow-hidden font-sans">
+        {/* NAVBAR */}
+        <nav className="fixed top-0 left-0 right-0 z-[100] bg-[#1a1f1b]/90 backdrop-blur-xl border-b border-white/10 shadow-lg h-[72px] px-8 flex items-center justify-between">
+          <div className="flex items-center gap-8">
+            <Link
+              href="/dashboard-buyer"
+              className="flex items-center gap-2 no-underline group"
+            >
+              <div className="w-[36px] h-[36px] rounded-xl bg-gradient-to-br from-[#2fa84f] to-[#1a7a35] flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform">
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="white"
+                  strokeWidth="2.5"
+                >
+                  <path d="M12 2L3 7v9c0 5 9 7 9 7s9-2 9-7V7l-9-5z" />
+                </svg>
+              </div>
+              <span className="text-xl font-black text-white tracking-tight uppercase">
+                Green<span className="text-[#2fa84f]">Market</span>
+              </span>
+            </Link>
+
+            <div className="hidden lg:flex items-center gap-4">
+              {user.role === "SELLER" && (
+                <Link
+                  href="/panel-penjual"
+                  className="bg-[#2fa84f] text-white px-5 py-2.5 rounded-xl text-xs font-bold no-underline hover:bg-[#268c41] transition-all shadow-[0_4px_12px_rgba(47,168,79,0.3)] flex items-center gap-2"
+                >
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="3"
+                  >
+                    <line x1="12" y1="5" x2="12" y2="19" />
+                    <line x1="5" y1="12" x2="19" y2="12" />
+                  </svg>
+                  Panel Inventaris
+                </Link>
+              )}
+            </div>
+          </div>
+
+          <div className="flex items-center gap-4">
+            <Link
+              href="/keranjang"
+              className="w-[42px] h-[42px] rounded-xl border border-white/10 bg-white/5 flex items-center justify-center text-white/70 hover:text-[#2fa84f] transition-all"
+            >
               <svg
                 width="20"
                 height="20"
                 viewBox="0 0 24 24"
                 fill="none"
-                stroke="white"
-                strokeWidth="2.5"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+                strokeLinejoin="round"
               >
-                <path d="M12 2L3 7v9c0 5 9 7 9 7s9-2 9-7V7l-9-5z" />
+                <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" />
+                <line x1="3" y1="6" x2="21" y2="6" />
+                <path d="M16 10a4 4 0 01-8 0" />
               </svg>
-            </div>
-            <span className="text-xl font-black text-white tracking-tight uppercase">
-              Green<span className="text-[#2fa84f]">Market</span>
-            </span>
-          </Link>
+            </Link>
 
-          <div className="hidden lg:flex items-center gap-4">
-            {user.role === "SELLER" && (
-              <Link
-                href="/panel-penjual"
-                className="bg-[#2fa84f] text-white px-5 py-2.5 rounded-xl text-xs font-bold no-underline hover:bg-[#268c41] transition-all shadow-[0_4px_12px_rgba(47,168,79,0.3)] flex items-center gap-2"
-              >
-                <svg
-                  width="14"
-                  height="14"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="3"
-                >
-                  <line x1="12" y1="5" x2="12" y2="19" />
-                  <line x1="5" y1="12" x2="19" y2="12" />
-                </svg>
-                Panel Inventaris
-              </Link>
-            )}
-          </div>
-        </div>
-
-        <div className="flex items-center gap-4">
-          <Link
-            href="/keranjang"
-            className="w-[42px] h-[42px] rounded-xl border border-white/10 bg-white/5 flex items-center justify-center text-white/70 hover:text-[#2fa84f] transition-all"
-          >
-            <svg
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.8"
-              strokeLinecap="round"
-              strokeLinejoin="round"
+            <button
+              onClick={handleLogout}
+              className="text-gray-400 hover:text-red-500 text-xs font-bold uppercase transition-colors bg-transparent border-none cursor-pointer mx-2"
             >
-              <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" />
-              <line x1="3" y1="6" x2="21" y2="6" />
-              <path d="M16 10a4 4 0 01-8 0" />
-            </svg>
-          </Link>
+              Logout
+            </button>
 
-          <button
-            onClick={handleLogout}
-            className="text-gray-400 hover:text-red-500 text-xs font-bold uppercase transition-colors bg-transparent border-none cursor-pointer mx-2"
-          >
-            Logout
-          </button>
-
-          <Link
-            href="/profile"
-            className="flex items-center gap-3 group no-underline border-l border-white/10 pl-4"
-          >
-            <div className="text-right hidden sm:block">
-              <p className="text-xs font-bold text-white m-0 group-hover:text-[#2fa84f] transition-colors">
-                {user.nama || "User"}
-              </p>
-              <p className="text-[10px] text-[#2fa84f] m-0 font-black uppercase">
-                {user.role === "SELLER" ? "Seller Hub" : "Buyer"}
-              </p>
-            </div>
-
-            <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-[#2fa84f] to-[#1a7a35] p-[2px]">
-              <div className="w-full h-full rounded-full bg-[#0a110b] flex items-center justify-center text-white font-bold uppercase">
-                {user.nama ? user.nama.charAt(0) : "U"}
-              </div>
-            </div>
-          </Link>
-        </div>
-      </nav>
-
-      {/* CONTENT */}
-      <main className="max-w-[1280px] mx-auto pt-[110px] px-6 pb-16 relative z-10">
-        {/* BREADCRUMB */}
-        <div className="mb-6 flex items-center gap-2 text-[11px] font-bold tracking-[2px] uppercase">
-          <Link
-            href="/dashboard-buyer"
-            className="text-[#31405f] hover:text-[#2fa84f] transition-colors no-underline"
-          >
-            GreenMarket
-          </Link>
-
-          <span className="text-[#31405f]">/</span>
-
-          <Link
-            href={`/katalog-detail/${product.id_produk}`}
-            className="text-[#31405f] hover:text-[#2fa84f] transition-colors no-underline"
-          >
-            {product.nama_produk}
-          </Link>
-
-          <span className="text-[#31405f]">/</span>
-
-          <span className="text-[#009b36]">Pembayaran</span>
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-[1.6fr_0.7fr] gap-6">
-          {/* LEFT */}
-          <div className="bg-[#f7f7f7] rounded-[28px] shadow-lg p-6 lg:p-8">
-            {/* PRODUK */}
-            <div className="flex items-start justify-between gap-6 pb-7 border-b border-gray-200">
-              <div className="flex items-start gap-6">
-                <img
-                  src={productImage}
-                  alt={product.nama_produk}
-                  className="w-[120px] h-[120px] rounded-[20px] object-cover border border-gray-200 shrink-0"
-                />
-
-                <div>
-                  <p className="text-[13px] text-gray-500 font-semibold mb-1">
-                    {product.seller?.username || "GreenMarket Store"}
-                  </p>
-
-                  <h2 className="text-[30px] font-black text-[#1f1f1f] leading-tight mb-2">
-                    {product.nama_produk}
-                  </h2>
-
-                  <p className="text-[20px] font-black text-[#111]">
-                    Rp {product.harga.toLocaleString("id-ID")}
-                  </p>
-                </div>
+            <Link
+              href="/profile"
+              className="flex items-center gap-3 group no-underline border-l border-white/10 pl-4"
+            >
+              <div className="text-right hidden sm:block">
+                <p className="text-xs font-bold text-white m-0 group-hover:text-[#2fa84f] transition-colors">
+                  {user.nama || "User"}
+                </p>
+                <p className="text-[10px] text-[#2fa84f] m-0 font-black uppercase">
+                  {user.role === "SELLER" ? "Seller Hub" : "Buyer"}
+                </p>
               </div>
 
-              <div className="flex flex-col items-end gap-3 shrink-0 mt-4">
-                <div className="border border-gray-300 rounded-xl flex items-center overflow-hidden bg-white">
-                  <button
-                    type="button"
-                    onClick={() => handleQuantity("min")}
-                    className="px-6 py-3 text-red-500 font-bold text-lg"
-                  >
-                    -
-                  </button>
-
-                  <span className="px-7 py-3 text-sm font-bold text-[#1f1f1f]">
-                    {quantity}
-                  </span>
-
-                  <button
-                    type="button"
-                    onClick={() => handleQuantity("plus")}
-                    className="px-6 py-3 text-[#2fa84f] font-bold text-lg"
-                  >
-                    +
-                  </button>
+              <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-[#2fa84f] to-[#1a7a35] p-[2px]">
+                <div className="w-full h-full rounded-full bg-[#0a110b] flex items-center justify-center text-white font-bold uppercase">
+                  {user.nama ? user.nama.charAt(0) : "U"}
                 </div>
-
-                <span className="text-sm text-gray-500">
-                  Stok tersedia: {product.stok}
-                </span>
               </div>
-            </div>
+            </Link>
+          </div>
+        </nav>
 
-            {/* ALAMAT PENGIRIMAN */}
-            <div className="pt-4 pb-3 border-b border-gray-200">
-              <h3 className="text-[18px] font-black text-[#1f1f1f] mb-4">
-                Alamat Pengiriman
-              </h3>
+        {/* CONTENT */}
+        <main className="max-w-[1280px] mx-auto pt-[110px] px-6 pb-16 relative z-10">
+          {/* BREADCRUMB */}
+          <div className="mb-6 flex items-center gap-2 text-[11px] font-bold tracking-[2px] uppercase">
+            <Link
+              href="/dashboard-buyer"
+              className="text-[#31405f] hover:text-[#2fa84f] transition-colors no-underline"
+            >
+              GreenMarket
+            </Link>
 
-              {addresses.length === 0 ? (
-                <div className="bg-red-50 border border-red-200 rounded-[16px] p-4">
-                  <p className="text-sm text-red-500 font-bold mb-3">
-                    Belum ada alamat tersimpan.
-                  </p>
+            <span className="text-[#31405f]">/</span>
 
-                  <button
-                    type="button"
-                    onClick={() => router.push("/alamat")}
-                    className="bg-[#2fa84f] text-white px-4 py-2 rounded-xl font-bold text-sm"
-                  >
-                    Tambah Alamat
-                  </button>
+            <Link
+              href={`/katalog-detail/${product.id_produk}`}
+              className="text-[#31405f] hover:text-[#2fa84f] transition-colors no-underline"
+            >
+              {product.nama_produk}
+            </Link>
+
+            <span className="text-[#31405f]">/</span>
+
+            <span className="text-[#009b36]">Pembayaran</span>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-[1.6fr_0.7fr] gap-6">
+            {/* LEFT */}
+            <div className="bg-[#f7f7f7] rounded-[28px] shadow-lg p-6 lg:p-8">
+              {/* PRODUK */}
+              <div className="flex items-start justify-between gap-6 pb-7 border-b border-gray-200">
+                <div className="flex items-start gap-6">
+                  <img
+                    src={productImage}
+                    alt={product.nama_produk}
+                    className="w-[120px] h-[120px] rounded-[20px] object-cover border border-gray-200 shrink-0"
+                  />
+
+                  <div>
+                    <p className="text-[13px] text-gray-500 font-semibold mb-1">
+                      {product.seller?.username || "GreenMarket Store"}
+                    </p>
+
+                    <h2 className="text-[30px] font-black text-[#1f1f1f] leading-tight mb-2">
+                      {product.nama_produk}
+                    </h2>
+
+                    <p className="text-[20px] font-black text-[#111]">
+                      Rp {product.harga.toLocaleString("id-ID")}
+                    </p>
+                  </div>
                 </div>
-              ) : (
-                <div className="space-y-3">
-                  {addresses.map((address) => (
-                    <label
-                      key={address.id_alamat}
-                      className={`block border rounded-[18px] p-4 cursor-pointer transition-all ${
-                        selectedAddress === address.id_alamat
-                          ? "border-[#2fa84f] bg-[#eef9f0]"
-                          : "border-gray-300 bg-white"
-                      }`}
+
+                <div className="flex flex-col items-end gap-3 shrink-0 mt-4">
+                  <div className="border border-gray-300 rounded-xl flex items-center overflow-hidden bg-white">
+                    <button
+                      type="button"
+                      onClick={() => handleQuantity("min")}
+                      className="px-6 py-3 text-red-500 font-bold text-lg"
                     >
-                      <div className="flex items-start justify-between gap-4">
-                        <div>
-                          <p className="font-bold text-[#1f1f1f]">
-                            {address.nama_penerima}
-                          </p>
+                      -
+                    </button>
 
-                          <p className="text-sm text-gray-600">
-                            {address.nomor_hp}
-                          </p>
+                    <span className="px-7 py-3 text-sm font-bold text-[#1f1f1f]">
+                      {quantity}
+                    </span>
 
-                          <p className="text-sm text-gray-600 mt-1 leading-relaxed">
-                            {address.alamat_lengkap}
-                          </p>
+                    <button
+                      type="button"
+                      onClick={() => handleQuantity("plus")}
+                      className="px-6 py-3 text-[#2fa84f] font-bold text-lg"
+                    >
+                      +
+                    </button>
+                  </div>
+
+                  <span className="text-sm text-gray-500">
+                    Stok tersedia: {product.stok}
+                  </span>
+                </div>
+              </div>
+
+              {/* ALAMAT PENGIRIMAN */}
+              <div className="pt-4 pb-3 border-b border-gray-200">
+                <h3 className="text-[18px] font-black text-[#1f1f1f] mb-4">
+                  Alamat Pengiriman
+                </h3>
+
+                {addresses.length === 0 ? (
+                  <div className="bg-red-50 border border-red-200 rounded-[16px] p-4">
+                    <p className="text-sm text-red-500 font-bold mb-3">
+                      Belum ada alamat tersimpan.
+                    </p>
+
+                    <button
+                      type="button"
+                      onClick={() => router.push("/alamat")}
+                      className="bg-[#2fa84f] text-white px-4 py-2 rounded-xl font-bold text-sm"
+                    >
+                      Tambah Alamat
+                    </button>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {addresses.map((address) => (
+                      <label
+                        key={address.id_alamat}
+                        className={`block border rounded-[18px] p-4 cursor-pointer transition-all ${
+                          selectedAddress === address.id_alamat
+                            ? "border-[#2fa84f] bg-[#eef9f0]"
+                            : "border-gray-300 bg-white"
+                        }`}
+                      >
+                        <div className="flex items-start justify-between gap-4">
+                          <div>
+                            <p className="font-bold text-[#1f1f1f]">
+                              {address.nama_penerima}
+                            </p>
+
+                            <p className="text-sm text-gray-600">
+                              {address.nomor_hp}
+                            </p>
+
+                            <p className="text-sm text-gray-600 mt-1 leading-relaxed">
+                              {address.alamat_lengkap}
+                            </p>
+                          </div>
+
+                          <input
+                            type="radio"
+                            name="address"
+                            checked={selectedAddress === address.id_alamat}
+                            onChange={() =>
+                              setSelectedAddress(address.id_alamat)
+                            }
+                            className="w-4 h-4 accent-[#2fa84f] mt-1"
+                          />
                         </div>
+                      </label>
+                    ))}
+                  </div>
+                )}
+              </div>
 
-                        <input
-                          type="radio"
-                          name="address"
-                          checked={selectedAddress === address.id_alamat}
-                          onChange={() => setSelectedAddress(address.id_alamat)}
-                          className="w-4 h-4 accent-[#2fa84f] mt-1"
-                        />
+              {/* JASA KIRIM */}
+              <div className="pt-4">
+                <h3 className="text-[18px] font-black text-[#1f1f1f] mb-4">
+                  Pilih Jasa Kirim
+                </h3>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setTempSelectedShipping(selectedShipping);
+                    setShowShippingOptions(true);
+                  }}
+                  className="w-full border border-[#2fa84f] bg-[#eef9f0] rounded-[18px] p-4 flex items-center justify-between text-left hover:bg-[#e5f6e8] transition-all"
+                >
+                  <div>
+                    <p className="font-bold text-[#1f1f1f] text-[15px]">
+                      {selectedShippingData?.nama_jasa || "Pilih Jasa Kirim"}{" "}
+                      {selectedShippingData && (
+                        <span>
+                          (Rp{" "}
+                          {selectedShippingData.harga_pengiriman.toLocaleString(
+                            "id-ID",
+                          )}
+                          )
+                        </span>
+                      )}
+                    </p>
+
+                    <p className="text-sm text-gray-600 mt-1">
+                      {selectedShippingData?.estimasi_waktu ||
+                        "Pilih layanan pengiriman"}
+                    </p>
+                  </div>
+
+                  <svg
+                    width="18"
+                    height="18"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="#2fa84f"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <polyline points="6 9 12 15 18 9" />
+                  </svg>
+                </button>
+
+                <label className="flex items-center justify-between mt-4 border border-gray-300 rounded-[16px] p-4 bg-white cursor-pointer">
+                  <p className="text-[15px] font-semibold text-[#1f1f1f]">
+                    Asuransi Pengiriman (Rp 500)
+                  </p>
+
+                  <input
+                    type="checkbox"
+                    checked={shippingInsurance}
+                    onChange={(e) => setShippingInsurance(e.target.checked)}
+                    className="w-4 h-4 accent-[#2fa84f]"
+                  />
+                </label>
+              </div>
+
+              {/* MODAL JASA KIRIM */}
+              {showShippingOptions && (
+                <div className="fixed inset-0 z-[300] bg-black/60 flex items-end sm:items-start justify-center p-0 sm:px-6 sm:pt-[96px] sm:pb-6">
+                  <div className="bg-white w-full sm:max-w-xl rounded-t-[28px] sm:rounded-[28px] shadow-2xl overflow-hidden max-h-[calc(100vh-120px)] flex flex-col">
+                    <div className="p-5 border-b border-gray-100 flex items-center justify-between">
+                      <div>
+                        <h3 className="text-xl font-black text-[#1f1f1f]">
+                          Pilih Jasa Kirim
+                        </h3>
+
+                        <p className="text-sm text-gray-500 mt-1">
+                          Pilih layanan pengiriman yang tersedia
+                        </p>
                       </div>
-                    </label>
-                  ))}
+
+                      <button
+                        type="button"
+                        onClick={() => setShowShippingOptions(false)}
+                        className="w-9 h-9 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center"
+                      >
+                        ✕
+                      </button>
+                    </div>
+
+                    <div className="overflow-y-auto flex-1">
+                      {jasaKirim.map((item) => {
+                        const isSelected =
+                          tempSelectedShipping === item.id_jasa;
+
+                        return (
+                          <button
+                            key={item.id_jasa}
+                            type="button"
+                            onClick={() => {
+                              setTempSelectedShipping(item.id_jasa);
+                            }}
+                            className={`w-full flex items-center gap-4 px-5 py-4 border-b border-gray-100 text-left transition-all ${
+                              isSelected
+                                ? "bg-[#eef9f0]"
+                                : "bg-white hover:bg-gray-50"
+                            }`}
+                          >
+                            <div
+                              className={`w-5 h-5 rounded-full border flex items-center justify-center shrink-0 ${
+                                isSelected
+                                  ? "border-[#2fa84f]"
+                                  : "border-gray-400"
+                              }`}
+                            >
+                              {isSelected && (
+                                <div className="w-2.5 h-2.5 rounded-full bg-[#2fa84f]" />
+                              )}
+                            </div>
+
+                            <div className="flex-1">
+                              <p className="font-bold text-[15px] text-[#1f1f1f]">
+                                {item.nama_jasa}
+                              </p>
+
+                              <p className="text-sm text-gray-500 mt-1">
+                                {item.estimasi_waktu}
+                              </p>
+                            </div>
+
+                            <p className="font-bold text-[#1f1f1f]">
+                              Rp {item.harga_pengiriman.toLocaleString("id-ID")}
+                            </p>
+                          </button>
+                        );
+                      })}
+                    </div>
+
+                    <div className="p-5 border-t border-gray-100">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSelectedShipping(tempSelectedShipping);
+                          setShowShippingOptions(false);
+                        }}
+                        className="w-full bg-[#2fa84f] hover:bg-[#268c41] text-white font-black py-4 rounded-[16px] transition-all"
+                      >
+                        Konfirmasi
+                      </button>
+                    </div>
+                  </div>
                 </div>
               )}
             </div>
 
-            {/* JASA KIRIM */}
-            <div className="pt-4">
-              <h3 className="text-[18px] font-black text-[#1f1f1f] mb-4">
-                Pilih Jasa Kirim
-              </h3>
+            {/* RIGHT */}
+            <div className="bg-[#f7f7f7] rounded-[24px] shadow-lg p-6 h-fit">
+              <div className="flex items-center justify-between mb-5">
+                <h3 className="text-[18px] font-black text-[#1f1f1f]">
+                  Metode pembayaran
+                </h3>
+              </div>
 
-              <button
-                type="button"
-                onClick={() => {
-                  setTempSelectedShipping(selectedShipping);
-                  setShowShippingOptions(true);
-                }}
-                className="w-full border border-[#2fa84f] bg-[#eef9f0] rounded-[18px] p-4 flex items-center justify-between text-left hover:bg-[#e5f6e8] transition-all"
-              >
-                <div>
-                  <p className="font-bold text-[#1f1f1f] text-[15px]">
-                    {selectedShippingData?.nama_jasa || "Pilih Jasa Kirim"}{" "}
-                    {selectedShippingData && (
-                      <span>
-                        (Rp{" "}
-                        {selectedShippingData.harga_pengiriman.toLocaleString(
-                          "id-ID",
-                        )}
-                        )
-                      </span>
-                    )}
-                  </p>
-
-                  <p className="text-sm text-gray-600 mt-1">
-                    {selectedShippingData?.estimasi_waktu ||
-                      "Pilih layanan pengiriman"}
-                  </p>
-                </div>
-
-                <svg
-                  width="18"
-                  height="18"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="#2fa84f"
-                  strokeWidth="2.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <polyline points="6 9 12 15 18 9" />
-                </svg>
-              </button>
-
-              <label className="flex items-center justify-between mt-4 border border-gray-300 rounded-[16px] p-4 bg-white cursor-pointer">
-                <p className="text-[15px] font-semibold text-[#1f1f1f]">
-                  Asuransi Pengiriman (Rp 500)
-                </p>
-
-                <input
-                  type="checkbox"
-                  checked={shippingInsurance}
-                  onChange={(e) => setShippingInsurance(e.target.checked)}
-                  className="w-4 h-4 accent-[#2fa84f]"
-                />
-              </label>
-            </div>
-
-            {/* MODAL JASA KIRIM */}
-            {showShippingOptions && (
-              <div className="fixed inset-0 z-[300] bg-black/60 flex items-end sm:items-start justify-center p-0 sm:px-6 sm:pt-[96px] sm:pb-6">
-                <div className="bg-white w-full sm:max-w-xl rounded-t-[28px] sm:rounded-[28px] shadow-2xl overflow-hidden max-h-[calc(100vh-120px)] flex flex-col">
-                  <div className="p-5 border-b border-gray-100 flex items-center justify-between">
+              <div className="space-y-3 mb-6">
+                {metodePembayaran.map((item) => (
+                  <label
+                    key={item.id_metode}
+                    className="flex items-center justify-between border-b border-gray-200 pb-3 cursor-pointer"
+                  >
                     <div>
-                      <h3 className="text-xl font-black text-[#1f1f1f]">
-                        Pilih Jasa Kirim
-                      </h3>
-
-                      <p className="text-sm text-gray-500 mt-1">
-                        Pilih layanan pengiriman yang tersedia
+                      <p className="font-semibold text-[#1f1f1f]">
+                        {item.nama_metode}
                       </p>
                     </div>
 
-                    <button
-                      type="button"
-                      onClick={() => setShowShippingOptions(false)}
-                      className="w-9 h-9 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center"
-                    >
-                      ✕
-                    </button>
+                    <input
+                      type="radio"
+                      name="payment"
+                      checked={selectedPayment === item.id_metode}
+                      onChange={() => setSelectedPayment(item.id_metode)}
+                      className="w-4 h-4 accent-[#2fa84f]"
+                    />
+                  </label>
+                ))}
+              </div>
+
+              <div className="mb-6">
+                <h4 className="text-[16px] font-black text-[#1f1f1f] mb-4">
+                  Cek ringkasan transaksimu
+                </h4>
+                <div className="space-y-3 text-sm">
+                  <div className="flex justify-between text-gray-700">
+                    <span>Subtotal</span>
+                    <span>Rp {subtotal.toLocaleString("id-ID")}</span>
                   </div>
-
-                  <div className="overflow-y-auto flex-1">
-                    {jasaKirim.map((item) => {
-                      const isSelected = tempSelectedShipping === item.id_jasa;
-
-                      return (
-                        <button
-                          key={item.id_jasa}
-                          type="button"
-                          onClick={() => {
-                            setTempSelectedShipping(item.id_jasa);
-                          }}
-                          className={`w-full flex items-center gap-4 px-5 py-4 border-b border-gray-100 text-left transition-all ${
-                            isSelected
-                              ? "bg-[#eef9f0]"
-                              : "bg-white hover:bg-gray-50"
-                          }`}
-                        >
-                          <div
-                            className={`w-5 h-5 rounded-full border flex items-center justify-center shrink-0 ${
-                              isSelected
-                                ? "border-[#2fa84f]"
-                                : "border-gray-400"
-                            }`}
-                          >
-                            {isSelected && (
-                              <div className="w-2.5 h-2.5 rounded-full bg-[#2fa84f]" />
-                            )}
-                          </div>
-
-                          <div className="flex-1">
-                            <p className="font-bold text-[15px] text-[#1f1f1f]">
-                              {item.nama_jasa}
-                            </p>
-
-                            <p className="text-sm text-gray-500 mt-1">
-                              {item.estimasi_waktu}
-                            </p>
-                          </div>
-
-                          <p className="font-bold text-[#1f1f1f]">
-                            Rp {item.harga_pengiriman.toLocaleString("id-ID")}
-                          </p>
-                        </button>
-                      );
-                    })}
+                  <div className="flex justify-between text-gray-700">
+                    <span>Ongkir</span>
+                    <span>Rp {ongkir.toLocaleString("id-ID")}</span>
                   </div>
-
-                  <div className="p-5 border-t border-gray-100">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setSelectedShipping(tempSelectedShipping);
-                        setShowShippingOptions(false);
-                      }}
-                      className="w-full bg-[#2fa84f] hover:bg-[#268c41] text-white font-black py-4 rounded-[16px] transition-all"
-                    >
-                      Konfirmasi
-                    </button>
+                  <div className="flex justify-between text-gray-700">
+                    <span>Asuransi</span>
+                    <span>Rp {biayaAsuransi.toLocaleString("id-ID")}</span>
+                  </div>
+                  <div className="border-t border-gray-300 pt-3 flex justify-between font-black text-[#1f1f1f] text-[16px]">
+                    <span>Total transaksi</span>
+                    <span>Rp {total.toLocaleString("id-ID")}</span>
                   </div>
                 </div>
               </div>
-            )}
+              <button
+                onClick={handleBayar}
+                className="w-full bg-[#4caf50] hover:bg-[#419746] text-white font-black py-4 rounded-[14px] transition-all"
+              >
+                Bayar sekarang
+              </button>
+            </div>
           </div>
 
-          {/* RIGHT */}
-          <div className="bg-[#f7f7f7] rounded-[24px] shadow-lg p-6 h-fit">
-            <div className="flex items-center justify-between mb-5">
-              <h3 className="text-[18px] font-black text-[#1f1f1f]">
-                Metode pembayaran
-              </h3>
-            </div>
+          {/* MODAL SUKSES */}
+          {showSuccessModal && (
+            <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 px-4">
+              <div className="w-full max-w-[420px] rounded-[28px] bg-white p-8 text-center shadow-2xl">
+                <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-[#e8f8ee]">
+                  <span className="text-3xl text-[#2fa84f]">✓</span>
+                </div>
 
-            <div className="space-y-3 mb-6">
-              {metodePembayaran.map((item) => (
-                <label
-                  key={item.id_metode}
-                  className="flex items-center justify-between border-b border-gray-200 pb-3 cursor-pointer"
+                <h2 className="mb-2 text-xl font-black text-[#14281d]">
+                  Transaksi Berhasil
+                </h2>
+
+                <p className="mb-6 text-sm leading-relaxed text-[#6b7280]">
+                  Pesanan berhasil dibuat.
+                </p>
+
+                <button
+                  onClick={() => router.push("/pesanan")}
+                  className="w-full rounded-2xl bg-[#2fa84f] px-5 py-3 text-sm font-bold text-white transition hover:bg-[#268a41]"
                 >
-                  <div>
-                    <p className="font-semibold text-[#1f1f1f]">
-                      {item.nama_metode}
-                    </p>
-                  </div>
-
-                  <input
-                    type="radio"
-                    name="payment"
-                    checked={selectedPayment === item.id_metode}
-                    onChange={() => setSelectedPayment(item.id_metode)}
-                    className="w-4 h-4 accent-[#2fa84f]"
-                  />
-                </label>
-              ))}
-            </div>
-
-            <div className="mb-6">
-              <h4 className="text-[16px] font-black text-[#1f1f1f] mb-4">
-                Cek ringkasan transaksimu
-              </h4>
-              <div className="space-y-3 text-sm">
-                <div className="flex justify-between text-gray-700">
-                  <span>Subtotal</span>
-                  <span>Rp {subtotal.toLocaleString("id-ID")}</span>
-                </div>
-                <div className="flex justify-between text-gray-700">
-                  <span>Ongkir</span>
-                  <span>Rp {ongkir.toLocaleString("id-ID")}</span>
-                </div>
-                <div className="flex justify-between text-gray-700">
-                  <span>Asuransi</span>
-                  <span>Rp {biayaAsuransi.toLocaleString("id-ID")}</span>
-                </div>
-                <div className="border-t border-gray-300 pt-3 flex justify-between font-black text-[#1f1f1f] text-[16px]">
-                  <span>Total transaksi</span>
-                  <span>Rp {total.toLocaleString("id-ID")}</span>
-                </div>
+                  Lihat Pesanan Saya
+                </button>
               </div>
             </div>
-            <button
-              onClick={handleBayar}
-              className="w-full bg-[#4caf50] hover:bg-[#419746] text-white font-black py-4 rounded-[14px] transition-all"
-            >
-              Bayar sekarang
-            </button>
-          </div>
-        </div>
-      </main>
-    </div>
+          )}
+
+          {/* MODAL ERROR */}
+          {errorMessage && (
+            <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 px-4">
+              <div className="w-full max-w-[420px] rounded-[28px] bg-white p-8 text-center shadow-2xl">
+                <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-red-50">
+                  <span className="text-3xl text-red-500">!</span>
+                </div>
+
+                <h2 className="mb-2 text-xl font-black text-[#14281d]">
+                  Transaksi Gagal
+                </h2>
+
+                <p className="mb-6 text-sm leading-relaxed text-[#6b7280]">
+                  {errorMessage}
+                </p>
+
+                <button
+                  onClick={() => setErrorMessage("")}
+                  className="w-full rounded-2xl bg-red-500 px-5 py-3 text-sm font-bold text-white transition hover:bg-red-600"
+                >
+                  Tutup
+                </button>
+              </div>
+            </div>
+          )}
+        </main>
+      </div>
+    </>
   );
 }
 
