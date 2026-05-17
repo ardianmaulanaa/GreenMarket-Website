@@ -1,192 +1,493 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useEffect, useRef, useState } from "react";
+import {
+  motion,
+  useInView,
+  useScroll,
+  useTransform,
+  type Variants,
+} from "framer-motion";
+import AnimatedCounter from "@/components/landing/AnimatedCounter";
+import CategoryCard from "@/components/landing/CategoryCard";
+import FloatingBlobs from "@/components/landing/FloatingBlobs";
+import InfoCard from "@/components/landing/InfoCard";
+import MagneticButton from "@/components/landing/MagneticButton";
+import ParticlesOverlay from "@/components/landing/ParticlesOverlay";
 
-interface InfoCardProps {
-  icon: React.ReactNode;
-  badge: string;
-  title: string;
-  desc: string;
+const HERO_IMAGE =
+  "https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?q=80&w=2013&auto=format&fit=crop";
+
+const fadeUp: Variants = {
+  hidden: { opacity: 0, y: 28 },
+  visible: (i: number) => ({
+    opacity: 1,
+    y: 0,
+    transition: {
+      duration: 0.55,
+      delay: i * 0.09,
+      ease: [0.22, 1, 0.36, 1] as [number, number, number, number],
+    },
+  }),
+};
+
+const stagger: Variants = {
+  hidden: {},
+  visible: { transition: { staggerChildren: 0.09 } },
+};
+
+const categories = [
+  {
+    name: "Elektronik",
+    icon: (
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M20 16V4a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v12m16 0a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2m16 0V4M4 16v-12M8 20h8M12 17v3" />
+      </svg>
+    ),
+  },
+  {
+    name: "Fashion",
+    icon: (
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z" />
+        <path d="M3 6h18" />
+        <path d="M16 10a4 4 0 0 1-8 0" />
+      </svg>
+    ),
+  },
+  {
+    name: "DIY",
+    icon: (
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="m14.7 6.3 5 5" />
+        <path d="m3.1 20.9 7.4-7.4" />
+        <path d="m16.4 4.6 2.8 2.8a1 1 0 0 1 0 1.4l-6.2 6.2a1 1 0 0 1-1.4 0l-2.8-2.8a1 1 0 0 1 0-1.4l6.2-6.2a1 1 0 0 1 1.4 0Z" />
+      </svg>
+    ),
+  },
+  {
+    name: "Sepeda",
+    icon: (
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="18.5" cy="17.5" r="3.5" />
+        <circle cx="5.5" cy="17.5" r="3.5" />
+        <path d="M15 17.5V11l-3-3 3-3" />
+        <path d="M5.5 17.5 12 11" />
+      </svg>
+    ),
+  },
+  {
+    name: "Lainnya",
+    icon: (
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="12" cy="12" r="1" />
+        <circle cx="19" cy="12" r="1" />
+        <circle cx="5" cy="12" r="1" />
+      </svg>
+    ),
+  },
+];
+
+function SectionReveal({
+  children,
+  className = "",
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) {
+  const ref = useRef(null);
+  const inView = useInView(ref, { once: true, margin: "-72px" });
+  return (
+    <motion.div
+      ref={ref}
+      className={className}
+      initial="hidden"
+      animate={inView ? "visible" : "hidden"}
+      variants={stagger}
+    >
+      {children}
+    </motion.div>
+  );
+}
+
+function GradientHighlight({ children }: { children: string }) {
+  return <span className="gradient-text-shine">{children}</span>;
 }
 
 export default function LandingPage() {
   const [scrolled, setScrolled] = useState(false);
+  const [mouse, setMouse] = useState({ x: 0, y: 0 });
+  const heroRef = useRef<HTMLElement>(null);
+
+  const { scrollYProgress } = useScroll({
+    target: heroRef,
+    offset: ["start start", "end start"],
+  });
+
+  const heroContentY = useTransform(scrollYProgress, [0, 1], [0, 100]);
+  const heroOpacity = useTransform(scrollYProgress, [0, 0.8], [1, 0]);
+  const bgScale = useTransform(scrollYProgress, [0, 1], [1, 1.12]);
+  const bgY = useTransform(scrollYProgress, [0, 1], [0, 80]);
+  const heroBottomFade = useTransform(scrollYProgress, [0.5, 1], [0, 1]);
 
   useEffect(() => {
-    const handleScroll = () => {
-      setScrolled(window.scrollY > 50);
+    const onScroll = () => setScrolled(window.scrollY > 32);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  useEffect(() => {
+    const onMove = (e: MouseEvent) => {
+      const nx = (e.clientX / window.innerWidth - 0.5) * 2;
+      const ny = (e.clientY / window.innerHeight - 0.5) * 2;
+      setMouse({ x: nx, y: ny });
     };
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
+    window.addEventListener("mousemove", onMove, { passive: true });
+    return () => window.removeEventListener("mousemove", onMove);
   }, []);
 
   return (
-    <div className="bg-[#f1f8e9] text-[#1a2e1f] font-sans overflow-x-hidden">
-      
-      {/* ── NAVBAR (Glassmorphism Sinkron) ── */}
-      <nav
-        className={`fixed top-0 w-full z-50 transition-all duration-500 h-[72px] flex items-center ${
+    <div className="relative overflow-x-hidden bg-[#f4f9f0] text-[#1a2e1f]">
+      {/* ── NAVBAR ── */}
+      <motion.header
+        className={`fixed top-0 z-50 w-full transition-all duration-500 ${
           scrolled
-            ? "bg-[#1a1f1b]/80 backdrop-blur-md shadow-lg border-b border-white/5"
-            : "bg-transparent"
+            ? "border-b border-white/20 bg-white/70 shadow-[0_8px_32px_rgba(10,17,11,0.08)] backdrop-blur-2xl"
+            : "bg-white/5 backdrop-blur-md"
         }`}
+        initial={{ y: -20, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ duration: 0.5 }}
       >
-        <div className="container mx-auto px-10 flex justify-between items-center">
-          <Link href="/" className="flex items-center gap-2 no-underline group">
-            <div className="w-[34px] h-[34px] rounded-[10px] bg-gradient-to-br from-[#2fa84f] to-[#1a7a35] flex items-center justify-center shadow-[0_4px_12px_rgba(47,168,79,0.35)]">
+        <nav className="mx-auto flex h-[72px] max-w-7xl items-center justify-between px-5 md:px-10">
+          <Link href="/" className="flex items-center gap-2.5 no-underline">
+            <motion.div
+              className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-[#2fa84f] to-[#1a7a35] shadow-[0_4px_20px_rgba(47,168,79,0.4)]"
+              whileHover={{ scale: 1.06 }}
+            >
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M12 2L3 7v9c0 5 9 7 9 7s9-2 9-7V7l-9-5z"/>
+                <path d="M12 2L3 7v9c0 5 9 7 9 7s9-2 9-7V7l-9-5z" />
               </svg>
-            </div>
-            <span className={`text-[20px] font-[800] tracking-[-0.5px] transition-colors ${scrolled ? "text-white" : "text-[#1a2e1f]"}`}>
+            </motion.div>
+            <span
+              className={`text-lg font-extrabold tracking-tight transition-colors md:text-xl ${
+                scrolled ? "text-[#1a2e1f]" : "text-white"
+              }`}
+            >
               GreenMarket
             </span>
           </Link>
 
-          <div className="flex items-center space-x-8">
-            <div className={`hidden md:flex items-center space-x-6 font-bold text-[14px] ${scrolled ? "text-white/70" : "text-[#1a2e1f]"}`}>
-              <Link href="/beranda-dashboard" className="hover:text-[#2fa84f] transition no-underline">Jelajahi</Link>
-              <Link href="/komunitas" className="hover:text-[#2fa84f] transition no-underline">Komunitas</Link>
-            </div>
-            <div className="flex items-center gap-4">
-              <Link href="/login" className={`font-bold text-[14px] no-underline hover:text-[#2fa84f] transition ${scrolled ? "text-white" : "text-[#1a2e1f]"}`}>Masuk</Link>
+          <div className="flex items-center gap-4 md:gap-6">
+            <Link
+              href="/beranda-dashboard"
+              className={`hidden text-sm font-semibold no-underline transition hover:text-[#2fa84f] sm:inline ${
+                scrolled ? "text-[#1a2e1f]/80" : "text-white/90"
+              }`}
+            >
+              Jelajahi
+            </Link>
+            <Link
+              href="/login"
+              className={`text-sm font-semibold no-underline transition hover:text-[#2fa84f] ${
+                scrolled ? "text-[#1a2e1f]" : "text-white"
+              }`}
+            >
+              Masuk
+            </Link>
+            <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.97 }}>
               <Link
                 href="/register"
-                className="bg-primary text-white px-6 py-2.5 rounded-xl font-bold no-underline hover:bg-secondary transition shadow-lg shadow-[#2fa84f]/20"
+                className="inline-block rounded-xl bg-[#2fa84f] px-5 py-2.5 text-sm font-bold text-white no-underline shadow-[0_4px_24px_rgba(47,168,79,0.35)] transition hover:bg-[#268c41]"
               >
                 Daftar
               </Link>
-            </div>
+            </motion.div>
           </div>
-        </div>
-      </nav>
+        </nav>
+      </motion.header>
 
-      {/* ── HERO SECTION (Overlay Gradasi ke Gelap) ── */}
-      <section 
-        className="h-screen flex items-center bg-cover bg-center relative"
-        style={{
-          backgroundImage: `linear-gradient(to right, rgba(241, 248, 233, 0.9), rgba(10, 17, 11, 0.6)), url('https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?q=80&w=2013&auto=format&fit=crop')`
-        }}
-      >
-        <div className="container mx-auto px-10">
-          <div className="max-w-[750px]">
-            <h1 className="text-[68px] font-[800] leading-[1.05] text-[#1a2e1f] mb-6 tracking-tight">
-              Barang lama, <br /> <span className="text-[#2fa84f]">cerita baru.</span>
-            </h1>
-            <p className="text-xl text-[#6b7c71] mb-10 leading-relaxed max-w-[600px]">
-              Bantu selamatkan bumi dengan memberikan nafas kedua bagi barang tak terpakai Anda. Marketplace ramah lingkungan nomor satu di Indonesia.
-            </p>
-            <Link
-              href="/beranda-dashboard"
-              className="bg-primary text-white px-10 py-4 rounded-2xl font-bold no-underline inline-block hover:-translate-y-1 hover:shadow-[0_12px_30px_rgba(0,0,0,0.3)] hover:bg-secondary transition-all duration-300"
+      {/* ── HERO ── */}
+      <section ref={heroRef} className="relative min-h-screen overflow-hidden">
+        {/* Background layers */}
+        <motion.div
+          className="absolute inset-0 will-change-transform"
+          style={{
+            scale: bgScale,
+            y: bgY,
+            x: mouse.x * -18,
+          }}
+        >
+          <div
+            className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+            style={{ backgroundImage: `url('${HERO_IMAGE}')` }}
+          />
+        </motion.div>
+
+        <div className="absolute inset-0 bg-gradient-to-br from-[#0a110b]/75 via-[#111815]/55 to-[#1a1f1b]/65" />
+        <motion.div
+          className="absolute inset-0 bg-gradient-to-t from-[#f4f9f0] via-transparent to-[#0a110b]/30"
+          style={{ opacity: heroBottomFade }}
+        />
+        <FloatingBlobs variant="hero" />
+        <ParticlesOverlay tone="dark" />
+
+        {/* Depth layer */}
+        <motion.div
+          className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_30%_20%,rgba(47,168,79,0.18),transparent_55%)]"
+          style={{ x: mouse.x * 24, y: mouse.y * 16 }}
+        />
+
+        <motion.div
+          className="relative z-10 mx-auto flex min-h-screen max-w-7xl flex-col justify-center px-5 pb-24 pt-28 md:px-10 md:pt-32"
+          style={{ y: heroContentY, opacity: heroOpacity }}
+        >
+          <motion.div initial="hidden" animate="visible" variants={stagger} className="max-w-3xl">
+            <motion.span
+              variants={fadeUp}
+              custom={0}
+              className="mb-6 inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/15 px-4 py-2 text-[11px] font-bold uppercase tracking-[0.2em] text-white backdrop-blur-md"
             >
-              Mulai Jelajahi Produk
-            </Link>
+              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[#2fa84f]" />
+              Marketplace Ramah Lingkungan
+            </motion.span>
+
+            <motion.h1
+              variants={fadeUp}
+              custom={1}
+              className="text-4xl font-extrabold leading-[1.06] tracking-[-0.03em] text-white sm:text-5xl md:text-6xl lg:text-[4.25rem]"
+            >
+              Barang lama, <br />
+              <GradientHighlight>cerita baru.</GradientHighlight>
+            </motion.h1>
+
+            <motion.p
+              variants={fadeUp}
+              custom={2}
+              className="mt-6 max-w-xl text-base leading-relaxed text-white/75 md:text-lg"
+            >
+              Bantu selamatkan bumi dengan memberikan nafas kedua bagi barang tak
+              terpakai Anda.
+            </motion.p>
+
+            <motion.div variants={fadeUp} custom={3} className="mt-10 flex flex-wrap gap-4">
+              <MagneticButton href="/dashboard-seller" variant="primary" showArrow>
+                Mulai Jelajahi Produk
+              </MagneticButton>
+              <MagneticButton href="/register" variant="secondary" showArrow>
+                Daftar Gratis
+              </MagneticButton>
+            </motion.div>
+
+            <motion.div
+              variants={fadeUp}
+              custom={4}
+              className="mt-14 grid grid-cols-1 gap-6 border-t border-white/15 pt-10 sm:grid-cols-3 sm:gap-8"
+            >
+              <AnimatedCounter value={50} suffix="K+" label="Produk Daur Ulang" />
+              <AnimatedCounter value={12} suffix="K+" label="Pengguna Aktif" delay={0.1} />
+              <AnimatedCounter value={98} suffix="%" label="Kepuasan Hijau" delay={0.2} />
+            </motion.div>
+          </motion.div>
+        </motion.div>
+
+        <motion.div
+          className="absolute bottom-8 left-1/2 z-10 -translate-x-1/2"
+          animate={{ y: [0, 6, 0] }}
+          transition={{ duration: 2, repeat: Infinity }}
+        >
+          <div className="h-10 w-6 rounded-full border border-white/30 p-1 backdrop-blur-sm">
+            <motion.div
+              className="mx-auto h-2 w-1 rounded-full bg-[#2fa84f]"
+              animate={{ y: [0, 10, 0], opacity: [1, 0.4, 1] }}
+              transition={{ duration: 2, repeat: Infinity }}
+            />
           </div>
-        </div>
+        </motion.div>
       </section>
 
-      {/* ── KATEGORI ── */}
-      <section className="py-32 px-[5%] bg-white text-center">
-        <span className="bg-[#f1f8e9] text-[#2fa84f] px-5 py-2 rounded-xl font-[800] text-[10px] uppercase tracking-widest border border-[#e0e6e2]">
-          Kategori Pilihan
-        </span>
-        <h2 className="text-[40px] font-[800] mt-5 mb-16 tracking-tight">Telusuri Kebutuhan Hijaumu</h2>
-        
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-8 max-w-6xl mx-auto">
-          {[
-            { name: "Elektronik", svg: <path d="M20 16V4a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v12m16 0a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2m16 0V4M4 16v-12M8 20h8M12 17v3"/> },
-            { name: "Fashion", svg: <><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></> },
-            { name: "DIY", svg: <><path d="m14.7 6.3 5 5"/><path d="m3.1 20.9 7.4-7.4"/><path d="m16.4 4.6 2.8 2.8a1 1 0 0 1 0 1.4l-6.2 6.2a1 1 0 0 1-1.4 0l-2.8-2.8a1 1 0 0 1 0-1.4l6.2-6.2a1 1 0 0 1 1.4 0Z"/></> },
-            { name: "Sepeda", svg: <><circle cx="18.5" cy="17.5" r="3.5"/><circle cx="5.5" cy="17.5" r="3.5"/><path d="M15 17.5V11l-3-3 3-3"/><path d="M5.5 17.5 12 11"/></> },
-            { name: "Lainnya", svg: <><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></> },
-          ].map((item) => (
-            <div
-              key={item.name}
-              className="group bg-[#fcfdfc] border border-[#eef2ef] p-12 rounded-[32px] text-center cursor-pointer transition-all duration-500 hover:bg-[#1a2e1f] hover:text-white hover:-translate-y-3 hover:shadow-[0_20px_40px_rgba(0,0,0,0.1)]"
-            >
-              <div className="w-16 h-16 bg-[#f1f8e9] rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:bg-[#2fa84f] transition-colors">
-                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className="text-[#2fa84f] group-hover:text-white">
-                  {item.svg}
+      {/* ── CATEGORIES ── */}
+      <section className="relative overflow-hidden bg-gradient-to-b from-[#f4f9f0] via-white to-[#f1f8e9] px-5 py-20 md:px-10 md:py-28">
+        <FloatingBlobs variant="light" />
+        <ParticlesOverlay tone="light" />
+        <SectionReveal className="relative z-10 mx-auto max-w-6xl">
+          <motion.div variants={fadeUp} custom={0} className="text-center">
+            <span className="inline-block rounded-full border border-[#2fa84f]/20 bg-white/80 px-5 py-2 text-[10px] font-bold uppercase tracking-[0.22em] text-[#2fa84f] backdrop-blur-sm">
+              Kategori Pilihan
+            </span>
+            <h2 className="mt-5 text-3xl font-extrabold tracking-tight text-[#1a2e1f] md:text-4xl lg:text-5xl">
+              Telusuri Kebutuhan Hijaumu
+            </h2>
+            <p className="mx-auto mt-4 max-w-lg text-[#6b7c71]">
+              Temukan barang bekas berkualitas di kategori favoritmu.
+            </p>
+          </motion.div>
+          <div className="mt-14 grid grid-cols-2 gap-4 sm:gap-6 md:grid-cols-3 lg:grid-cols-5">
+            {categories.map((cat, i) => (
+              <CategoryCard key={cat.name} name={cat.name} icon={cat.icon} index={i} />
+            ))}
+          </div>
+        </SectionReveal>
+      </section>
+
+      {/* ── INFO ── */}
+      <section className="relative overflow-hidden bg-gradient-to-b from-[#f1f8e9] via-white to-[#eef6ea] px-5 py-20 md:px-10 md:py-28">
+        <motion.div
+          className="pointer-events-none absolute inset-0 opacity-[0.4]"
+          style={{
+            backgroundImage:
+              "linear-gradient(rgba(47,168,79,0.06) 1px, transparent 1px), linear-gradient(90deg, rgba(47,168,79,0.06) 1px, transparent 1px)",
+            backgroundSize: "48px 48px",
+          }}
+        />
+        <FloatingBlobs variant="light" />
+        <motion.div
+          className="pointer-events-none absolute left-1/2 top-0 h-px w-3/4 max-w-3xl -translate-x-1/2 bg-gradient-to-r from-transparent via-[#2fa84f]/40 to-transparent"
+          initial={{ scaleX: 0 }}
+          whileInView={{ scaleX: 1 }}
+          viewport={{ once: true }}
+          transition={{ duration: 1 }}
+        />
+
+        <SectionReveal className="relative z-10 mx-auto max-w-7xl">
+          <motion.div variants={fadeUp} custom={0} className="mx-auto mb-14 max-w-2xl text-center md:mb-16">
+            <span className="inline-flex items-center gap-2 rounded-full border border-[#2fa84f]/20 bg-white/80 px-4 py-1.5 text-[10px] font-bold uppercase tracking-[0.22em] text-[#2fa84f] backdrop-blur-sm">
+              <span className="h-1 w-1 rounded-full bg-[#2fa84f]" />
+              Mengapa GreenMarket
+            </span>
+            <h2 className="mt-5 text-3xl font-extrabold tracking-tight text-[#1a2e1f] md:text-4xl lg:text-[2.75rem]">
+              Lebih dari sekadar jual beli
+            </h2>
+            <p className="mt-4 text-base text-[#6b7c71] md:text-lg">
+              Dua cara GreenMarket membantu kamu dan planet—dengan pengalaman yang
+              terasa premium dari awal.
+            </p>
+          </motion.div>
+
+          <motion.div className="grid gap-6 md:grid-cols-2 md:gap-8 lg:gap-10">
+            <InfoCard
+              index={0}
+              variant="light"
+              step="01"
+              badge="GreenJualan"
+              title="Ubah barang lama Anda jadi berkah"
+              desc="Daftarkan barang tak terpakai dalam hitungan menit dan temukan pembeli yang peduli lingkungan."
+              href="/register"
+              cta="Mulai berjualan"
+              icon={
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8a7 7 0 0 1-10 10Z" />
+                  <path d="M19 2v10" />
+                </svg>
+              }
+            />
+            <InfoCard
+              index={1}
+              variant="dark"
+              step="02"
+              badge="EcoTransact"
+              title="Transaksi lebih hijau dan berkelanjutan"
+              desc="Setiap transaksi mendukung ekonomi sirkular dan mengurangi limbah yang mencemari bumi."
+              href="/beranda-dashboard"
+              cta="Jelajahi produk"
+              icon={
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                  <path d="M9 12l2 2 4-4" />
+                </svg>
+              }
+            />
+          </motion.div>
+        </SectionReveal>
+      </section>
+
+      {/* ── CTA ── */}
+      <section className="relative bg-[#f1f8e9] px-5 py-16 md:px-10 md:py-24">
+        <SectionReveal className="mx-auto max-w-5xl">
+          <motion.div
+            variants={fadeUp}
+            custom={0}
+            className="relative overflow-hidden rounded-[36px] border border-white/10 bg-[#1a1f1b] px-8 py-14 text-center shadow-[0_24px_80px_rgba(10,17,11,0.25)] md:rounded-[44px] md:px-16 md:py-20"
+          >
+            <motion.div
+              className="pointer-events-none absolute inset-0"
+              animate={{
+                background: [
+                  "radial-gradient(circle at 25% 50%, rgba(47,168,79,0.2), transparent 55%)",
+                  "radial-gradient(circle at 75% 50%, rgba(47,168,79,0.28), transparent 55%)",
+                  "radial-gradient(circle at 25% 50%, rgba(47,168,79,0.2), transparent 55%)",
+                ],
+              }}
+              transition={{ duration: 7, repeat: Infinity, ease: "easeInOut" }}
+            />
+            <motion.div
+              className="pointer-events-none absolute -left-20 top-0 h-56 w-56 rounded-full bg-[#2fa84f]/25 blur-[80px]"
+              animate={{ scale: [1, 1.2, 1], opacity: [0.4, 0.7, 0.4] }}
+              transition={{ duration: 6, repeat: Infinity }}
+            />
+            <h2 className="relative text-3xl font-extrabold leading-tight tracking-tight text-white md:text-5xl">
+              Daftar sekarang untuk <br className="hidden sm:block" />
+              membantu mencintai bumi
+            </h2>
+            <p className="relative mx-auto my-8 max-w-2xl text-base text-white/50 md:my-10 md:text-lg">
+              Mulai langkah kecil untuk bumi yang lebih baik bersama jutaan pahlawan bumi
+              lainnya.
+            </p>
+            <MagneticButton href="/register" variant="primary" showArrow>
+              Mulai Sekarang Gratis
+            </MagneticButton>
+          </motion.div>
+        </SectionReveal>
+      </section>
+
+      {/* ── FOOTER ── */}
+      <footer className="border-t border-white/10 bg-[#0a110b] px-5 py-16 text-white md:px-10 md:py-20">
+        <motion.div
+          className="mx-auto grid max-w-7xl gap-12 md:grid-cols-2 md:gap-16"
+          initial={{ opacity: 0, y: 24 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6 }}
+        >
+          <div>
+            <motion.div className="mb-5 flex items-center gap-2.5">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-[#2fa84f] to-[#1a7a35]">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5">
+                  <path d="M12 2L3 7v9c0 5 9 7 9 7s9-2 9-7V7l-9-5z" />
                 </svg>
               </div>
-              <h5 className="font-[800] text-[15px]">{item.name}</h5>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* ── INFO SECTION (Mix Hijau-Hitam) ── */}
-      <section className="py-24 px-[5%] bg-gradient-to-b from-white to-[#f1f8e9]">
-        <div className="grid md:grid-cols-2 gap-10 max-w-7xl mx-auto">
-          <InfoCard 
-            icon={<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8a7 7 0 0 1-10 10Z"/><path d="M19 2v10"/></svg>} 
-            badge="GreenJualan" 
-            title="Ubah barang lama Anda jadi berkah." 
-            desc="Daftarkan barang tak terpakai Anda dalam hitungan menit dan temukan pembeli yang peduli lingkungan."
-          />
-          <InfoCard 
-            icon={<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>} 
-            badge="GCommunity" 
-            title="Komunitas peduli masa depan." 
-            desc="Diskusikan ide-ide berkelanjutan dan temukan tips mendaur ulang dari jutaan pengguna kami."
-          />
-        </div>
-      </section>
-
-      {/* ── CTA SECTION (Gelap Sinkron Register) ── */}
-      <section className="py-20 px-[5%] bg-[#f1f8e9]">
-        <div className="bg-[#1a1f1b] p-20 rounded-[48px] text-center relative overflow-hidden border border-white/5">
-          <div className="absolute top-0 right-0 p-10 opacity-10">
-            <svg width="200" height="200" viewBox="0 0 24 24" fill="white"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8a7 7 0 0 1-10 10Z"/></svg>
+              <span className="text-lg font-extrabold">GreenMarket</span>
+            </motion.div>
+            <p className="max-w-sm text-sm leading-relaxed text-white/45">
+              Solusi ramah lingkungan untuk masa depan. Menghubungkan barang berkualitas
+              dengan pemilik baru yang peduli bumi.
+            </p>
           </div>
-          <h2 className="text-white text-[48px] font-[800] leading-tight tracking-tight">Daftar sekarang untuk <br /> membantu mencintai bumi</h2>
-          <p className="text-white/50 my-10 text-xl max-w-2xl mx-auto">Mulai langkah kecil untuk bumi yang lebih baik bersama jutaan pahlawan bumi lainnya.</p>
-          <Link href="/register" className="bg-[#2fa84f] text-white px-12 py-4 rounded-2xl font-bold no-underline inline-block hover:scale-105 transition-all shadow-xl shadow-[#2fa84f]/20">
-            Mulai Sekarang Gratis
-          </Link>
-        </div>
-      </section>
-
-      {/* ── FOOTER (Gelap Premium) ── */}
-      <footer className="bg-[#0a110b] py-24 px-[5%] text-white">
-        <div className="container mx-auto grid lg:grid-cols-3 gap-16">
-          <div className="text-left">
-            <div className="flex items-center gap-2 mb-6">
-                <div className="w-[30px] h-[30px] rounded-[8px] bg-gradient-to-br from-[#2fa84f] to-[#1a7a35] flex items-center justify-center">
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5"><path d="M12 2L3 7v9c0 5 9 7 9 7s9-2 9-7V7l-9-5z"/></svg>
-                </div>
-                <div className="text-white text-xl font-[800]">GreenMarket</div>
+          <div>
+            <h6 className="mb-4 text-xs font-bold uppercase tracking-[0.2em] text-[#2fa84f]">
+              Newsletter
+            </h6>
+            <div className="flex max-w-md overflow-hidden rounded-xl border border-white/10 bg-white/5 backdrop-blur-md">
+              <input
+                type="email"
+                placeholder="Email Anda"
+                className="min-w-0 flex-1 bg-transparent px-4 py-3 text-sm text-white outline-none placeholder:text-white/35"
+              />
+              <motion.button
+                className="shrink-0 bg-[#2fa84f] px-5 py-3 text-sm font-bold text-white transition hover:bg-[#268c41]"
+                whileHover={{ scale: 1.04 }}
+                whileTap={{ scale: 0.96 }}
+              >
+                Kirim
+              </motion.button>
             </div>
-            <p className="text-white/50 text-sm leading-relaxed max-w-xs">Solusi ramah lingkungan untuk masa depan. Kami menghubungkan barang berkualitas dengan pemilik baru yang peduli bumi.</p>
+            <p className="mt-6 text-[11px] font-semibold tracking-widest text-white/25">
+              © 2026 GREENMARKET INC.
+            </p>
           </div>
-          <div className="text-left">
-            <h6 className="font-bold text-[#2fa84f] mb-8 text-[14px] uppercase tracking-widest">Newsletter</h6>
-            <div className="flex bg-white/5 rounded-xl overflow-hidden mb-5 border border-white/10">
-              <input type="email" placeholder="Email Anda" className="bg-transparent px-5 py-3 outline-none flex-grow text-sm text-white" />
-              <button className="bg-[#2fa84f] text-white px-5 py-3 hover:bg-[#268c41] transition">🚀</button>
-            </div>
-            <p className="text-white/30 text-[11px] font-bold tracking-widest">© 2026 GREENMARKET INC.</p>
-          </div>
-        </div>
+        </motion.div>
       </footer>
-    </div>
-  );
-}
-
-function InfoCard({ icon, badge, title, desc }: InfoCardProps) {
-  return (
-    <div className="bg-[#1a1f1b] p-14 rounded-[40px] shadow-2xl border border-white/5 h-full transition-all hover:border-[#2fa84f]/40 text-left group">
-      <div className="w-[64px] h-[64px] bg-white/5 text-[#2fa84f] rounded-[20px] flex items-center justify-center mb-8 group-hover:bg-[#2fa84f] group-hover:text-white transition-all duration-300">
-        {icon}
-      </div>
-      <h5 className="text-[#2fa84f] font-[800] text-[10px] uppercase tracking-[2px]">{badge}</h5>
-      <h2 className="text-[30px] font-[800] my-5 leading-tight tracking-tight text-white">{title}</h2>
-      <p className="text-white/50 leading-relaxed mb-8 text-[15px]">{desc}</p>
-      <Link href="/login" className="text-[#2fa84f] font-[800] text-[14px] no-underline group flex items-center gap-2 transition hover:text-white">
-        Gabung Sekarang <span className="transition-transform group-hover:translate-x-2">→</span>
-      </Link>
     </div>
   );
 }

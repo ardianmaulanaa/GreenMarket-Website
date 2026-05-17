@@ -1,12 +1,40 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import FloatingInput from "@/components/auth/FloatingInput";
+import BackButton from "@/components/profile/BackButton";
+import ProfileAvatarEditor from "@/components/profile/ProfileAvatarEditor";
+import RoleBadge from "@/components/profile/RoleBadge";
+import { motion, type Variants } from "framer-motion";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useEffect, useMemo, useState, type SyntheticEvent } from "react";
+
+const fadeUp: Variants = {
+  hidden: { opacity: 0, y: 24 },
+  visible: (i: number) => ({
+    opacity: 1,
+    y: 0,
+    transition: {
+      duration: 0.5,
+      delay: i * 0.08,
+      ease: [0.22, 1, 0.36, 1] as [number, number, number, number],
+    },
+  }),
+};
+
+const stagger: Variants = {
+  hidden: {},
+  visible: { transition: { staggerChildren: 0.08 } },
+};
+
+function defaultAvatarUrl(name: string) {
+  return `https://ui-avatars.com/api/?name=${encodeURIComponent(name || "User")}&background=2fa84f&color=fff&size=256`;
+}
 
 export default function ProfilePage() {
   const [isPageLoading, setIsPageLoading] = useState(true);
-  const [showPassword, setShowPassword] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const router = useRouter();
 
   const [form, setForm] = useState({
@@ -22,12 +50,20 @@ export default function ProfilePage() {
     role: "",
   });
 
-  const normalizeRole = (role: string) => {
-    return role?.trim().toUpperCase();
-  };
+  const normalizeRole = (role: string) => role?.trim().toUpperCase();
 
   const isSeller = normalizeRole(profile.role) === "SELLER";
   const dashboardHref = isSeller ? "/dashboard-seller" : "/dashboard-buyer";
+
+  const avatarSrc = useMemo(
+    () => avatarPreview ?? defaultAvatarUrl(profile.nama),
+    [avatarPreview, profile.nama]
+  );
+
+  const handleAvatarSelect = (dataUrl: string) => {
+    setAvatarPreview(dataUrl);
+    localStorage.setItem("profileAvatar", dataUrl);
+  };
 
   const fetchProfile = async () => {
     const userId = localStorage.getItem("userId");
@@ -70,19 +106,19 @@ export default function ProfilePage() {
   };
 
   useEffect(() => {
+    const savedAvatar = localStorage.getItem("profileAvatar");
+    if (savedAvatar) setAvatarPreview(savedAvatar);
+
     const loadProfile = async () => {
       setIsPageLoading(true);
       await fetchProfile();
-
-      setTimeout(() => {
-        setIsPageLoading(false);
-      }, 500);
+      setTimeout(() => setIsPageLoading(false), 500);
     };
 
     loadProfile();
   }, []);
 
-  const handleUpdateProfile = async (e: React.SyntheticEvent<HTMLFormElement>) => {
+  const handleUpdateProfile = async (e: SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     const userId = localStorage.getItem("userId");
@@ -98,6 +134,7 @@ export default function ProfilePage() {
       return;
     }
 
+    setIsSubmitting(true);
     try {
       const response = await fetch(`http://localhost:5050/api/users/${userId}`, {
         method: "PUT",
@@ -140,6 +177,8 @@ export default function ProfilePage() {
     } catch (error) {
       console.error("Gagal update profile:", error);
       alert("Terjadi kesalahan saat update profile");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -150,136 +189,119 @@ export default function ProfilePage() {
 
   if (isPageLoading) {
     return (
-      <div className="min-h-screen bg-[#0a110b] flex flex-col items-center justify-center font-sans">
-        <div className="w-12 h-12 border-4 border-[#2fa84f]/20 border-t-[#2fa84f] rounded-full animate-spin mb-4"></div>
-        <p className="text-[#2fa84f] font-bold text-[11px] tracking-[3px] uppercase animate-pulse">
+      <motion.div
+        className="flex min-h-screen flex-col items-center justify-center bg-[#0a110b] font-sans"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+      >
+        <motion.div
+          className="relative mb-6 h-14 w-14"
+          animate={{ rotate: 360 }}
+          transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+        >
+          <motion.div className="absolute inset-0 rounded-full border-4 border-[#2fa84f]/20" />
+          <motion.div className="absolute inset-0 rounded-full border-4 border-transparent border-t-[#2fa84f]" />
+        </motion.div>
+        <motion.p
+          className="text-[11px] font-bold uppercase tracking-[0.3em] text-[#2fa84f]"
+          animate={{ opacity: [0.5, 1, 0.5] }}
+          transition={{ duration: 2, repeat: Infinity }}
+        >
           Memuat Profil...
-        </p>
-      </div>
+        </motion.p>
+      </motion.div>
     );
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-br from-[#f1f8e9] via-[#2fa84f]/15 to-[#0a110b] font-sans text-[#1a2e1f] relative overflow-hidden">
-      <div className="absolute top-[-10%] right-[-5%] w-[600px] h-[600px] bg-[#2fa84f] opacity-20 blur-[150px] rounded-full pointer-events-none"></div>
+    <div className="relative flex min-h-screen flex-col overflow-hidden bg-gradient-to-br from-[#f1f8e9] via-[#2fa84f]/12 to-[#0a110b] font-sans text-[#1a2e1f]">
+      <motion.div
+        className="pointer-events-none absolute -right-24 top-0 h-[520px] w-[520px] rounded-full bg-[#2fa84f]/20 blur-[140px]"
+        animate={{ opacity: [0.3, 0.55, 0.3] }}
+        transition={{ duration: 9, repeat: Infinity }}
+      />
 
-      <nav className="fixed top-0 left-0 right-0 z-[100] bg-[#1a1f1b]/90 backdrop-blur-xl border-b border-white/10 shadow-lg h-[72px] px-8 flex items-center justify-between">
-        <div className="flex items-center gap-8">
-          <Link
-            href={dashboardHref}
-            className="flex items-center gap-2 no-underline group"
-          >
-            <div className="w-[36px] h-[36px] rounded-xl bg-gradient-to-br from-[#2fa84f] to-[#1a7a35] flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform">
-              <svg
-                width="20"
-                height="20"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="white"
-                strokeWidth="2.5"
-              >
+      {/* Navbar */}
+      <nav className="fixed top-0 right-0 left-0 z-[100] flex h-[72px] items-center justify-between border-b border-white/10 bg-[#1a1f1b]/90 px-4 shadow-lg backdrop-blur-xl sm:px-6 lg:px-8">
+        <div className="flex min-w-0 items-center gap-2 sm:gap-3">
+          <BackButton href={dashboardHref} />
+          <Link href={dashboardHref} className="flex min-w-0 items-center gap-2 no-underline group">
+            <motion.div
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#2fa84f] to-[#1a7a35] shadow-lg sm:h-[36px] sm:w-[36px]"
+              whileHover={{ scale: 1.05 }}
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5">
                 <path d="M12 2L3 7v9c0 5 9 7 9 7s9-2 9-7V7l-9-5z" />
               </svg>
-            </div>
-            <span className="text-xl font-black text-white tracking-tight uppercase">
+            </motion.div>
+            <span className="truncate text-base font-black tracking-tight text-white uppercase sm:text-xl">
               Green<span className="text-[#2fa84f]">Market</span>
             </span>
           </Link>
         </div>
 
-        <div className="flex-1 max-w-xl mx-10 hidden md:block">
-          <div className="relative group">
-            <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
-              <svg
-                width="18"
-                height="18"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="#6b7280"
-                strokeWidth="2.5"
-              >
+        <div className="mx-4 hidden max-w-xl flex-1 md:block">
+          <div className="relative">
+            <motion.div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6b7280" strokeWidth="2.5">
                 <circle cx="11" cy="11" r="8" />
                 <line x1="21" y1="21" x2="16.65" y2="16.65" />
               </svg>
-            </div>
+            </motion.div>
             <input
               type="text"
               placeholder="Cari produk ramah lingkungan..."
-              className="w-full bg-white/5 border border-white/10 rounded-2xl pl-12 pr-4 py-2.5 text-sm text-white focus:outline-none focus:border-[#2fa84f] transition-all placeholder:text-gray-500"
+              className="w-full rounded-2xl border border-white/10 bg-white/5 py-2.5 pr-4 pl-12 text-sm text-white transition-all placeholder:text-gray-500 focus:border-[#2fa84f] focus:outline-none"
             />
           </div>
         </div>
 
-        <div className="flex items-center gap-4">
-          <Link
-            href={dashboardHref}
-            className="text-gray-400 hover:text-white text-xs font-bold transition-colors bg-transparent border-none cursor-pointer mr-2 no-underline flex items-center gap-1"
-          >
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.5"
-            >
-              <line x1="19" y1="12" x2="5" y2="12"></line>
-              <polyline points="12 19 5 12 12 5"></polyline>
-            </svg>
-            Kembali
-          </Link>
-
-          <div className="flex items-center gap-3 pl-2 group">
-            <div className="text-right hidden sm:block">
-              <p className="text-xs font-bold text-white m-0 group-hover:text-[#2fa84f] transition-colors">
-                {profile.nama}
-              </p>
-              <p className="text-[10px] text-[#2fa84f] m-0 font-black uppercase">
-                {isSeller ? "SELLER HUB" : "BUYER"}
-              </p>
-            </div>
-
-            <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-[#2fa84f] to-[#1a7a35] p-[2px]">
-              <div className="w-full h-full rounded-full bg-[#0a110b] flex items-center justify-center text-white font-bold uppercase">
-                {profile.nama ? profile.nama.charAt(0) : "U"}
-              </div>
-            </div>
+        <div className="flex shrink-0 items-center gap-2 sm:gap-3">
+          <div className="hidden text-right sm:block">
+            <p className="m-0 text-xs font-bold text-white">{profile.nama}</p>
+            <p className="m-0 text-[10px] font-black uppercase text-[#2fa84f]">
+              {isSeller ? "SELLER HUB" : "BUYER"}
+            </p>
           </div>
+          <motion.img
+            src={avatarSrc}
+            alt=""
+            className="h-10 w-10 rounded-full border-2 border-[#2fa84f]/40 object-cover shadow-[0_0_12px_rgba(47,168,79,0.3)]"
+            whileHover={{ scale: 1.05 }}
+          />
         </div>
       </nav>
 
-      <div className="max-w-[1600px] mx-auto pt-28 pb-20 px-6 flex flex-col lg:flex-row gap-8 relative z-10 w-full flex-grow">
-        <aside className="w-full lg:w-[280px] shrink-0">
-          <div className="sticky top-28 bg-[#1a1f1b]/80 backdrop-blur-xl rounded-[32px] p-6 border border-white/5 shadow-2xl">
-            <div className="text-center mb-8">
-              <div className="relative w-20 h-20 mx-auto mb-4">
-                <img
-                  src={`https://ui-avatars.com/api/?name=${profile.nama.replace(" ", "+")}&background=2fa84f&color=fff&size=128`}
-                  className="w-full h-full rounded-full border-[3px] border-[#2fa84f]/40 object-cover shadow-[0_0_15px_rgba(47,168,79,0.3)]"
-                  alt="Avatar"
-                />
-              </div>
-              <h3 className="text-lg font-[800] text-white m-0 tracking-tight">
+      <div className="relative z-10 mx-auto flex w-full max-w-[1600px] flex-grow flex-col gap-6 px-4 pt-24 pb-16 sm:px-6 lg:flex-row lg:gap-8 lg:px-6 lg:pt-28 lg:pb-20">
+        {/* Sidebar */}
+        <aside className="w-full shrink-0 lg:w-[280px]">
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.5 }}
+            className="sticky top-24 rounded-[28px] border border-white/10 bg-[#1a1f1b]/85 p-5 shadow-2xl backdrop-blur-xl sm:rounded-[32px] sm:p-6"
+          >
+            <div className="mb-6 flex flex-col items-center text-center sm:mb-8">
+              <ProfileAvatarEditor
+                src={avatarSrc}
+                name={profile.nama}
+                size={88}
+                onImageSelect={handleAvatarSelect}
+              />
+              <h3 className="mt-4 text-base font-extrabold tracking-tight text-white sm:text-lg">
                 {profile.nama}
               </h3>
-              <p className="text-[10px] text-[#2fa84f] m-0 mt-1.5 uppercase font-black tracking-[2px]">
-                {profile.role}
-              </p>
+              <div className="mt-2">
+                <RoleBadge role={profile.role} />
+              </div>
             </div>
 
             <nav className="flex flex-col gap-2">
               <Link
                 href="/profile"
-                className="flex items-center gap-3 p-3.5 rounded-2xl bg-[#2fa84f] text-white font-bold transition no-underline shadow-[0_4px_15px_rgba(47,168,79,0.2)]"
+                className="flex items-center gap-3 rounded-2xl bg-[#2fa84f] p-3.5 font-bold text-white no-underline shadow-[0_4px_15px_rgba(47,168,79,0.2)] transition"
               >
-                <svg
-                  width="18"
-                  height="18"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2.5"
-                >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                   <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
                   <circle cx="12" cy="7" r="4" />
                 </svg>
@@ -288,19 +310,9 @@ export default function ProfilePage() {
 
               <Link
                 href="/alamat"
-                className="flex items-center gap-3 p-3.5 rounded-2xl text-gray-400 hover:bg-white/5 hover:text-white transition no-underline font-semibold group"
+                className="group flex items-center gap-3 rounded-2xl p-3.5 font-semibold text-gray-400 no-underline transition hover:bg-white/5 hover:text-white"
               >
-                <svg
-                  width="18"
-                  height="18"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  className="group-hover:text-[#2fa84f] transition-colors"
-                >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="transition-colors group-hover:text-[#2fa84f]">
                   <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
                   <circle cx="12" cy="10" r="3" />
                 </svg>
@@ -309,17 +321,9 @@ export default function ProfilePage() {
 
               <Link
                 href="/pesanan"
-                className="flex items-center gap-3 p-3.5 rounded-2xl text-gray-400 hover:bg-white/5 hover:text-white transition no-underline font-semibold group"
+                className="group flex items-center gap-3 rounded-2xl p-3.5 font-semibold text-gray-400 no-underline transition hover:bg-white/5 hover:text-white"
               >
-                <svg
-                  width="18"
-                  height="18"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2.5"
-                  className="group-hover:text-[#2fa84f] transition-colors"
-                >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="transition-colors group-hover:text-[#2fa84f]">
                   <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" />
                   <line x1="3" y1="6" x2="21" y2="6" />
                   <path d="M16 10a4 4 0 01-8 0" />
@@ -330,16 +334,9 @@ export default function ProfilePage() {
               {!isSeller ? (
                 <Link
                   href="/register-penjual"
-                  className="flex items-center gap-3 p-3.5 rounded-2xl text-[#2fa84f] bg-[#2fa84f]/10 border border-[#2fa84f]/20 hover:bg-[#2fa84f]/20 transition no-underline font-bold mt-2 shadow-sm"
+                  className="mt-2 flex items-center gap-3 rounded-2xl border border-[#2fa84f]/20 bg-[#2fa84f]/10 p-3.5 font-bold text-[#2fa84f] no-underline shadow-sm transition hover:bg-[#2fa84f]/20"
                 >
-                  <svg
-                    width="18"
-                    height="18"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2.5"
-                  >
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                     <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
                     <polyline points="9 22 9 12 15 12 15 22" />
                   </svg>
@@ -348,16 +345,9 @@ export default function ProfilePage() {
               ) : (
                 <Link
                   href="/panel-penjual"
-                  className="flex items-center gap-3 p-3.5 rounded-2xl text-[#2fa84f] border border-[#2fa84f]/20 bg-[#2fa84f]/10 hover:bg-[#2fa84f]/20 transition no-underline font-bold mt-2 shadow-sm"
+                  className="mt-2 flex items-center gap-3 rounded-2xl border border-[#2fa84f]/20 bg-[#2fa84f]/10 p-3.5 font-bold text-[#2fa84f] no-underline shadow-sm transition hover:bg-[#2fa84f]/20"
                 >
-                  <svg
-                    width="18"
-                    height="18"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2.5"
-                  >
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                     <rect x="3" y="3" width="7" height="7" />
                     <rect x="14" y="3" width="7" height="7" />
                     <rect x="14" y="14" width="7" height="7" />
@@ -367,21 +357,14 @@ export default function ProfilePage() {
                 </Link>
               )}
 
-              <div className="my-4 border-t border-white/5" />
+              <div className="my-3 border-t border-white/5 sm:my-4" />
 
               <button
+                type="button"
                 onClick={handleLogout}
-                className="w-full flex items-center gap-3 p-3.5 rounded-2xl text-red-400 hover:bg-red-500/10 hover:border-red-500/20 border border-transparent transition font-bold text-left group"
+                className="group flex w-full items-center gap-3 rounded-2xl border border-transparent p-3.5 text-left font-bold text-red-400 transition hover:border-red-500/20 hover:bg-red-500/10"
               >
-                <svg
-                  width="18"
-                  height="18"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2.5"
-                  className="group-hover:translate-x-1 transition-transform"
-                >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="transition-transform group-hover:translate-x-1">
                   <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
                   <polyline points="16 17 21 12 16 7" />
                   <line x1="21" y1="12" x2="9" y2="12" />
@@ -389,131 +372,159 @@ export default function ProfilePage() {
                 <span className="text-sm">Keluar</span>
               </button>
             </nav>
-          </div>
+          </motion.div>
         </aside>
 
-        <main className="flex-1">
-          <div className="bg-[#1a1f1b]/80 backdrop-blur-xl rounded-[32px] p-8 lg:p-12 border border-white/5 shadow-2xl relative overflow-hidden h-full">
-            <div className="absolute top-[-20%] right-[-10%] w-64 h-64 bg-[#2fa84f] rounded-full opacity-[0.15] blur-3xl pointer-events-none"></div>
+        {/* Main */}
+        <main className="min-w-0 flex-1">
+          <motion.div
+            initial="hidden"
+            animate="visible"
+            variants={stagger}
+            className="space-y-6"
+          >
+            {/* Header card */}
+            <motion.div
+              variants={fadeUp}
+              custom={0}
+              className="relative overflow-hidden rounded-[28px] border border-white/10 bg-[#1a1f1b]/80 p-6 shadow-2xl backdrop-blur-xl sm:rounded-[32px] sm:p-8"
+            >
+              <div className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-[#2fa84f]/15 blur-[60px]" />
+              <motion.div className="relative z-10 flex flex-col items-center gap-5 sm:flex-row sm:items-center sm:gap-8">
+                <ProfileAvatarEditor
+                  src={avatarSrc}
+                  name={profile.nama}
+                  size={120}
+                  onImageSelect={handleAvatarSelect}
+                />
+                <div className="text-center sm:text-left">
+                  <h2 className="m-0 text-2xl font-extrabold tracking-tight text-white sm:text-3xl">
+                    {profile.nama || "Pengguna"}
+                  </h2>
+                  <motion.div className="mt-3 flex flex-wrap items-center justify-center gap-2 sm:justify-start">
+                    <RoleBadge role={profile.role} />
+                    <span className="rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-white/40">
+                      Aktif
+                    </span>
+                  </motion.div>
+                  <p className="mt-3 text-sm text-white/50">{profile.email}</p>
+                </div>
+              </motion.div>
+            </motion.div>
 
-            <div className="relative z-10 mb-10">
-              <h2 className="text-3xl font-[800] text-white tracking-tight m-0">
-                Pengaturan Profil
-              </h2>
-              <p className="text-sm text-gray-400 mt-2 font-medium">
-                Kelola informasi data diri dan keamanan akun Anda.
-              </p>
-            </div>
+            {/* Form card */}
+            <motion.div
+              variants={fadeUp}
+              custom={1}
+              className="relative overflow-hidden rounded-[28px] border border-white/10 bg-[#1a1f1b]/80 p-6 shadow-2xl backdrop-blur-xl sm:rounded-[32px] sm:p-8 lg:p-10"
+            >
+              <div className="pointer-events-none absolute top-[-15%] right-[-8%] h-56 w-56 rounded-full bg-[#2fa84f]/15 blur-3xl" />
 
-            <form onSubmit={handleUpdateProfile} className="space-y-8 relative z-10">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div className="flex flex-col gap-2">
-                  <label className="text-[11px] font-bold text-gray-400 uppercase tracking-widest ml-1">
-                    Nama Lengkap
-                  </label>
-                  <input
-                    type="text"
+              <motion.div variants={fadeUp} custom={2} className="relative z-10 mb-8">
+                <h2 className="m-0 text-2xl font-extrabold tracking-tight text-white sm:text-3xl">
+                  Pengaturan Profil
+                </h2>
+                <p className="mt-2 text-sm font-medium text-white/45">
+                  Kelola informasi data diri dan keamanan akun Anda.
+                </p>
+              </motion.div>
+
+              <form onSubmit={handleUpdateProfile} className="relative z-10 space-y-6">
+                <motion.div variants={fadeUp} custom={3} className="grid grid-cols-1 gap-5 md:grid-cols-2 md:gap-6">
+                  <FloatingInput
+                    id="nama"
+                    name="nama"
+                    label="Nama Lengkap"
                     value={form.nama}
                     onChange={(e) => setForm({ ...form, nama: e.target.value })}
-                    className="w-full px-5 py-4 border border-white/10 rounded-2xl outline-none focus:border-[#2fa84f] focus:ring-1 focus:ring-[#2fa84f] focus:bg-[#1a1f1b] text-sm text-white bg-[#1a1f1b]/50 shadow-inner transition-all"
+                    required
+                    index={0}
                   />
-                </div>
-
-                <div className="flex flex-col gap-2">
-                  <label className="text-[11px] font-bold text-gray-400 uppercase tracking-widest ml-1 flex justify-between">
-                    Email
-                    <span className="text-[#2fa84f] lowercase tracking-normal flex items-center gap-1">
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
-                      </svg>
-                      Terverifikasi
-                    </span>
-                  </label>
-                  <input
+                  <FloatingInput
+                    id="email"
+                    name="email"
                     type="email"
+                    label="Email"
                     value={form.email}
                     readOnly
-                    className="w-full px-5 py-4 border border-white/5 rounded-2xl text-sm bg-white/5 cursor-not-allowed outline-none font-medium text-gray-500 shadow-inner"
+                    index={1}
                   />
-                </div>
+                </motion.div>
 
-                <div className="flex flex-col gap-2">
-                  <label className="text-[11px] font-bold text-gray-400 uppercase tracking-widest ml-1">
-                    Password Baru
-                  </label>
-                  <div className="relative">
-                    <input
-                      type={showPassword ? "text" : "password"}
-                      placeholder="Kosongkan jika tidak diubah"
-                      className="w-full px-5 py-4 border border-white/10 rounded-2xl outline-none focus:border-[#2fa84f] focus:ring-1 focus:ring-[#2fa84f] focus:bg-[#1a1f1b] text-sm text-white bg-[#1a1f1b]/50 pr-14 shadow-inner transition-all placeholder:text-gray-600"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white transition-colors"
+                <motion.div variants={fadeUp} custom={4} className="grid grid-cols-1 gap-5 md:grid-cols-2 md:gap-6">
+                  <FloatingInput
+                    id="password"
+                    name="password"
+                    label="Password Baru"
+                    value={form.password}
+                    onChange={(e) => setForm({ ...form, password: e.target.value })}
+                    showToggle
+                    placeholder="Kosongkan jika tidak diubah"
+                    index={2}
+                  />
+
+                  <motion.div variants={fadeUp} custom={5}>
+                    <label className="mb-2 ml-1 block text-[10px] font-bold uppercase tracking-wider text-white/40">
+                      Status Keanggotaan
+                    </label>
+                    <motion.div
+                      className="flex items-center justify-between rounded-2xl border border-[#2fa84f]/30 bg-[#2fa84f]/10 px-5 py-4 backdrop-blur-sm"
+                      whileHover={{ borderColor: "rgba(47,168,79,0.5)" }}
                     >
-                      {showPassword ? (
-                        <svg
-                          width="18"
-                          height="18"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2.5"
-                        >
-                          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                          <circle cx="12" cy="12" r="3" />
-                        </svg>
-                      ) : (
-                        <svg
-                          width="18"
-                          height="18"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2.5"
-                        >
-                          <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
-                          <line x1="1" y1="1" x2="23" y2="23" />
-                        </svg>
-                      )}
-                    </button>
-                  </div>
-                </div>
-
-                <div className="flex flex-col gap-2">
-                  <label className="text-[11px] font-bold text-gray-400 uppercase tracking-widest ml-1">
-                    Status Keanggotaan
-                  </label>
-                  <div className="w-full px-5 py-4 border border-[#2fa84f]/30 rounded-2xl text-sm flex items-center justify-between bg-[#2fa84f]/10 shadow-inner">
-                    <span className="font-black text-[#2fa84f] uppercase tracking-wider">
-                      {form.role}
-                    </span>
-                    <div className="flex items-center gap-2">
-                      <span className="text-[10px] text-[#2fa84f] font-bold uppercase tracking-wider">
-                        Aktif
+                      <span className="font-extrabold uppercase tracking-wider text-[#2fa84f]">
+                        {form.role}
                       </span>
-                      <div className="w-2.5 h-2.5 rounded-full bg-[#2fa84f] animate-pulse shadow-[0_0_8px_#2fa84f]"></div>
-                    </div>
-                  </div>
-                </div>
-              </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-[#2fa84f]">
+                          Aktif
+                        </span>
+                        <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-[#2fa84f] shadow-[0_0_8px_#2fa84f]" />
+                      </div>
+                    </motion.div>
+                  </motion.div>
+                </motion.div>
 
-              <div className="mt-12 pt-8 border-t border-white/5 flex justify-end">
-                <button
-                  type="submit"
-                  className="bg-[#2fa84f] text-white px-8 py-3.5 rounded-xl font-[800] text-sm hover:bg-[#268c41] transition-all shadow-[0_10px_25px_rgba(47,168,79,0.3)] hover:-translate-y-1 active:scale-[0.98]"
+                <motion.div
+                  variants={fadeUp}
+                  custom={6}
+                  className="flex justify-end border-t border-white/5 pt-6 sm:pt-8"
                 >
-                  Simpan Perubahan
-                </button>
-              </div>
-            </form>
-          </div>
+                  <motion.button
+                    type="submit"
+                    disabled={isSubmitting}
+                    whileHover={!isSubmitting ? { y: -3, scale: 1.02 } : {}}
+                    whileTap={!isSubmitting ? { scale: 0.98 } : {}}
+                    className="relative overflow-hidden rounded-2xl bg-[#2fa84f] px-8 py-3.5 text-sm font-extrabold text-white shadow-[0_10px_30px_rgba(47,168,79,0.35)] transition disabled:cursor-not-allowed disabled:opacity-70"
+                  >
+                    <motion.span
+                      className="pointer-events-none absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
+                      animate={isSubmitting ? {} : { x: ["-100%", "100%"] }}
+                      transition={{ duration: 2.5, repeat: Infinity, repeatDelay: 1 }}
+                    />
+                    <span className="relative z-10 flex items-center gap-2">
+                      {isSubmitting ? (
+                        <>
+                          <motion.span
+                            className="inline-block h-4 w-4 rounded-full border-2 border-white/30 border-t-white"
+                            animate={{ rotate: 360 }}
+                            transition={{ duration: 0.8, repeat: Infinity, ease: "linear" }}
+                          />
+                          Menyimpan...
+                        </>
+                      ) : (
+                        "Simpan Perubahan"
+                      )}
+                    </span>
+                  </motion.button>
+                </motion.div>
+              </form>
+            </motion.div>
+          </motion.div>
         </main>
       </div>
 
-      <footer className="bg-transparent py-8 text-center border-t border-[#1a2e1f]/10 mt-auto relative z-10">
-        <p className="text-[#1a2e1f]/50 text-[10px] font-black tracking-[4px] uppercase m-0">
+      <footer className="relative z-10 mt-auto border-t border-[#1a2e1f]/10 bg-transparent py-6 text-center sm:py-8">
+        <p className="m-0 text-[10px] font-black tracking-[0.25em] text-[#1a2e1f]/50 uppercase">
           © 2026 GREENMARKET. ALL SELLER & BUYER CATALOG.
         </p>
       </footer>
