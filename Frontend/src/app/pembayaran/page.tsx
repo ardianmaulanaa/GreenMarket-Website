@@ -83,6 +83,8 @@ function PembayaranContent() {
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
+  const [isPaying, setIsPaying] = useState(false);
+
   const fetchMetodePembayaran = async () => {
     try {
       const response = await fetch(
@@ -264,6 +266,9 @@ function PembayaranContent() {
 
   const handleBayar = async () => {
     const userId = localStorage.getItem("userId");
+
+    if (isPaying) return;
+    setIsPaying(true);
 
     if (!userId) {
       alert("Silakan login terlebih dahulu");

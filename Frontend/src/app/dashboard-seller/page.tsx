@@ -70,6 +70,7 @@ export default function DashboardSeller() {
   const [dbProducts, setDbProducts] = useState<Produk[]>([]);
   const [loading, setLoading] = useState(true);
   const [userName, setUserName] = useState<string>("User");
+  const [sellerId, setSellerId] = useState<number | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [currentSlide, setCurrentSlide] = useState(0);
 
@@ -104,7 +105,10 @@ export default function DashboardSeller() {
     return () => clearInterval(interval);
   }, []);
 
-  const myProducts = dbProducts;
+    const myProducts = sellerId
+    ? dbProducts.filter((p) => p.id_user_seller === sellerId)
+    : [];
+
   const totalProduk = myProducts.length;
   const totalStok = myProducts.reduce((acc, curr) => acc + curr.stok, 0);
   const produkMenipis = myProducts.filter((p) => p.stok < 5).length;
@@ -114,6 +118,7 @@ export default function DashboardSeller() {
       const storedUserId = localStorage.getItem("userId");
       const storedRole = localStorage.getItem("userRole");
       const storedUser = localStorage.getItem("user");
+      setSellerId(Number(storedUserId));
 
       if (!storedUserId) {
         router.push("/login");
@@ -137,9 +142,7 @@ export default function DashboardSeller() {
       try {
         setLoading(true);
 
-        const response = await fetch(
-          `http://localhost:5050/api/products?userId=${storedUserId}`,
-        );
+        const response = await fetch("http://localhost:5050/api/products");
 
         if (!response.ok) {
           throw new Error("Gagal mengambil data produk seller");
@@ -483,7 +486,7 @@ export default function DashboardSeller() {
           <section className="flex-1">
             <div className={`flex justify-between items-end mb-8 ${shouldAnimate ? 'animate-fade-in-up delay-300' : 'opacity-0'}`}>
               <h3 className="text-2xl font-[800] text-[#1a2e1f] tracking-tight m-0">
-                Katalog Produk Saya
+                Katalog Produk GreenMarket
               </h3>
             </div>
 
@@ -500,12 +503,22 @@ export default function DashboardSeller() {
               </div>
             ) : (
               <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-5">
-                {filteredProducts.map((p, i) => (
-                  <div key={p.id_produk} className={`relative group ${shouldAnimate ? 'animate-fade-in-up' : 'opacity-0'}`} style={shouldAnimate ? { animationDelay: `${400 + (i % 8) * 100}ms` } : {}}>
-                    <Link
-                      href={`/katalog-detail/${p.id_produk}`}
-                      className="no-underline block h-full"
-                    >
+                {filteredProducts.map((p, i) => {
+                const isMyProduct = sellerId !== null && p.id_user_seller === sellerId;
+
+                return (
+                  <div
+                    key={p.id_produk}
+                    className={`relative group ${
+                      shouldAnimate ? "animate-fade-in-up" : "opacity-0"
+                    }`}
+                    style={
+                      shouldAnimate
+                        ? { animationDelay: `${400 + (i % 8) * 100}ms` }
+                        : {}
+                    }
+                  >
+                    <Link href={`/katalog-detail/${p.id_produk}`} className="no-underline block h-full">
                       <div className="bg-[#1a1f1b]/90 backdrop-blur-md border border-white/5 rounded-[28px] overflow-hidden hover:border-[#2fa84f]/50 transition-all duration-500 flex flex-col relative shadow-xl hover:-translate-y-1 h-full">
                         <div className="relative aspect-square bg-[#0a110b] overflow-hidden">
                           <img
@@ -513,22 +526,32 @@ export default function DashboardSeller() {
                             alt={p.nama_produk}
                             className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 opacity-90 group-hover:opacity-100"
                           />
+
                           <div className="absolute top-4 left-4 bg-[#2fa84f] text-white text-[9px] font-black px-3 py-1.5 rounded-full uppercase tracking-wider shadow-lg">
                             {p.kategori?.nama_kategori || "Eco Product"}
                           </div>
+
+                          {isMyProduct && (
+                            <div className="absolute top-4 right-4 bg-yellow-400 text-[#1a1f1b] text-[9px] font-black px-3 py-1.5 rounded-full uppercase tracking-wider shadow-lg">
+                              Produk Saya
+                            </div>
+                          )}
                         </div>
 
                         <div className="p-5 flex flex-col flex-grow">
                           <h4 className="font-bold text-[14px] text-white mb-1.5 line-clamp-1 leading-snug group-hover:text-[#2fa84f] transition-colors">
                             {p.nama_produk}
                           </h4>
+
                           <p className="text-gray-400 text-[11px] mb-4 line-clamp-2 italic opacity-70 leading-relaxed">
                             {p.deskripsi}
                           </p>
+
                           <div className="text-[#2fa84f] font-[900] text-lg mb-4 mt-auto tracking-tight">
                             <span className="text-[11px] mr-0.5">Rp</span>
                             {p.harga?.toLocaleString("id-ID")}
                           </div>
+
                           <div className="flex justify-between items-center pt-4 border-t border-white/5">
                             <span className="text-[9px] text-gray-500 uppercase font-black truncate max-w-[100px] flex items-center gap-1.5">
                               <svg
@@ -544,6 +567,7 @@ export default function DashboardSeller() {
                               </svg>
                               {p.seller?.username || "Toko Saya"}
                             </span>
+
                             <span className="text-[9px] text-[#2fa84f] bg-[#2fa84f]/10 px-2 py-1 rounded font-black uppercase">
                               {p.stok} Unit
                             </span>
@@ -552,7 +576,8 @@ export default function DashboardSeller() {
                       </div>
                     </Link>
                   </div>
-                ))}
+                );
+              })}
               </div>
             )}
           </section>
