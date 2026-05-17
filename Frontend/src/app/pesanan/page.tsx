@@ -4,6 +4,55 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
+// Animation styles for smooth entrance effects
+const animationStyles = `
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(40px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  @keyframes slideInLeft {
+    from {
+      opacity: 0;
+      transform: translateX(-40px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  .animate-fade-in-up {
+    opacity: 0;
+    animation: fadeInUp 1s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+  }
+
+  .animate-fade-in {
+    opacity: 0;
+    animation: fadeIn 0.8s ease-out forwards;
+  }
+
+  .animate-slide-in-left {
+    opacity: 0;
+    animation: slideInLeft 0.9s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+  }
+`;
+
 interface TrackingLog {
   id_log: string;
   id_transaksi: string;
@@ -68,6 +117,7 @@ export default function PesananPage() {
   const router = useRouter();
 
   const [isPageLoading, setIsPageLoading] = useState(true);
+  const [shouldAnimate, setShouldAnimate] = useState(false);
   const [activeTab, setActiveTab] = useState("semua");
   const [user, setUser] = useState({ nama: "", role: "" });
   const [transactions, setTransactions] = useState<Transaksi[]>([]);
@@ -107,7 +157,8 @@ export default function PesananPage() {
     // Efek loading transisi halaman
     const timer = setTimeout(() => {
       setIsPageLoading(false);
-    }, 800);
+      setShouldAnimate(true);
+    }, 300);
 
     const savedUser = localStorage.getItem("user");
     if (savedUser) {
@@ -200,11 +251,12 @@ export default function PesananPage() {
   // ── TAMPILAN UTAMA ──
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-[#f1f8e9] via-[#2fa84f]/15 to-[#0a110b] font-sans text-[#1a2e1f] relative overflow-hidden">
+      <style>{animationStyles}</style>
       {/* Dekorasi Glow Hijau Latar Belakang */}
       <div className="absolute top-[-10%] right-[-5%] w-[600px] h-[600px] bg-[#2fa84f] opacity-20 blur-[150px] rounded-full pointer-events-none"></div>
 
       {/* ── NAVBAR ── */}
-      <nav className="fixed top-0 left-0 right-0 z-[100] bg-[#1a1f1b]/90 backdrop-blur-xl border-b border-white/10 shadow-lg h-[72px] px-8 flex items-center justify-between">
+      <nav className={`fixed top-0 left-0 right-0 z-[100] bg-[#1a1f1b]/90 backdrop-blur-xl border-b border-white/10 shadow-lg h-[72px] px-8 flex items-center justify-between ${shouldAnimate ? 'animate-fade-in' : 'opacity-0'}`}>
         <div className="flex items-center gap-8">
           <Link
             href={isSeller ? "/dashboard-seller" : "/dashboard-buyer"}
@@ -226,6 +278,18 @@ export default function PesananPage() {
               Green<span className="text-[#2fa84f]">Market</span>
             </span>
           </Link>
+          
+          {!isSeller && (
+            <div className="hidden lg:flex items-center gap-4">
+              <Link
+                href="/register-penjual"
+                className="bg-white/5 border border-white/10 text-white px-5 py-2.5 rounded-xl text-xs font-bold no-underline hover:bg-[#2fa84f] hover:border-transparent transition-all flex items-center gap-2"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>
+                Mulai Berjualan
+              </Link>
+            </div>
+          )}
         </div>
 
         {/* SEARCH BAR (Disembunyikan di mobile) */}
@@ -294,7 +358,7 @@ export default function PesananPage() {
       <div className="max-w-[1600px] mx-auto pt-28 pb-20 px-6 flex flex-col lg:flex-row gap-8 relative z-10 w-full flex-grow">
         {/* ── SIDEBAR PROFIL ── */}
         <aside className="w-full lg:w-[280px] shrink-0">
-          <div className="sticky top-28 bg-[#1a1f1b]/80 backdrop-blur-xl rounded-[32px] p-6 border border-white/5 shadow-2xl">
+          <div className={`sticky top-28 bg-[#1a1f1b]/80 backdrop-blur-xl rounded-[32px] p-6 border border-white/5 shadow-2xl ${shouldAnimate ? 'animate-slide-in-left' : 'opacity-0'}`}>
             <div className="text-center mb-8">
               <div className="relative w-20 h-20 mx-auto mb-4">
                 <img
@@ -439,7 +503,7 @@ export default function PesananPage() {
 
         {/* ── DAFTAR PESANAN UTAMA ── */}
         <main className="flex-1">
-          <div className="bg-[#1a1f1b]/80 backdrop-blur-xl rounded-[32px] p-8 lg:p-12 border border-white/5 shadow-2xl relative overflow-hidden h-full">
+          <div className={`bg-[#1a1f1b]/80 backdrop-blur-xl rounded-[32px] p-8 lg:p-12 border border-white/5 shadow-2xl relative overflow-hidden h-full ${shouldAnimate ? 'animate-fade-in-up' : 'opacity-0'}`}>
             <div className="absolute top-[-20%] right-[-10%] w-64 h-64 bg-[#2fa84f] rounded-full opacity-[0.15] blur-3xl pointer-events-none"></div>
 
             <div className="relative z-10 mb-8">
@@ -473,7 +537,7 @@ export default function PesananPage() {
 
             {/* List Pesanan */}
             <div className="space-y-6 relative z-10">
-              {filteredTransactions.map((trx) => {
+              {filteredTransactions.map((trx, index) => {
                 const firstDetail = trx.detail_transaksi?.[0];
                 const firstProduct = firstDetail?.produk;
 
@@ -502,7 +566,8 @@ export default function PesananPage() {
                 return (
                   <div
                     key={trx.id_transaksi}
-                    className="border border-white/10 rounded-[28px] overflow-hidden bg-[#1a1f1b]/50 hover:border-[#2fa84f]/40 transition-all shadow-lg backdrop-blur-sm"
+                    className={`border border-white/10 rounded-[28px] overflow-hidden bg-[#1a1f1b]/50 hover:border-[#2fa84f]/40 transition-all shadow-lg backdrop-blur-sm ${shouldAnimate ? 'animate-fade-in-up' : 'opacity-0'}`}
+                    style={shouldAnimate ? { animationDelay: `${300 + index * 120}ms` } : {}}
                   >
                     {/* Header Pesanan */}
                     <div className="px-7 py-5 border-b border-white/10 flex justify-between items-center bg-white/5">

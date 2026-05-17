@@ -5,6 +5,55 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 
+// Animation styles for smooth entrance effects
+const animationStyles = `
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(40px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  @keyframes slideInLeft {
+    from {
+      opacity: 0;
+      transform: translateX(-40px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  .animate-fade-in-up {
+    opacity: 0;
+    animation: fadeInUp 1s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+  }
+
+  .animate-fade-in {
+    opacity: 0;
+    animation: fadeIn 0.8s ease-out forwards;
+  }
+
+  .animate-slide-in-left {
+    opacity: 0;
+    animation: slideInLeft 0.9s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+  }
+`;
+
 const MapPicker = dynamic(() => import("./MapPicker"), {
   ssr: false,
   loading: () => <div className="h-[300px] bg-white/5 rounded-2xl animate-pulse" />,
@@ -14,6 +63,7 @@ export default function AlamatPage() {
   const router = useRouter();
   
   const [isPageLoading, setIsPageLoading] = useState(true);
+  const [shouldAnimate, setShouldAnimate] = useState(false);
   const [user, setUser] = useState({ nama: "", role: "" });
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -51,7 +101,10 @@ export default function AlamatPage() {
   };
 
   useEffect(() => {
-    const timer = setTimeout(() => setIsPageLoading(false), 800);
+    const timer = setTimeout(() => {
+      setIsPageLoading(false);
+      setShouldAnimate(true);
+    }, 300);
     const savedUser = localStorage.getItem("user");
     if (savedUser) {
       const userData = JSON.parse(savedUser);
@@ -142,10 +195,11 @@ export default function AlamatPage() {
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-[#f1f8e9] via-[#2fa84f]/15 to-[#0a110b] font-sans text-[#1a2e1f] relative overflow-hidden">
+      <style>{animationStyles}</style>
       <div className="absolute top-[-10%] right-[-5%] w-[600px] h-[600px] bg-[#2fa84f] opacity-20 blur-[150px] rounded-full pointer-events-none"></div>
 
       {/* NAVBAR */}
-      <nav className="fixed top-0 left-0 right-0 z-[100] bg-[#1a1f1b]/90 backdrop-blur-xl border-b border-white/10 shadow-lg h-[72px] px-8 flex items-center justify-between">
+      <nav className={`fixed top-0 left-0 right-0 z-[100] bg-[#1a1f1b]/90 backdrop-blur-xl border-b border-white/10 shadow-lg h-[72px] px-8 flex items-center justify-between ${shouldAnimate ? 'animate-fade-in' : 'opacity-0'}`}>
         <div className="flex items-center gap-8">
           <Link href="/beranda-dashboard" className="flex items-center gap-2 no-underline group">
             <div className="w-[36px] h-[36px] rounded-xl bg-gradient-to-br from-[#2fa84f] to-[#1a7a35] flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform">
@@ -153,6 +207,18 @@ export default function AlamatPage() {
             </div>
             <span className="text-xl font-black text-white tracking-tight uppercase">Green<span className="text-[#2fa84f]">Market</span></span>
           </Link>
+
+          {!isSeller && (
+            <div className="hidden lg:flex items-center gap-4">
+              <Link
+                href="/register-penjual"
+                className="bg-white/5 border border-white/10 text-white px-5 py-2.5 rounded-xl text-xs font-bold no-underline hover:bg-[#2fa84f] hover:border-transparent transition-all flex items-center gap-2"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>
+                Mulai Berjualan
+              </Link>
+            </div>
+          )}
         </div>
         <div className="flex-1 max-w-xl mx-10 hidden md:block">
           <div className="relative group">
@@ -163,10 +229,6 @@ export default function AlamatPage() {
           </div>
         </div>
         <div className="flex items-center gap-4">
-          <Link href="/beranda-dashboard" className="text-gray-400 hover:text-white text-xs font-bold transition-colors bg-transparent border-none cursor-pointer mr-2 no-underline flex items-center gap-1">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
-            Kembali
-          </Link>
           <div className="flex items-center gap-3 pl-2 group">
             <div className="text-right hidden sm:block">
               <p className="text-xs font-bold text-white m-0 group-hover:text-[#2fa84f] transition-colors">{user.nama}</p>
@@ -186,7 +248,7 @@ export default function AlamatPage() {
 
         {/* SIDEBAR */}
         <aside className="w-full lg:w-[280px] shrink-0">
-          <div className="sticky top-28 bg-[#1a1f1b]/80 backdrop-blur-xl rounded-[32px] p-6 border border-white/5 shadow-2xl">
+          <div className={`sticky top-28 bg-[#1a1f1b]/80 backdrop-blur-xl rounded-[32px] p-6 border border-white/5 shadow-2xl ${shouldAnimate ? 'animate-slide-in-left' : 'opacity-0'}`}>
             <div className="text-center mb-8">
               <div className="relative w-20 h-20 mx-auto mb-4">
                 <img src={`https://ui-avatars.com/api/?name=${user.nama.replace(" ", "+")}&background=2fa84f&color=fff&size=128`} className="w-full h-full rounded-full border-[3px] border-[#2fa84f]/40 object-cover shadow-[0_0_15px_rgba(47,168,79,0.3)]" alt="Avatar" />
@@ -229,20 +291,24 @@ export default function AlamatPage() {
 
         {/* DAFTAR ALAMAT */}
         <main className="flex-1">
-          <div className="bg-[#1a1f1b]/80 backdrop-blur-xl rounded-[32px] p-8 lg:p-12 border border-white/5 shadow-2xl relative overflow-hidden h-full">
+          <div className={`bg-[#1a1f1b]/80 backdrop-blur-xl rounded-[32px] p-8 lg:p-12 border border-white/5 shadow-2xl relative overflow-hidden h-full ${shouldAnimate ? 'animate-fade-in-up' : 'opacity-0'}`}>
             <div className="absolute top-[-20%] right-[-10%] w-64 h-64 bg-[#2fa84f] rounded-full opacity-[0.15] blur-3xl pointer-events-none"></div>
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-10 relative z-10">
               <div>
                 <h2 className="text-3xl font-[800] text-white tracking-tight m-0">Daftar Alamat</h2>
                 <p className="text-sm text-gray-400 mt-2 font-medium">Kelola lokasi pengiriman pesanan Anda.</p>
               </div>
-              <button onClick={() => { resetForm(); setEditingId(null); setShowForm(true); }} className="bg-[#2fa84f] text-white px-7 py-3 rounded-2xl font-[800] text-sm hover:bg-[#268c41] transition-all shadow-[0_10px_25px_rgba(47,168,79,0.3)] hover:-translate-y-1 whitespace-nowrap">
-                + Tambah Alamat Baru
+              <button onClick={() => { resetForm(); setEditingId(null); setShowForm(true); }} className="bg-[#2fa84f] text-white px-7 py-3 rounded-2xl font-[800] text-sm hover:bg-[#268c41] transition-all shadow-[0_10px_25px_rgba(47,168,79,0.3)] hover:-translate-y-1 whitespace-nowrap flex items-center justify-center gap-2">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="12" y1="5" x2="12" y2="19" />
+                  <line x1="5" y1="12" x2="19" y2="12" />
+                </svg>
+                Tambah Alamat Baru
               </button>
             </div>
             <div className="grid grid-cols-1 gap-5 relative z-10">
-              {addresses.map((address) => (
-                <div key={address.id_alamat} className="border border-white/10 rounded-[24px] p-7 bg-[#1a1f1b]/50 hover:border-[#2fa84f]/40 hover:bg-white/5 transition-all group shadow-lg">
+              {addresses.map((address, index) => (
+                <div key={address.id_alamat} className={`border border-white/10 rounded-[24px] p-7 bg-[#1a1f1b]/50 hover:border-[#2fa84f]/40 hover:bg-white/5 transition-all group shadow-lg ${shouldAnimate ? 'animate-fade-in-up' : 'opacity-0'}`} style={shouldAnimate ? { animationDelay: `${300 + index * 100}ms` } : {}}>
                   <div className="flex flex-col md:flex-row justify-between items-start gap-4">
                     <div className="flex-1">
                       <div className="flex items-center gap-3 mb-4">
@@ -252,7 +318,7 @@ export default function AlamatPage() {
                       <p className="text-[14px] text-white/90 font-bold mb-1 tracking-wide">{address.nomor_hp}</p>
                       <p className="text-sm text-gray-400 leading-relaxed max-w-2xl mt-2 font-medium">{address.alamat_lengkap}</p>
                     </div>
-                    <div className="flex gap-2 w-full md:w-auto opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity mt-4 md:mt-0">
+                    <div className="flex gap-2 w-full md:w-auto opacity-100 transition-opacity mt-4 md:mt-0">
                       <button onClick={() => handleEdit(address)} className="flex-1 md:flex-none px-4 py-2.5 text-white text-xs font-bold bg-white/10 rounded-xl hover:bg-[#2fa84f] transition-all border border-white/5 hover:border-transparent">Edit</button>
                       <button onClick={() => handleDelete(address.id_alamat)} className="flex-1 md:flex-none px-4 py-2.5 text-red-400 text-xs font-bold bg-red-500/10 rounded-xl hover:bg-red-500 hover:text-white transition-all border border-red-500/20 hover:border-transparent">Hapus</button>
                     </div>
@@ -271,48 +337,48 @@ export default function AlamatPage() {
 
       {/* MODAL FORM */}
       {showForm && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-[200] p-6 animate-in fade-in duration-200">
-          <div className="bg-[#1a1f1b] p-8 lg:p-10 rounded-[32px] w-full max-w-2xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] border border-white/10 animate-in zoom-in-95 duration-300 overflow-y-auto max-h-[90vh]">
-            <h3 className="text-2xl font-[800] mb-8 text-white tracking-tight">
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-[200] p-4 animate-in fade-in duration-200">
+          <div className="bg-[#1a1f1b] p-5 lg:p-6 rounded-[24px] w-full max-w-xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] border border-white/10 animate-in zoom-in-95 duration-300">
+            <h3 className="text-xl font-[800] mb-5 text-white tracking-tight">
               {editingId ? "Edit Alamat" : "Tambah Alamat Baru"}
             </h3>
-            <form onSubmit={handleSubmit} className="grid grid-cols-2 gap-5">
+            <form onSubmit={handleSubmit} className="grid grid-cols-2 gap-4">
               <div className="col-span-2 md:col-span-1">
-                <label className="text-[11px] font-bold text-gray-400 uppercase tracking-widest ml-1 mb-2 block">Nama Penerima</label>
-                <input name="nama_penerima" value={formData.nama_penerima} onChange={handleInputChange} className="w-full px-5 py-4 border border-white/10 rounded-2xl outline-none focus:border-[#2fa84f] focus:ring-1 focus:ring-[#2fa84f] text-sm text-white bg-[#1a1f1b]/50 shadow-inner transition-all" required />
+                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1 mb-1.5 block">Nama Penerima</label>
+                <input name="nama_penerima" value={formData.nama_penerima} onChange={handleInputChange} className="w-full px-4 py-3 border border-white/10 rounded-xl outline-none focus:border-[#2fa84f] focus:ring-1 focus:ring-[#2fa84f] text-sm text-white bg-[#1a1f1b]/50 shadow-inner transition-all" required />
               </div>
               <div className="col-span-2 md:col-span-1">
-                <label className="text-[11px] font-bold text-gray-400 uppercase tracking-widest ml-1 mb-2 block">Nomor Telepon</label>
-                <input name="nomor_hp" value={formData.nomor_hp} onChange={handleInputChange} className="w-full px-5 py-4 border border-white/10 rounded-2xl outline-none focus:border-[#2fa84f] focus:ring-1 focus:ring-[#2fa84f] text-sm text-white bg-[#1a1f1b]/50 shadow-inner transition-all" required />
+                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1 mb-1.5 block">Nomor Telepon</label>
+                <input name="nomor_hp" value={formData.nomor_hp} onChange={handleInputChange} className="w-full px-4 py-3 border border-white/10 rounded-xl outline-none focus:border-[#2fa84f] focus:ring-1 focus:ring-[#2fa84f] text-sm text-white bg-[#1a1f1b]/50 shadow-inner transition-all" required />
               </div>
               <div className="col-span-2">
-                <label className="text-[11px] font-bold text-gray-400 uppercase tracking-widest ml-1 mb-2 block">Alamat Lengkap</label>
-                <textarea name="alamat_lengkap" value={formData.alamat_lengkap} onChange={handleInputChange} className="w-full px-5 py-4 border border-white/10 rounded-2xl outline-none focus:border-[#2fa84f] focus:ring-1 focus:ring-[#2fa84f] text-sm text-white bg-[#1a1f1b]/50 shadow-inner transition-all min-h-[100px] resize-none" required />
+                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1 mb-1.5 block">Alamat Lengkap</label>
+                <textarea name="alamat_lengkap" value={formData.alamat_lengkap} onChange={handleInputChange} className="w-full px-4 py-3 border border-white/10 rounded-xl outline-none focus:border-[#2fa84f] focus:ring-1 focus:ring-[#2fa84f] text-sm text-white bg-[#1a1f1b]/50 shadow-inner transition-all min-h-[70px] resize-none" required />
               </div>
 
               {/* MAP PICKER */}
               <div className="col-span-2">
-                <label className="text-[11px] font-bold text-gray-400 uppercase tracking-widest ml-1 mb-2 block">
+                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1 mb-1.5 block">
                   Pilih Lokasi di Peta
                 </label>
                 <MapPicker
                   position={coords}
-                  onSelect={(lat, lng, alamat) => {  
+                  onSelect={(lat, lng, alamat) => {
                     setCoords([lat, lng]);
                     setFormData(prev => ({
                       ...prev,
                       latitude: lat.toString(),
                       longitude: lng.toString(),
-                      alamat_lengkap: alamat,  
+                      alamat_lengkap: alamat,
                     }));
                   }}
                 />
-                <p className="text-xs text-gray-500 mt-2 ml-1">Cari atau klik peta untuk menentukan lokasi</p>
+                <p className="text-[11px] text-gray-500 mt-1.5 ml-1">Cari atau klik peta untuk menentukan lokasi</p>
               </div>
 
-              <div className="flex gap-4 col-span-2 mt-6">
-                <button type="button" onClick={() => setShowForm(false)} className="flex-1 py-4 rounded-2xl font-[800] text-sm text-gray-400 bg-white/5 border border-white/10 hover:bg-white/10 hover:text-white transition-all">Batal</button>
-                <button type="submit" className="flex-1 py-4 rounded-2xl font-[800] text-sm text-white bg-[#2fa84f] hover:bg-[#268c41] transition-all shadow-[0_10px_20px_rgba(47,168,79,0.3)] hover:-translate-y-1">Simpan Alamat</button>
+              <div className="flex gap-3 col-span-2 mt-4">
+                <button type="button" onClick={() => setShowForm(false)} className="flex-1 py-3 rounded-xl font-[800] text-sm text-gray-400 bg-white/5 border border-white/10 hover:bg-white/10 hover:text-white transition-all">Batal</button>
+                <button type="submit" className="flex-1 py-3 rounded-xl font-[800] text-sm text-white bg-[#2fa84f] hover:bg-[#268c41] transition-all shadow-[0_10px_20px_rgba(47,168,79,0.3)] hover:-translate-y-1">Simpan Alamat</button>
               </div>
             </form>
           </div>

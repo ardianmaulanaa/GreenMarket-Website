@@ -151,11 +151,10 @@ export default function LandingPage() {
     <div className="relative overflow-x-hidden bg-[#f4f9f0] text-[#1a2e1f]">
       {/* ── NAVBAR ── */}
       <motion.header
-        className={`fixed top-0 z-50 w-full transition-all duration-500 ${
-          scrolled
-            ? "border-b border-white/20 bg-white/70 shadow-[0_8px_32px_rgba(10,17,11,0.08)] backdrop-blur-2xl"
-            : "bg-white/5 backdrop-blur-md"
-        }`}
+        className={`fixed top-0 z-50 w-full transition-all duration-500 ${scrolled
+          ? "border-b border-white/20 bg-white/70 shadow-[0_8px_32px_rgba(10,17,11,0.08)] backdrop-blur-2xl"
+          : "bg-white/5 backdrop-blur-md"
+          }`}
         initial={{ y: -20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.5 }}
@@ -171,9 +170,8 @@ export default function LandingPage() {
               </svg>
             </motion.div>
             <span
-              className={`text-lg font-extrabold tracking-tight transition-colors md:text-xl ${
-                scrolled ? "text-[#1a2e1f]" : "text-white"
-              }`}
+              className={`text-lg font-extrabold tracking-tight transition-colors md:text-xl ${scrolled ? "text-[#1a2e1f]" : "text-white"
+                }`}
             >
               GreenMarket
             </span>
@@ -182,17 +180,15 @@ export default function LandingPage() {
           <div className="flex items-center gap-4 md:gap-6">
             <Link
               href="/beranda-dashboard"
-              className={`hidden text-sm font-semibold no-underline transition hover:text-[#2fa84f] sm:inline ${
-                scrolled ? "text-[#1a2e1f]/80" : "text-white/90"
-              }`}
+              className={`hidden text-sm font-semibold no-underline transition hover:text-[#2fa84f] sm:inline ${scrolled ? "text-[#1a2e1f]/80" : "text-white/90"
+                }`}
             >
               Jelajahi
             </Link>
             <Link
               href="/login"
-              className={`text-sm font-semibold no-underline transition hover:text-[#2fa84f] ${
-                scrolled ? "text-[#1a2e1f]" : "text-white"
-              }`}
+              className={`text-sm font-semibold no-underline transition hover:text-[#2fa84f] ${scrolled ? "text-[#1a2e1f]" : "text-white"
+                }`}
             >
               Masuk
             </Link>

@@ -32,6 +32,7 @@ export default function DetailProdukPage() {
   const [product, setProduct] = useState<Produk | null>(null);
   const [activeImage, setActiveImage] = useState(0);
   const [quantity, setQuantity] = useState(1);
+  const [showPopup, setShowPopup] = useState(false);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -105,7 +106,8 @@ export default function DetailProdukPage() {
         return;
       }
 
-      alert("Produk berhasil dimasukkan ke keranjang");
+      setShowPopup(true);
+      setTimeout(() => setShowPopup(false), 3000);
     } catch (error) {
       console.error("Gagal tambah keranjang:", error);
       alert("Terjadi kesalahan saat memasukkan keranjang");
@@ -150,6 +152,42 @@ export default function DetailProdukPage() {
       <div className="absolute top-[-10%] right-[-5%] w-[600px] h-[600px] bg-[#2fa84f] opacity-20 blur-[150px] rounded-full pointer-events-none z-0"></div>
       <div className="absolute bottom-[-15%] left-[-10%] w-[500px] h-[500px] bg-[#2fa84f] opacity-10 blur-[120px] rounded-full pointer-events-none z-0"></div>
 
+      {showPopup && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center pointer-events-auto" onClick={() => setShowPopup(false)}>
+          <style>{`
+            .animate-checkmark {
+              stroke-dasharray: 50;
+              stroke-dashoffset: 50;
+              animation: drawCheck 0.4s cubic-bezier(0.65, 0, 0.45, 1) forwards;
+              animation-delay: 0.15s;
+            }
+            @keyframes drawCheck {
+              to { stroke-dashoffset: 0; }
+            }
+            .popup-bounce {
+              animation: bounceIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+            }
+            @keyframes bounceIn {
+              0% { transform: scale(0.8); opacity: 0; }
+              100% { transform: scale(1); opacity: 1; }
+            }
+          `}</style>
+          
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm animate-fade-in"></div>
+          
+          <div className="relative z-10 flex flex-col items-center justify-center bg-[#2c2c2c]/95 backdrop-blur-md rounded-[16px] p-8 w-[340px] shadow-2xl popup-bounce border border-white/5">
+            <div className="w-[84px] h-[84px] bg-[#00c09d] rounded-full flex items-center justify-center mb-6 shadow-lg">
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round">
+                <polyline className="animate-checkmark" points="20 6 9 17 4 12"></polyline>
+              </svg>
+            </div>
+            <p className="text-white text-[19px] font-medium tracking-wide text-center leading-snug drop-shadow-md">
+              Produk telah ditambahkan ke keranjang belanja
+            </p>
+          </div>
+        </div>
+      )}
+
       <nav className="fixed top-0 left-0 right-0 z-[100] bg-[#1a1f1b]/90 backdrop-blur-xl border-b border-white/10 shadow-lg h-[72px] px-8 flex items-center justify-between">
         <div className="flex items-center gap-8">
           <Link href="/dashboard-buyer" className="flex items-center gap-2 no-underline group">
@@ -158,6 +196,16 @@ export default function DetailProdukPage() {
             </div>
             <span className="text-xl font-black text-white tracking-tight uppercase hidden sm:block">Green<span className="text-[#2fa84f]">Market</span></span>
           </Link>
+          
+          <div className="hidden lg:flex items-center gap-4">
+            <Link
+              href="/register-penjual"
+              className="bg-white/5 border border-white/10 text-white px-5 py-2.5 rounded-xl text-xs font-bold no-underline hover:bg-[#2fa84f] hover:border-transparent transition-all flex items-center gap-2"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>
+              Mulai Berjualan
+            </Link>
+          </div>
         </div>
 
         <div className="flex-1 max-w-xl mx-10 hidden md:block">
@@ -240,9 +288,9 @@ export default function DetailProdukPage() {
               </h1>
 
               <div className="flex items-center gap-4 text-sm font-bold text-gray-400 mb-6">
-                <div className="flex items-center gap-1 text-[#2fa84f] border-b border-[#2fa84f] pb-0.5">
+                <div className="flex items-center gap-1 border-b border-[#2fa84f] pb-0.5">
                   <span className="text-lg text-white">4.8</span>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="#eab308" className="text-[#eab308]"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
                 </div>
                 <div className="h-4 w-[1px] bg-white/20"></div>
                 <div>
@@ -266,7 +314,7 @@ export default function DetailProdukPage() {
                 <span className="text-gray-500 uppercase tracking-widest text-[11px] mt-1">Pengiriman</span>
                 <div className="flex flex-col gap-2">
                    <div className="flex items-start gap-2 text-white">
-                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2fa84f" strokeWidth="2.5" className="mt-0.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2fa84f" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="mt-0.5"><rect x="3" y="6" width="13" height="11" rx="2"/><path d="M16 10h4l3 3v4h-7"/><circle cx="7" cy="17" r="2"/><circle cx="17" cy="17" r="2"/></svg>
                      <div>
                         <span>Pengiriman Ramah Lingkungan</span>
                         <p className="text-gray-400 text-xs mt-1 font-medium leading-relaxed">Emisi karbon dari pengiriman ini dikompensasi oleh GreenMarket.</p>

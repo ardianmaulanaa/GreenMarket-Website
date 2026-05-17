@@ -126,7 +126,7 @@ export default function MapPicker({ position, onSelect }: Props) {
       <MapContainer
         center={position}
         zoom={13}
-        style={{ height: "300px", width: "100%", borderRadius: "16px" }}
+        style={{ height: "200px", width: "100%", borderRadius: "12px" }}
       >
         <TileLayer
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"

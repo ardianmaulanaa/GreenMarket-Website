@@ -4,8 +4,39 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
+const animationStyles = `
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(40px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes slideInLeft {
+    from { opacity: 0; transform: translateX(-40px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  .animate-fade-in-up {
+    opacity: 0;
+    animation: fadeInUp 1s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+  }
+  .animate-slide-in-left {
+    opacity: 0;
+    animation: slideInLeft 1s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+  }
+  .animate-fade-in {
+    opacity: 0;
+    animation: fadeIn 1s ease-out forwards;
+  }
+  .delay-100 { animation-delay: 100ms; }
+  .delay-200 { animation-delay: 200ms; }
+  .delay-300 { animation-delay: 300ms; }
+`;
+
 export default function RegisterPenjual() {
   const [isPageLoading, setIsPageLoading] = useState(true);
+  const [shouldAnimate, setShouldAnimate] = useState(false);
   const [step, setStep] = useState(1);
   const [umur, setUmur] = useState("");
   const [loading, setLoading] = useState(false);
@@ -19,6 +50,7 @@ export default function RegisterPenjual() {
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsPageLoading(false);
+      setTimeout(() => setShouldAnimate(true), 50);
     }, 800);
 
     const storedUserId = localStorage.getItem("userId");
@@ -178,6 +210,7 @@ export default function RegisterPenjual() {
 
   return (
     <main className="min-h-screen flex bg-[#0a110b] font-sans m-0 overflow-hidden">
+      <style>{animationStyles}</style>
       <div className="hidden lg:block relative w-1/2 min-h-screen bg-[#1a2e1f] overflow-hidden">
         <img
           src="https://images.unsplash.com/photo-1536882240095-0379873feb4e?q=80&w=1000&auto=format&fit=crop"
@@ -188,7 +221,7 @@ export default function RegisterPenjual() {
         <div className="absolute inset-0 bg-[#0a110b]/20"></div>
         <div className="absolute inset-y-0 right-0 w-[250px] bg-gradient-to-l from-[#0a110b] via-[#0a110b]/90 to-transparent z-10"></div>
 
-        <div className="absolute bottom-20 left-16 max-w-md z-20">
+        <div className={`absolute bottom-20 left-16 max-w-md z-20 ${shouldAnimate ? 'animate-slide-in-left delay-200' : 'opacity-0'}`}>
           <h2 className="text-4xl font-black text-white leading-tight mb-4 tracking-tight shadow-black drop-shadow-lg">
             Buka Peluang Baru, <br />
             <span className="text-[#2fa84f]">Jadilah Penjual Hijau.</span>
@@ -206,7 +239,7 @@ export default function RegisterPenjual() {
 
         <Link
           href={dashboardHref}
-          className="absolute top-8 left-8 flex items-center gap-2 text-gray-400 no-underline text-sm font-bold px-4 py-2 rounded-full border border-white/10 hover:text-white hover:bg-white/5 transition-all duration-300 z-30"
+          className={`absolute top-8 left-8 flex items-center gap-2 text-gray-400 no-underline text-sm font-bold px-4 py-2 rounded-full border border-white/10 hover:text-white hover:bg-white/5 transition-all duration-300 z-30 ${shouldAnimate ? 'animate-fade-in delay-100' : 'opacity-0'}`}
         >
           <svg
             width="16"
@@ -224,7 +257,7 @@ export default function RegisterPenjual() {
           Kembali
         </Link>
 
-        <div className="w-full max-w-[460px] relative z-10 py-16 my-auto">
+        <div className={`w-full max-w-[460px] relative z-10 py-16 my-auto ${shouldAnimate ? 'animate-fade-in-up delay-200' : 'opacity-0'}`}>
           <div className="flex justify-center mb-6">
             <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#2fa84f] to-[#1a7a35] flex items-center justify-center shadow-[0_4px_15px_rgba(47,168,79,0.4)]">
               <svg

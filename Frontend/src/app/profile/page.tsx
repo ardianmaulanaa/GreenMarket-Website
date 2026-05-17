@@ -224,7 +224,6 @@ export default function ProfilePage() {
       {/* Navbar */}
       <nav className="fixed top-0 right-0 left-0 z-[100] flex h-[72px] items-center justify-between border-b border-white/10 bg-[#1a1f1b]/90 px-4 shadow-lg backdrop-blur-xl sm:px-6 lg:px-8">
         <div className="flex min-w-0 items-center gap-2 sm:gap-3">
-          <BackButton href={dashboardHref} />
           <Link href={dashboardHref} className="flex min-w-0 items-center gap-2 no-underline group">
             <motion.div
               className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#2fa84f] to-[#1a7a35] shadow-lg sm:h-[36px] sm:w-[36px]"
@@ -238,6 +237,18 @@ export default function ProfilePage() {
               Green<span className="text-[#2fa84f]">Market</span>
             </span>
           </Link>
+          
+          {!isSeller && (
+            <div className="hidden lg:flex items-center gap-4">
+              <Link
+                href="/register-penjual"
+                className="bg-white/5 border border-white/10 text-white px-5 py-2.5 rounded-xl text-xs font-bold no-underline hover:bg-[#2fa84f] hover:border-transparent transition-all flex items-center gap-2"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>
+                Mulai Berjualan
+              </Link>
+            </div>
+          )}
         </div>
 
         <div className="mx-4 hidden max-w-xl flex-1 md:block">

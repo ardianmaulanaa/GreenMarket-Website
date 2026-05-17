@@ -10,6 +10,11 @@
   --color-border: #e0e6e2;
 }
 
+:root {
+  /* Make Tailwind's `font-sans` utility use Plus Jakarta globally */
+  --font-sans: var(--font-plus-jakarta);
+}
+
 body {
   background-color: #f1f8e9;
   color: #1a2e1f;

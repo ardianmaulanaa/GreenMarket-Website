@@ -4,6 +4,81 @@ import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
+// Animation styles for smooth entrance effects
+const animationStyles = `
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(40px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  @keyframes slideInLeft {
+    from {
+      opacity: 0;
+      transform: translateX(-40px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  @keyframes scaleIn {
+    from {
+      opacity: 0;
+      transform: scale(0.92);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  .animate-fade-in-up {
+    opacity: 0;
+    animation: fadeInUp 1s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+  }
+
+  .animate-fade-in {
+    opacity: 0;
+    animation: fadeIn 0.8s ease-out forwards;
+  }
+
+  .animate-slide-in-left {
+    opacity: 0;
+    animation: slideInLeft 0.9s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+  }
+
+  .animate-scale-in {
+    opacity: 0;
+    animation: scaleIn 0.9s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+  }
+
+  /* Stagger delays */
+  .delay-100 { animation-delay: 100ms; }
+  .delay-200 { animation-delay: 200ms; }
+  .delay-300 { animation-delay: 300ms; }
+  .delay-400 { animation-delay: 400ms; }
+  .delay-500 { animation-delay: 500ms; }
+  .delay-600 { animation-delay: 600ms; }
+  .delay-700 { animation-delay: 700ms; }
+  .delay-800 { animation-delay: 800ms; }
+`;
+
 interface Produk {
   id_produk: string;
   id_user_seller: number;
@@ -25,13 +100,71 @@ interface Produk {
 
 export default function DashboardBuyer() {
   const [isPageLoading, setIsPageLoading] = useState(true);
+  const [shouldAnimate, setShouldAnimate] = useState(false);
   const [dbProducts, setDbProducts] = useState<Produk[]>([]);
   const [loading, setLoading] = useState(true);
   const [userName, setUserName] = useState<string>("User");
   const [searchTerm, setSearchTerm] = useState("");
+  const [currentSlide, setCurrentSlide] = useState(0);
+  const [prevSlide, setPrevSlide] = useState(0);
+  const [isGoingForward, setIsGoingForward] = useState(true);
+
+  const carouselSlides = [
+    {
+      image:
+        "https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?q=80&w=1000&auto=format&fit=crop",
+      title: "Temukan Gaya Hidup Berkelanjutan.",
+      subtitle:
+        "Jelajahi ribuan produk ramah lingkungan dari penjual terverifikasi dan dukung masa depan bumi dari langkah terkecil.",
+      badge: "GreenMarket Explorer",
+    },
+    {
+      image:
+        "https://images.unsplash.com/photo-1416879595882-3373a0480b5b?q=80&w=1000&auto=format&fit=crop",
+      title: "Daur Ulang untuk Masa Depan.",
+      subtitle:
+        "Setiap produk daur ulang yang Anda beli adalah kontribusi nyata untuk mengurangi limbah dan menyelamatkan bumi.",
+      badge: "Recycling Movement",
+    },
+    {
+      image:
+        "https://images.unsplash.com/photo-1497436072909-60f360e1d4b1?q=80&w=1000&auto=format&fit=crop",
+      title: "Bergabung dengan Komunitas Hijau.",
+      subtitle:
+        "Terhubung dengan ribuan penjual dan pembeli yang peduli lingkungan, bersama membangun ekosistem berkelanjutan.",
+      badge: "Eco Community",
+    },
+  ];
 
   const router = useRouter();
   const userRole = "BUYER";
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setPrevSlide(currentSlide);
+      setCurrentSlide((prev) => (prev + 1) % carouselSlides.length);
+      setIsGoingForward(true);
+    }, 3500);
+    return () => clearInterval(interval);
+  }, [currentSlide]);
+
+  const handlePrevSlide = () => {
+    setPrevSlide(currentSlide);
+    setCurrentSlide((prev) => (prev - 1 + carouselSlides.length) % carouselSlides.length);
+    setIsGoingForward(false);
+  };
+
+  const handleNextSlide = () => {
+    setPrevSlide(currentSlide);
+    setCurrentSlide((prev) => (prev + 1) % carouselSlides.length);
+    setIsGoingForward(true);
+  };
+
+  const handleDotClick = (index: number) => {
+    setPrevSlide(currentSlide);
+    setIsGoingForward(index > currentSlide);
+    setCurrentSlide(index);
+  };
 
   useEffect(() => {
     const loadDashboard = async () => {
@@ -77,6 +210,7 @@ export default function DashboardBuyer() {
 
         setTimeout(() => {
           setIsPageLoading(false);
+          setShouldAnimate(true);
         }, 500);
       }
     };
@@ -128,9 +262,12 @@ export default function DashboardBuyer() {
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-[#f1f8e9] via-[#2fa84f]/15 to-[#0a110b] font-sans text-[#1a2e1f] relative overflow-hidden">
+      <style>{animationStyles}</style>
       <div className="absolute top-[-10%] right-[-5%] w-[600px] h-[600px] bg-[#2fa84f] opacity-20 blur-[150px] rounded-full pointer-events-none"></div>
 
-      <nav className="fixed top-0 left-0 right-0 z-[100] bg-[#1a1f1b]/90 backdrop-blur-xl border-b border-white/10 shadow-lg h-[72px] px-8 flex items-center justify-between">
+      <nav
+        className={`fixed top-0 left-0 right-0 z-[100] bg-[#1a1f1b]/90 backdrop-blur-xl border-b border-white/10 shadow-lg h-[72px] px-8 flex items-center justify-between ${shouldAnimate ? "animate-fade-in" : "opacity-0"}`}
+      >
         <div className="flex items-center gap-8">
           <Link
             href="/dashboard-buyer"
@@ -249,31 +386,110 @@ export default function DashboardBuyer() {
       </nav>
 
       <main className="flex-grow container max-w-[1600px] mx-auto pt-24 px-6 pb-20 relative z-10 w-full">
-        <div className="w-full h-[240px] md:h-[280px] rounded-[32px] overflow-hidden relative mb-8 shadow-2xl border border-white/10">
-          <img
-            src="https://images.unsplash.com/photo-1536882240095-0379873feb4e?q=80&w=1000&auto=format&fit=crop"
-            alt="AI Generated Leaf"
-            className="w-full h-full object-cover opacity-90"
-          />
-          <div className="absolute inset-0 bg-gradient-to-r from-[#1a2e1f]/95 via-[#1a2e1f]/60 to-transparent"></div>
+        <div
+          className={`w-full h-[240px] md:h-[280px] rounded-[32px] overflow-hidden relative mb-8 shadow-2xl border border-white/10 ${shouldAnimate ? "animate-scale-in delay-100" : "opacity-0"}`}
+        >
+          {carouselSlides.map((slide, index) => {
+            const isActive = index === currentSlide;
+            const isPrev = index === prevSlide && prevSlide !== currentSlide;
+            
+            let translateX = '0%';
+            let opacity = '1';
+            
+            if (!isActive && isPrev) {
+              translateX = isGoingForward ? '-100%' : '100%';
+              opacity = '0';
+            } else if (!isActive) {
+              translateX = isGoingForward ? '100%' : '-100%';
+              opacity = '0';
+            }
+            
+            return (
+              <div
+                key={index}
+                style={{
+                  transform: `translateX(${translateX})`,
+                  opacity: opacity,
+                  transition: 'transform 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94), opacity 0.8s ease'
+                }}
+                className="absolute inset-0"
+              >
+              <img
+                src={slide.image}
+                alt={slide.title}
+                className="w-full h-full object-cover opacity-90"
+              />
+              <div className="absolute inset-0 bg-gradient-to-r from-[#1a2e1f]/95 via-[#1a2e1f]/60 to-transparent"></div>
 
-          <div className="absolute inset-0 flex flex-col justify-center px-8 md:px-14">
-            <span className="text-[#2fa84f] font-black tracking-widest text-[10px] md:text-xs uppercase mb-2 drop-shadow-md">
-              GreenMarket Explorer
-            </span>
-            <h1 className="text-3xl md:text-5xl font-black text-white mb-3 tracking-tight drop-shadow-xl max-w-2xl leading-tight">
-              Temukan Gaya Hidup Berkelanjutan.
-            </h1>
-            <p className="text-white/80 font-medium max-w-lg text-xs md:text-sm leading-relaxed drop-shadow-md">
-              Jelajahi ribuan produk ramah lingkungan dari penjual terverifikasi
-              dan dukung masa depan bumi dari langkah terkecil.
-            </p>
+              <div className="absolute inset-0 flex flex-col justify-center px-8 md:px-14">
+                <span className="text-[#2fa84f] font-black tracking-widest text-[10px] md:text-xs uppercase mb-2 drop-shadow-md">
+                  {slide.badge}
+                </span>
+                <h1 className="text-3xl md:text-5xl font-black text-white mb-3 tracking-tight drop-shadow-xl max-w-2xl leading-tight">
+                  {slide.title}
+                </h1>
+                <p className="text-white/80 font-medium max-w-lg text-xs md:text-sm leading-relaxed drop-shadow-md">
+                  {slide.subtitle}
+                </p>
+              </div>
+                </div>
+              );
+            })}
+
+          <button
+            onClick={handlePrevSlide}
+            className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/10 backdrop-blur-md rounded-full flex items-center justify-center text-white hover:bg-white/20 transition-all border border-white/20 z-20"
+          >
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+            >
+              <path d="M15 18l-6-6 6-6" />
+            </svg>
+          </button>
+
+          <button
+            onClick={handleNextSlide}
+            className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/10 backdrop-blur-md rounded-full flex items-center justify-center text-white hover:bg-white/20 transition-all border border-white/20 z-20"
+          >
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+            >
+              <path d="M9 18l6-6-6-6" />
+            </svg>
+          </button>
+
+          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-20">
+            {carouselSlides.map((_, index) => (
+              <button
+                key={index}
+                onClick={() => handleDotClick(index)}
+                className={`w-2 h-2 rounded-full transition-all ${
+                  index === currentSlide
+                    ? "bg-[#2fa84f] w-6"
+                    : "bg-white/40 hover:bg-white/60"
+                }`}
+              />
+            ))}
           </div>
         </div>
 
-        <div className="flex flex-col lg:flex-row gap-8">
+        <div
+          className={`flex flex-col lg:flex-row gap-8 ${shouldAnimate ? "animate-fade-in delay-200" : "opacity-0"}`}
+        >
           <aside className="w-full lg:w-[280px] shrink-0">
-            <div className="bg-[#1a1f1b]/80 backdrop-blur-xl rounded-[32px] p-6 border border-white/5 shadow-2xl sticky top-28">
+            <div
+              className={`bg-[#1a1f1b]/80 backdrop-blur-xl rounded-[32px] p-6 border border-white/5 shadow-2xl sticky top-28 ${shouldAnimate ? "animate-slide-in-left delay-300" : "opacity-0"}`}
+            >
               <div className="flex items-center gap-3 mb-8">
                 <div className="w-1.5 h-6 bg-[#2fa84f] rounded-full shadow-[0_0_8px_#2fa84f]"></div>
                 <h2 className="text-lg font-[800] text-white m-0 tracking-tight">
@@ -313,7 +529,9 @@ export default function DashboardBuyer() {
           </aside>
 
           <section className="flex-1">
-            <div className="flex justify-between items-end mb-8">
+            <div
+              className={`flex justify-between items-end mb-8 ${shouldAnimate ? "animate-fade-in-up delay-300" : "opacity-0"}`}
+            >
               <h3 className="text-2xl font-[800] text-[#1a2e1f] tracking-tight m-0">
                 Eksplorasi Katalog Hijau
               </h3>
@@ -333,7 +551,11 @@ export default function DashboardBuyer() {
             ) : (
               <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-5">
                 {filteredProducts.map((p) => (
-                  <div key={p.id_produk} className="relative group">
+                  <div
+                    key={p.id_produk}
+                    className={`relative group ${shouldAnimate ? "animate-fade-in-up" : "opacity-0"}`}
+                    style={shouldAnimate ? { animationDelay: "500ms" } : {}}
+                  >
                     <Link
                       href={`/katalog-detail/${p.id_produk}`}
                       className="no-underline block h-full"
