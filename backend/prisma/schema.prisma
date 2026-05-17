@@ -26,7 +26,7 @@ model Kategori_Produk {
 }
 
 model Produk {
-  id_produk        String          @id @default(uuid())
+  id_produk        String             @id @default(uuid())
   id_user_seller   Int
   id_kategori      String
   nama_produk      String
@@ -34,15 +34,16 @@ model Produk {
   harga            Int
   stok             Int
   status_produk    String
-  created_at       DateTime        @default(now())
+  created_at       DateTime           @default(now())
   foto_produk      String?
   konten_deskripsi String?
   catatan_penjual  String?
-  foto_produk_list String[]        @default([])
+  foto_produk_list String[]           @default([])
   keranjang        Keranjang[]
-  kategori         Kategori_Produk @relation(fields: [id_kategori], references: [id_kategori])
-  seller           User            @relation(fields: [id_user_seller], references: [id])
-  transaksi        Transaksi[]
+  kategori         Kategori_Produk    @relation(fields: [id_kategori], references: [id_kategori])
+  seller           User               @relation(fields: [id_user_seller], references: [id])
+
+  detailTransaksis Detail_Transaksi[]
 }
 
 model Keranjang {
@@ -83,22 +84,40 @@ model Metode_Pembayaran {
 }
 
 model Transaksi {
-  id_transaksi         String            @id @default(uuid())
+  id_transaksi         String   @id @default(uuid())
   id_user              Int
-  id_produk            String
   id_alamat            String
   id_jasa_kirim        String
   id_metode_pembayaran String
-  kuantitas            Int               @default(1)
+
+  total_harga          Int      @default(0)
   status_transaksi     String
-  tanggal_transaksi    DateTime          @default(now())
+  tanggal_transaksi    DateTime @default(now())
+
   pembayaran           Pembayaran?
   tracking_logs        TrackingLog[]
+
   alamat               Alamat            @relation(fields: [id_alamat], references: [id_alamat])
   jasa_kirim           Jasa_Kirim        @relation(fields: [id_jasa_kirim], references: [id_jasa])
   metode_pembayaran    Metode_Pembayaran @relation(fields: [id_metode_pembayaran], references: [id_metode])
-  produk               Produk            @relation(fields: [id_produk], references: [id_produk])
   user                 User              @relation(fields: [id_user], references: [id], onDelete: Cascade)
+
+  detail_transaksi     Detail_Transaksi[]
+}
+
+model Detail_Transaksi {
+  id_detail    String @id @default(uuid())
+  id_transaksi String
+  id_produk    String
+  kuantitas    Int
+  harga_satuan Int
+  subtotal     Int
+
+  transaksi Transaksi @relation(fields: [id_transaksi], references: [id_transaksi], onDelete: Cascade)
+  produk    Produk    @relation(fields: [id_produk], references: [id_produk])
+
+  @@index([id_transaksi])
+  @@index([id_produk])
 }
 
 model Pembayaran {

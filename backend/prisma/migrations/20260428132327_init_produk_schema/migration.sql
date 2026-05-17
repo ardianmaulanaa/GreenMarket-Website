@@ -40,17 +40,6 @@ CREATE TABLE "Wishlist" (
     CONSTRAINT "Wishlist_pkey" PRIMARY KEY ("id_wishlist")
 );
 
--- CreateTable
-CREATE TABLE "Alamat" (
-    "id_alamat" TEXT NOT NULL,
-    "id_user" INTEGER NOT NULL,
-    "nama_penerima" TEXT NOT NULL,
-    "nomor_hp" TEXT NOT NULL,
-    "alamat_lengkap" TEXT NOT NULL,
-
-    CONSTRAINT "Alamat_pkey" PRIMARY KEY ("id_alamat")
-);
-
 -- AddForeignKey
 ALTER TABLE "Produk" ADD CONSTRAINT "Produk_id_kategori_fkey" FOREIGN KEY ("id_kategori") REFERENCES "Kategori_Produk"("id_kategori") ON DELETE RESTRICT ON UPDATE CASCADE;
 

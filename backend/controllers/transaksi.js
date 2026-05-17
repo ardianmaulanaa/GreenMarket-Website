@@ -1,6 +1,30 @@
 const prisma = require("../lib/prisma");
 const snap = require("../config/midtrans");
 
+const getDemoStatusByTime = (transaksi) => {
+  if (transaksi.status_transaksi === "BELUM_BAYAR") {
+    return "BELUM_BAYAR";
+  }
+
+  if (transaksi.status_transaksi === "SELESAI") {
+    return "SELESAI";
+  }
+
+  const dibuatPada = new Date(transaksi.tanggal_transaksi).getTime();
+  const sekarang = Date.now();
+  const selisihJam = (sekarang - dibuatPada) / (1000 * 60 * 60);
+
+  if (selisihJam >= 24) {
+    return "SELESAI";
+  }
+
+  if (selisihJam >= 6) {
+    return "DIKIRIM";
+  }
+
+  return "DIKEMAS";
+};
+
 const createTransaksi = async (req, res) => {
   try {
     const {
@@ -10,58 +34,44 @@ const createTransaksi = async (req, res) => {
       id_jasa_kirim,
       id_metode_pembayaran,
       kuantitas,
+      items,
     } = req.body;
 
-    if (
-      !id_user ||
-      !id_produk ||
-      !id_alamat ||
-      !id_jasa_kirim ||
-      !id_metode_pembayaran
-    ) {
+    const userId = Number(id_user);
+
+    if (!id_user || !id_alamat || !id_jasa_kirim || !id_metode_pembayaran) {
       return res.status(400).json({
         message: "Data transaksi belum lengkap",
       });
     }
 
-    const userId = Number(id_user);
-    const jumlahBeli = Number(kuantitas) || 1;
-
-    // Validasi user id
     if (Number.isNaN(userId)) {
       return res.status(400).json({
         message: "ID user tidak valid",
       });
     }
 
-    // Validasi jumlah beli
-    if (Number.isNaN(jumlahBeli) || jumlahBeli <= 0) {
-      return res.status(400).json({
-        message: "Jumlah beli tidak valid",
-      });
+    const normalizedItems =
+      Array.isArray(items) && items.length > 0
+        ? items.map((item) => ({
+            id_produk: item.id_produk,
+            kuantitas: Number(item.kuantitas) || 1,
+          }))
+        : [
+            {
+              id_produk,
+              kuantitas: Number(kuantitas) || 1,
+            },
+          ];
+
+    for (const item of normalizedItems) {
+      if (!item.id_produk || item.kuantitas <= 0) {
+        return res.status(400).json({
+          message: "Data produk tidak valid",
+        });
+      }
     }
 
-    // Cek produk
-    const produk = await prisma.produk.findUnique({
-      where: {
-        id_produk,
-      },
-    });
-
-    if (!produk) {
-      return res.status(404).json({
-        message: "Produk tidak ditemukan",
-      });
-    }
-
-    // Cek stok cukup
-    if (produk.stok < jumlahBeli) {
-      return res.status(400).json({
-        message: `Stok tidak cukup. Stok tersedia hanya ${produk.stok}`,
-      });
-    }
-
-    // Cek alamat milik user
     const alamat = await prisma.alamat.findFirst({
       where: {
         id_alamat,
@@ -75,7 +85,6 @@ const createTransaksi = async (req, res) => {
       });
     }
 
-    // Cek jasa kirim
     const jasaKirim = await prisma.jasa_Kirim.findUnique({
       where: {
         id_jasa: id_jasa_kirim,
@@ -88,7 +97,6 @@ const createTransaksi = async (req, res) => {
       });
     }
 
-    // Cek metode pembayaran
     const metode = await prisma.metode_Pembayaran.findUnique({
       where: {
         id_metode: id_metode_pembayaran,
@@ -100,24 +108,76 @@ const createTransaksi = async (req, res) => {
         message: "Metode pembayaran tidak ditemukan",
       });
     }
-    // Menentukan status berdasarkan metode pembayaran
+
+    const produkIds = normalizedItems.map((item) => item.id_produk);
+
+    const produkList = await prisma.produk.findMany({
+      where: {
+        id_produk: {
+          in: produkIds,
+        },
+      },
+    });
+
+    if (produkList.length !== produkIds.length) {
+      return res.status(404).json({
+        message: "Ada produk yang tidak ditemukan",
+      });
+    }
+
+    for (const item of normalizedItems) {
+      const produk = produkList.find((p) => p.id_produk === item.id_produk);
+
+      if (!produk) {
+        return res.status(404).json({
+          message: "Produk tidak ditemukan",
+        });
+      }
+
+      if (produk.stok < item.kuantitas) {
+        return res.status(400).json({
+          message: `Stok ${produk.nama_produk} tidak cukup. Stok tersedia hanya ${produk.stok}`,
+        });
+      }
+    }
+
+    const totalProduk = normalizedItems.reduce((total, item) => {
+      const produk = produkList.find((p) => p.id_produk === item.id_produk);
+      return total + produk.harga * item.kuantitas;
+    }, 0);
+
+    const totalHarga = totalProduk + jasaKirim.harga_pengiriman;
+
     const statusTransaksi =
       metode.kode_metode === "CASH" ? "DIKEMAS" : "BELUM_BAYAR";
 
     const statusPembayaran =
       metode.kode_metode === "CASH" ? "BAYAR_DI_TEMPAT" : "MENUNGGU_PEMBAYARAN";
 
-    // Buat transaksi dan kurangi stok
     const transaksi = await prisma.$transaction(async (tx) => {
       const transaksiBaru = await tx.transaksi.create({
         data: {
           id_user: userId,
-          id_produk,
           id_alamat,
           id_jasa_kirim,
           id_metode_pembayaran,
-          kuantitas: jumlahBeli,
+          total_harga: totalHarga,
           status_transaksi: statusTransaksi,
+
+          detail_transaksi: {
+            create: normalizedItems.map((item) => {
+              const produk = produkList.find(
+                (p) => p.id_produk === item.id_produk,
+              );
+
+              return {
+                id_produk: item.id_produk,
+                kuantitas: item.kuantitas,
+                harga_satuan: produk.harga,
+                subtotal: produk.harga * item.kuantitas,
+              };
+            }),
+          },
 
           pembayaran: {
             create: {
@@ -140,15 +200,19 @@ const createTransaksi = async (req, res) => {
         },
         include: {
           user: true,
-          produk: {
+          detail_transaksi: {
             include: {
-              seller: {
-                select: {
-                  username: true,
-                  email: true,
+              produk: {
+                include: {
+                  seller: {
+                    select: {
+                      username: true,
+                      email: true,
+                    },
+                  },
+                  kategori: true,
                 },
               },
-              kategori: true,
             },
           },
           alamat: true,
@@ -164,17 +228,28 @@ const createTransaksi = async (req, res) => {
       });
 
       if (metode.kode_metode === "CASH") {
-        await tx.produk.update({
-          where: {
-            id_produk,
-          },
-          data: {
-            stok: {
-              decrement: jumlahBeli,
+        for (const item of normalizedItems) {
+          await tx.produk.update({
+            where: {
+              id_produk: item.id_produk,
             },
-          },
-        });
+            data: {
+              stok: {
+                decrement: item.kuantitas,
+              },
+            },
+          });
+        }
       }
+
+      await tx.keranjang.deleteMany({
+        where: {
+          id_user: userId,
+          id_produk: {
+            in: produkIds,
+          },
+        },
+      });
 
       return transaksiBaru;
     });
@@ -182,31 +257,27 @@ const createTransaksi = async (req, res) => {
     let midtransToken = null;
 
     if (metode.kode_metode === "QRIS") {
-      const totalProduk = transaksi.produk.harga * transaksi.kuantitas;
-      const totalPengiriman = transaksi.jasa_kirim.harga_pengiriman;
-      const totalBayar = totalProduk + totalPengiriman;
-
       const parameter = {
         transaction_details: {
           order_id: transaksi.id_transaksi,
-          gross_amount: totalBayar,
+          gross_amount: totalHarga,
         },
         customer_details: {
           first_name: transaksi.user.username,
           email: transaksi.user.email,
         },
         item_details: [
+          ...transaksi.detail_transaksi.map((detail) => ({
+            id: detail.produk.id_produk,
+            price: detail.harga_satuan,
+            quantity: detail.kuantitas,
+            name: detail.produk.nama_produk,
+          })),
           {
-            id: transaksi.produk.id_produk,
-            price: transaksi.produk.harga,
-            quantity: transaksi.kuantitas,
-            name: transaksi.produk.nama_produk,
-          },
-          {
-            id: transaksi.jasa_kirim.id_jasa,
-            price: transaksi.jasa_kirim.harga_pengiriman,
+            id: jasaKirim.id_jasa,
+            price: jasaKirim.harga_pengiriman,
             quantity: 1,
-            name: transaksi.jasa_kirim.nama_jasa,
+            name: jasaKirim.nama_jasa,
           },
         ],
       };
@@ -237,15 +308,19 @@ const getTransaksiByUser = async (req, res) => {
         id_user,
       },
       include: {
-        produk: {
+        detail_transaksi: {
           include: {
-            seller: {
-              select: {
-                username: true,
-                email: true,
+            produk: {
+              include: {
+                seller: {
+                  select: {
+                    username: true,
+                    email: true,
+                  },
+                },
+                kategori: true,
               },
             },
-            kategori: true,
           },
         },
         alamat: true,
@@ -263,7 +338,64 @@ const getTransaksiByUser = async (req, res) => {
       },
     });
 
-    res.json(transaksi);
+    const transaksiTerupdate = [];
+
+    for (const trx of transaksi) {
+      const statusDemo = getDemoStatusByTime(trx);
+
+      if (statusDemo !== trx.status_transaksi) {
+        const trackingStatus =
+          statusDemo === "DIKIRIM"
+            ? "Pesanan sedang dikirim"
+            : "Pesanan selesai";
+
+        const updated = await prisma.transaksi.update({
+          where: {
+            id_transaksi: trx.id_transaksi,
+          },
+          data: {
+            status_transaksi: statusDemo,
+            tracking_logs: {
+              create: {
+                status: trackingStatus,
+              },
+            },
+          },
+          include: {
+            detail_transaksi: {
+              include: {
+                produk: {
+                  include: {
+                    seller: {
+                      select: {
+                        username: true,
+                        email: true,
+                      },
+                    },
+                    kategori: true,
+                  },
+                },
+              },
+            },
+            alamat: true,
+            jasa_kirim: true,
+            metode_pembayaran: true,
+            pembayaran: true,
+            tracking_logs: {
+              orderBy: {
+                waktu: "asc",
+              },
+            },
+          },
+        });
+
+        transaksiTerupdate.push(updated);
+      } else {
+        transaksiTerupdate.push(trx);
+      }
+    }
+
+    res.json(transaksiTerupdate);
   } catch (error) {
     console.error("Error Get Transaksi:", error);
     res.status(500).json({

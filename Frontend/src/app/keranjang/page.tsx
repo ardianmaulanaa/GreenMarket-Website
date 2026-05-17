@@ -240,16 +240,20 @@ export default function KeranjangPage() {
       return;
     }
 
-    if (selectedProducts.length > 1) {
-      alert(
-        "Checkout saat ini baru mendukung satu produk dalam sekali proses.",
-      );
-      return;
-    }
+    const checkoutItems = selectedProducts.map((item) => ({
+      id_keranjang: item.id_keranjang,
+      id_produk: item.produk.id_produk,
+      nama_produk: item.produk.nama_produk,
+      harga: item.produk.harga,
+      stok: item.produk.stok || 0,
+      foto_produk: item.produk.foto_produk,
+      foto_produk_list: item.produk.foto_produk_list,
+      kuantitas: quantities[item.id_keranjang] || 1,
+    }));
 
-    const item = selectedProducts[0];
-    const quantity = quantities[item.id_keranjang] || 1;
-    router.push(`/pembayaran?produk=${item.produk.id_produk}&qty=${quantity}`);
+    localStorage.setItem("checkoutItems", JSON.stringify(checkoutItems));
+
+    router.push("/pembayaran?mode=cart");
   };
 
   const buyNow = (item: KeranjangItem) => {

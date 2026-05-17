@@ -39,6 +39,17 @@ interface Address {
   alamat_lengkap: string;
 }
 
+interface CheckoutItem {
+  id_keranjang?: string;
+  id_produk: string;
+  nama_produk: string;
+  harga: number;
+  stok?: number;
+  foto_produk?: string;
+  foto_produk_list?: string[];
+  kuantitas: number;
+}
+
 declare global {
   interface Window {
     snap: any;
@@ -51,18 +62,20 @@ function PembayaranContent() {
 
   const produkId = searchParams.get("produk");
   const qtyParam = Number(searchParams.get("qty") || "1");
+  const mode = searchParams.get("mode");
+  const isCartCheckout = mode === "cart";
 
   const [product, setProduct] = useState<Produk | null>(null);
   const [quantity, setQuantity] = useState(qtyParam > 0 ? qtyParam : 1);
   const [metodePembayaran, setMetodePembayaran] = useState<MetodePembayaran[]>(
     [],
   );
+  const [checkoutItems, setCheckoutItems] = useState<CheckoutItem[]>([]);
   const [selectedPayment, setSelectedPayment] = useState("");
   const [jasaKirim, setJasaKirim] = useState<JasaKirim[]>([]);
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [selectedAddress, setSelectedAddress] = useState("");
   const [selectedShipping, setSelectedShipping] = useState("");
-  const [shippingInsurance, setShippingInsurance] = useState(false);
   const [showShippingOptions, setShowShippingOptions] = useState(false);
   const [tempSelectedShipping, setTempSelectedShipping] = useState("");
   const [loading, setLoading] = useState(true);
@@ -126,6 +139,21 @@ function PembayaranContent() {
   };
 
   const fetchProduct = async () => {
+    if (isCartCheckout) {
+      const savedItems = localStorage.getItem("checkoutItems");
+      const parsedItems = savedItems ? JSON.parse(savedItems) : [];
+
+      if (!parsedItems.length) {
+        alert("Data checkout keranjang tidak ditemukan");
+        router.push("/keranjang");
+        return;
+      }
+
+      setCheckoutItems(parsedItems);
+      setLoading(false);
+      return;
+    }
+
     if (!produkId) {
       alert("Produk tidak ditemukan");
       router.push("/dashboard-buyer");
@@ -207,10 +235,14 @@ function PembayaranContent() {
     return jasaKirim.find((item) => item.id_jasa === selectedShipping);
   }, [jasaKirim, selectedShipping]);
 
-  const subtotal = (product?.harga || 0) * quantity;
+  const subtotal = isCartCheckout
+    ? checkoutItems.reduce(
+        (total, item) => total + item.harga * item.kuantitas,
+        0,
+      )
+    : (product?.harga || 0) * quantity;
   const ongkir = selectedShippingData?.harga_pengiriman || 0;
-  const biayaAsuransi = shippingInsurance ? 500 : 0;
-  const total = subtotal + ongkir + biayaAsuransi;
+  const total = subtotal + ongkir;
 
   const productImage =
     product?.foto_produk ||
@@ -239,8 +271,13 @@ function PembayaranContent() {
       return;
     }
 
-    if (!product) {
+    if (!isCartCheckout && !product) {
       alert("Produk tidak ditemukan");
+      return;
+    }
+
+    if (isCartCheckout && checkoutItems.length === 0) {
+      alert("Produk checkout keranjang tidak ditemukan");
       return;
     }
 
@@ -260,19 +297,32 @@ function PembayaranContent() {
     }
 
     try {
+      const requestBody = isCartCheckout
+        ? {
+            id_user: Number(userId),
+            id_alamat: selectedAddress,
+            id_jasa_kirim: selectedShipping,
+            id_metode_pembayaran: selectedPayment,
+            items: checkoutItems.map((item) => ({
+              id_produk: item.id_produk,
+              kuantitas: item.kuantitas,
+            })),
+          }
+        : {
+            id_user: Number(userId),
+            id_produk: product!.id_produk,
+            id_alamat: selectedAddress,
+            id_jasa_kirim: selectedShipping,
+            id_metode_pembayaran: selectedPayment,
+            kuantitas: quantity,
+          };
+
       const response = await fetch("http://localhost:5050/api/transaksi", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          id_user: Number(userId),
-          id_produk: product.id_produk,
-          id_alamat: selectedAddress,
-          id_jasa_kirim: selectedShipping,
-          id_metode_pembayaran: selectedPayment,
-          kuantitas: quantity,
-        }),
+        body: JSON.stringify(requestBody),
       });
 
       const data = await response.json();
@@ -282,26 +332,43 @@ function PembayaranContent() {
         return;
       }
 
-      const paymentData = {
-        id_transaksi: data.transaksi.id_transaksi,
-        id_user: Number(userId),
-        id_produk: product.id_produk,
-        nama_produk: product.nama_produk,
-        quantity,
-        id_alamat: selectedAddress,
-        id_jasa_kirim: selectedShipping,
-        id_metode_pembayaran: selectedPayment,
-        jasa_kirim: selectedShippingData?.nama_jasa || "",
-        ongkir,
-        asuransi_pengiriman: shippingInsurance,
-        biaya_asuransi: biayaAsuransi,
-        subtotal,
-        total_harga: total,
-        status_transaksi: data.transaksi.status_transaksi,
-        status_pembayaran: data.transaksi.pembayaran?.status_pembayaran,
-      };
+      const paymentData = isCartCheckout
+        ? {
+            id_transaksi: data.transaksi.id_transaksi,
+            id_user: Number(userId),
+            items: checkoutItems,
+            id_alamat: selectedAddress,
+            id_jasa_kirim: selectedShipping,
+            id_metode_pembayaran: selectedPayment,
+            jasa_kirim: selectedShippingData?.nama_jasa || "",
+            ongkir,
+            subtotal,
+            total_harga: total,
+            status_transaksi: data.transaksi.status_transaksi,
+            status_pembayaran: data.transaksi.pembayaran?.status_pembayaran,
+          }
+        : {
+            id_transaksi: data.transaksi.id_transaksi,
+            id_user: Number(userId),
+            id_produk: product!.id_produk,
+            nama_produk: product!.nama_produk,
+            quantity,
+            id_alamat: selectedAddress,
+            id_jasa_kirim: selectedShipping,
+            id_metode_pembayaran: selectedPayment,
+            jasa_kirim: selectedShippingData?.nama_jasa || "",
+            ongkir,
+            subtotal,
+            total_harga: total,
+            status_transaksi: data.transaksi.status_transaksi,
+            status_pembayaran: data.transaksi.pembayaran?.status_pembayaran,
+          };
 
       localStorage.setItem("paymentData", JSON.stringify(paymentData));
+
+      if (isCartCheckout) {
+        localStorage.removeItem("checkoutItems");
+      }
 
       // Kalau backend mengirim token Midtrans, buka popup pembayaran
       if (data.midtransToken) {
@@ -357,10 +424,20 @@ function PembayaranContent() {
     );
   }
 
-  if (!product) {
+  if (!isCartCheckout && !product) {
     return (
       <div className="min-h-screen bg-[#f3f8ee] flex items-center justify-center">
         <p className="text-[#1a2e1f] font-bold">Produk tidak ditemukan.</p>
+      </div>
+    );
+  }
+
+  if (isCartCheckout && checkoutItems.length === 0) {
+    return (
+      <div className="min-h-screen bg-[#f3f8ee] flex items-center justify-center">
+        <p className="text-[#1a2e1f] font-bold">
+          Data checkout keranjang tidak ditemukan.
+        </p>
       </div>
     );
   }
@@ -483,12 +560,16 @@ function PembayaranContent() {
 
             <span className="text-[#31405f]">/</span>
 
-            <Link
-              href={`/katalog-detail/${product.id_produk}`}
-              className="text-[#31405f] hover:text-[#2fa84f] transition-colors no-underline"
-            >
-              {product.nama_produk}
-            </Link>
+            {isCartCheckout ? (
+              <span className="text-[#31405f]">Checkout Keranjang</span>
+            ) : (
+              <Link
+                href={`/katalog-detail/${product!.id_produk}`}
+                className="text-[#31405f] hover:text-[#2fa84f] transition-colors no-underline"
+              >
+                {product!.nama_produk}
+              </Link>
+            )}
 
             <span className="text-[#31405f]">/</span>
 
@@ -499,56 +580,108 @@ function PembayaranContent() {
             {/* LEFT */}
             <div className="bg-[#f7f7f7] rounded-[28px] shadow-lg p-6 lg:p-8">
               {/* PRODUK */}
-              <div className="flex items-start justify-between gap-6 pb-7 border-b border-gray-200">
-                <div className="flex items-start gap-6">
-                  <img
-                    src={productImage}
-                    alt={product.nama_produk}
-                    className="w-[120px] h-[120px] rounded-[20px] object-cover border border-gray-200 shrink-0"
-                  />
-
+              <div className="pb-7 border-b border-gray-200">
+                {isCartCheckout ? (
                   <div>
-                    <p className="text-[13px] text-gray-500 font-semibold mb-1">
-                      {product.seller?.username || "GreenMarket Store"}
-                    </p>
-
-                    <h2 className="text-[30px] font-black text-[#1f1f1f] leading-tight mb-2">
-                      {product.nama_produk}
+                    <h2 className="text-[28px] font-black text-[#1f1f1f] mb-5">
+                      Checkout Keranjang
                     </h2>
 
-                    <p className="text-[20px] font-black text-[#111]">
-                      Rp {product.harga.toLocaleString("id-ID")}
-                    </p>
+                    <div className="space-y-4">
+                      {checkoutItems.map((item) => {
+                        const image =
+                          item.foto_produk ||
+                          item.foto_produk_list?.[0] ||
+                          "https://placehold.co/120x120/e9f7ec/2fa84f?text=GreenMarket";
+
+                        return (
+                          <div
+                            key={item.id_produk}
+                            className="flex items-center justify-between gap-4 rounded-[18px] bg-white border border-gray-200 p-4"
+                          >
+                            <div className="flex items-center gap-4">
+                              <img
+                                src={image}
+                                alt={item.nama_produk}
+                                className="w-[86px] h-[86px] rounded-[16px] object-cover border border-gray-200"
+                              />
+
+                              <div>
+                                <h3 className="font-black text-[#1f1f1f] text-[18px]">
+                                  {item.nama_produk}
+                                </h3>
+
+                                <p className="text-sm text-gray-500 mt-1">
+                                  {item.kuantitas} x Rp{" "}
+                                  {item.harga.toLocaleString("id-ID")}
+                                </p>
+                              </div>
+                            </div>
+
+                            <p className="font-black text-[#1f1f1f]">
+                              Rp{" "}
+                              {(item.harga * item.kuantitas).toLocaleString(
+                                "id-ID",
+                              )}
+                            </p>
+                          </div>
+                        );
+                      })}
+                    </div>
                   </div>
-                </div>
+                ) : (
+                  <div className="flex items-start justify-between gap-6">
+                    <div className="flex items-start gap-6">
+                      <img
+                        src={productImage}
+                        alt={product!.nama_produk}
+                        className="w-[120px] h-[120px] rounded-[20px] object-cover border border-gray-200 shrink-0"
+                      />
 
-                <div className="flex flex-col items-end gap-3 shrink-0 mt-4">
-                  <div className="border border-gray-300 rounded-xl flex items-center overflow-hidden bg-white">
-                    <button
-                      type="button"
-                      onClick={() => handleQuantity("min")}
-                      className="px-6 py-3 text-red-500 font-bold text-lg"
-                    >
-                      -
-                    </button>
+                      <div>
+                        <p className="text-[13px] text-gray-500 font-semibold mb-1">
+                          {product!.seller?.username || "GreenMarket Store"}
+                        </p>
 
-                    <span className="px-7 py-3 text-sm font-bold text-[#1f1f1f]">
-                      {quantity}
-                    </span>
+                        <h2 className="text-[30px] font-black text-[#1f1f1f] leading-tight mb-2">
+                          {product!.nama_produk}
+                        </h2>
 
-                    <button
-                      type="button"
-                      onClick={() => handleQuantity("plus")}
-                      className="px-6 py-3 text-[#2fa84f] font-bold text-lg"
-                    >
-                      +
-                    </button>
+                        <p className="text-[20px] font-black text-[#111]">
+                          Rp {product!.harga.toLocaleString("id-ID")}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-col items-end gap-3 shrink-0 mt-4">
+                      <div className="border border-gray-300 rounded-xl flex items-center overflow-hidden bg-white">
+                        <button
+                          type="button"
+                          onClick={() => handleQuantity("min")}
+                          className="px-6 py-3 text-red-500 font-bold text-lg"
+                        >
+                          -
+                        </button>
+
+                        <span className="px-7 py-3 text-sm font-bold text-[#1f1f1f]">
+                          {quantity}
+                        </span>
+
+                        <button
+                          type="button"
+                          onClick={() => handleQuantity("plus")}
+                          className="px-6 py-3 text-[#2fa84f] font-bold text-lg"
+                        >
+                          +
+                        </button>
+                      </div>
+
+                      <span className="text-sm text-gray-500">
+                        Stok tersedia: {product!.stok}
+                      </span>
+                    </div>
                   </div>
-
-                  <span className="text-sm text-gray-500">
-                    Stok tersedia: {product.stok}
-                  </span>
-                </div>
+                )}
               </div>
 
               {/* ALAMAT PENGIRIMAN */}
@@ -660,19 +793,6 @@ function PembayaranContent() {
                     <polyline points="6 9 12 15 18 9" />
                   </svg>
                 </button>
-
-                <label className="flex items-center justify-between mt-4 border border-gray-300 rounded-[16px] p-4 bg-white cursor-pointer">
-                  <p className="text-[15px] font-semibold text-[#1f1f1f]">
-                    Asuransi Pengiriman (Rp 500)
-                  </p>
-
-                  <input
-                    type="checkbox"
-                    checked={shippingInsurance}
-                    onChange={(e) => setShippingInsurance(e.target.checked)}
-                    className="w-4 h-4 accent-[#2fa84f]"
-                  />
-                </label>
               </div>
 
               {/* MODAL JASA KIRIM */}
@@ -807,10 +927,6 @@ function PembayaranContent() {
                   <div className="flex justify-between text-gray-700">
                     <span>Ongkir</span>
                     <span>Rp {ongkir.toLocaleString("id-ID")}</span>
-                  </div>
-                  <div className="flex justify-between text-gray-700">
-                    <span>Asuransi</span>
-                    <span>Rp {biayaAsuransi.toLocaleString("id-ID")}</span>
                   </div>
                   <div className="border-t border-gray-300 pt-3 flex justify-between font-black text-[#1f1f1f] text-[16px]">
                     <span>Total transaksi</span>
