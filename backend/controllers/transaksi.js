@@ -1,28 +1,114 @@
 const prisma = require("../lib/prisma");
 const snap = require("../config/midtrans");
 
-const getDemoStatusByTime = (transaksi) => {
-  if (transaksi.status_transaksi === "BELUM_BAYAR") {
-    return "BELUM_BAYAR";
+const getTransaksiInclude = (sellerId = null) => ({
+  detail_transaksi: {
+    where: sellerId
+      ? {
+          produk: {
+            is: {
+              id_user_seller: sellerId,
+            },
+          },
+        }
+      : undefined,
+    include: {
+      produk: {
+        include: {
+          seller: {
+            select: {
+              username: true,
+              email: true,
+            },
+          },
+          kategori: true,
+        },
+      },
+    },
+  },
+  alamat: true,
+  jasa_kirim: true,
+  metode_pembayaran: true,
+  pembayaran: true,
+  tracking_logs: {
+    orderBy: {
+      waktu: "asc",
+    },
+  },
+});
+
+const updateSellerSelesaiJikaLewatSatuMenit = async (trx) => {
+  const fullTrx = await prisma.transaksi.findUnique({
+    where: {
+      id_transaksi: trx.id_transaksi,
+    },
+    include: getTransaksiInclude(),
+  });
+
+  if (!fullTrx) return trx;
+
+  const sellerIds = [
+    ...new Set(
+      fullTrx.detail_transaksi
+        ?.map((detail) => detail.produk?.id_user_seller)
+        .filter(Boolean),
+    ),
+  ];
+
+  let updatedTrx = fullTrx;
+
+  for (const sellerId of sellerIds) {
+    const logDikirim = updatedTrx.tracking_logs?.find(
+      (log) => log.status === `DIKIRIM_SELLER_${sellerId}`,
+    );
+
+    const sudahSelesai = updatedTrx.tracking_logs?.some(
+      (log) => log.status === `SELESAI_SELLER_${sellerId}`,
+    );
+
+    if (!logDikirim || sudahSelesai) continue;
+
+    const waktuDikirim = new Date(logDikirim.waktu).getTime();
+    const selisihMenit = (Date.now() - waktuDikirim) / (1000 * 60);
+
+    if (selisihMenit >= 1) {
+      updatedTrx = await prisma.transaksi.update({
+        where: {
+          id_transaksi: updatedTrx.id_transaksi,
+        },
+        data: {
+          tracking_logs: {
+            create: {
+              status: `SELESAI_SELLER_${sellerId}`,
+            },
+          },
+        },
+        include: getTransaksiInclude(),
+      });
+    }
   }
 
-  if (transaksi.status_transaksi === "SELESAI") {
-    return "SELESAI";
+  const semuaSellerSelesai =
+    sellerIds.length > 0 &&
+    sellerIds.every((sellerId) =>
+      updatedTrx.tracking_logs?.some(
+        (log) => log.status === `SELESAI_SELLER_${sellerId}`,
+      ),
+    );
+
+  if (semuaSellerSelesai && updatedTrx.status_transaksi !== "SELESAI") {
+    updatedTrx = await prisma.transaksi.update({
+      where: {
+        id_transaksi: updatedTrx.id_transaksi,
+      },
+      data: {
+        status_transaksi: "SELESAI",
+      },
+      include: getTransaksiInclude(),
+    });
   }
 
-  const dibuatPada = new Date(transaksi.tanggal_transaksi).getTime();
-  const sekarang = Date.now();
-  const selisihJam = (sekarang - dibuatPada) / (1000 * 60 * 60);
-
-  if (selisihJam >= 24) {
-    return "SELESAI";
-  }
-
-  if (selisihJam >= 6) {
-    return "DIKIRIM";
-  }
-
-  return "DIKEMAS";
+  return updatedTrx;
 };
 
 const createTransaksi = async (req, res) => {
@@ -303,36 +389,17 @@ const getTransaksiByUser = async (req, res) => {
   try {
     const id_user = parseInt(req.params.id_user);
 
+    if (Number.isNaN(id_user)) {
+      return res.status(400).json({
+        message: "ID user tidak valid",
+      });
+    }
+
     const transaksi = await prisma.transaksi.findMany({
       where: {
         id_user,
       },
-      include: {
-        detail_transaksi: {
-          include: {
-            produk: {
-              include: {
-                seller: {
-                  select: {
-                    username: true,
-                    email: true,
-                  },
-                },
-                kategori: true,
-              },
-            },
-          },
-        },
-        alamat: true,
-        jasa_kirim: true,
-        metode_pembayaran: true,
-        pembayaran: true,
-        tracking_logs: {
-          orderBy: {
-            waktu: "asc",
-          },
-        },
-      },
+      include: getTransaksiInclude(),
       orderBy: {
         tanggal_transaksi: "desc",
       },
@@ -341,58 +408,8 @@ const getTransaksiByUser = async (req, res) => {
     const transaksiTerupdate = [];
 
     for (const trx of transaksi) {
-      const statusDemo = getDemoStatusByTime(trx);
-
-      if (statusDemo !== trx.status_transaksi) {
-        const trackingStatus =
-          statusDemo === "DIKIRIM"
-            ? "Pesanan sedang dikirim"
-            : "Pesanan selesai";
-
-        const updated = await prisma.transaksi.update({
-          where: {
-            id_transaksi: trx.id_transaksi,
-          },
-          data: {
-            status_transaksi: statusDemo,
-            tracking_logs: {
-              create: {
-                status: trackingStatus,
-              },
-            },
-          },
-          include: {
-            detail_transaksi: {
-              include: {
-                produk: {
-                  include: {
-                    seller: {
-                      select: {
-                        username: true,
-                        email: true,
-                      },
-                    },
-                    kategori: true,
-                  },
-                },
-              },
-            },
-            alamat: true,
-            jasa_kirim: true,
-            metode_pembayaran: true,
-            pembayaran: true,
-            tracking_logs: {
-              orderBy: {
-                waktu: "asc",
-              },
-            },
-          },
-        });
-
-        transaksiTerupdate.push(updated);
-      } else {
-        transaksiTerupdate.push(trx);
-      }
+      const updated = await updateSellerSelesaiJikaLewatSatuMenit(trx);
+      transaksiTerupdate.push(updated);
     }
 
     res.json(transaksiTerupdate);
@@ -405,7 +422,146 @@ const getTransaksiByUser = async (req, res) => {
   }
 };
 
+const getTransaksiBySeller = async (req, res) => {
+  try {
+    const id_seller = parseInt(req.params.id_seller);
+
+    if (Number.isNaN(id_seller)) {
+      return res.status(400).json({
+        message: "ID seller tidak valid",
+      });
+    }
+
+    const transaksi = await prisma.transaksi.findMany({
+      where: {
+        detail_transaksi: {
+          some: {
+            produk: {
+              is: {
+                id_user_seller: id_seller,
+              },
+            },
+          },
+        },
+      },
+      include: getTransaksiInclude(id_seller),
+      orderBy: {
+        tanggal_transaksi: "desc",
+      },
+    });
+
+    const transaksiTerupdate = [];
+
+    for (const trx of transaksi) {
+      const updated = await updateSellerSelesaiJikaLewatSatuMenit(trx);
+
+      const transaksiSeller = await prisma.transaksi.findUnique({
+        where: {
+          id_transaksi: updated.id_transaksi,
+        },
+        include: getTransaksiInclude(id_seller),
+      });
+
+      transaksiTerupdate.push(transaksiSeller);
+    }
+
+    res.json(transaksiTerupdate);
+  } catch (error) {
+    console.error("Error Get Transaksi Seller:", error);
+    res.status(500).json({
+      message: "Gagal mengambil pesanan masuk seller",
+      detail: error.message,
+    });
+  }
+};
+
+const konfirmasiKirim = async (req, res) => {
+  try {
+    const { id_transaksi } = req.params;
+    const id_seller = Number(req.body.id_seller);
+
+    if (!id_transaksi) {
+      return res.status(400).json({
+        message: "ID transaksi wajib dikirim",
+      });
+    }
+
+    if (!id_seller || Number.isNaN(id_seller)) {
+      return res.status(400).json({
+        message: "ID seller tidak valid",
+      });
+    }
+
+    const transaksi = await prisma.transaksi.findFirst({
+      where: {
+        id_transaksi,
+        detail_transaksi: {
+          some: {
+            produk: {
+              is: {
+                id_user_seller: id_seller,
+              },
+            },
+          },
+        },
+      },
+      include: getTransaksiInclude(),
+    });
+
+    if (!transaksi) {
+      return res.status(404).json({
+        message: "Transaksi tidak ditemukan atau bukan pesanan seller ini",
+      });
+    }
+
+    if (transaksi.status_transaksi === "BELUM_BAYAR") {
+      return res.status(400).json({
+        message: "Pesanan belum dibayar, belum bisa dikirim",
+      });
+    }
+
+    const statusLog = `DIKIRIM_SELLER_${id_seller}`;
+
+    const sudahAdaLogDikirim = transaksi.tracking_logs?.some(
+      (log) => log.status === statusLog,
+    );
+
+    if (sudahAdaLogDikirim) {
+      return res.status(400).json({
+        message: "Pesanan seller ini sudah dikonfirmasi dikirim",
+      });
+    }
+
+    const updated = await prisma.transaksi.update({
+      where: {
+        id_transaksi,
+      },
+      data: {
+        tracking_logs: {
+          create: {
+            status: statusLog,
+          },
+        },
+      },
+      include: getTransaksiInclude(id_seller),
+    });
+
+    res.json({
+      message: "Pesanan berhasil dikonfirmasi dikirim",
+      transaksi: updated,
+    });
+  } catch (error) {
+    console.error("Error Konfirmasi Kirim:", error);
+    res.status(500).json({
+      message: "Gagal konfirmasi kirim",
+      detail: error.message,
+    });
+  }
+};
+
 module.exports = {
   createTransaksi,
   getTransaksiByUser,
+  getTransaksiBySeller,
+  konfirmasiKirim,
 };

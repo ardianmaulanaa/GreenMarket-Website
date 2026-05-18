@@ -7,6 +7,7 @@ import { motion, type Variants } from "framer-motion";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState, type SyntheticEvent } from "react";
+import ProfileSidebar from "@/components/profile/ProfileSidebar";
 
 const fadeUp: Variants = {
   hidden: { opacity: 0, y: 24 },
@@ -56,7 +57,7 @@ export default function ProfilePage() {
 
   const avatarSrc = useMemo(
     () => avatarPreview ?? defaultAvatarUrl(profile.nama),
-    [avatarPreview, profile.nama]
+    [avatarPreview, profile.nama],
   );
 
   const handleAvatarSelect = (dataUrl: string) => {
@@ -135,16 +136,19 @@ export default function ProfilePage() {
 
     setIsSubmitting(true);
     try {
-      const response = await fetch(`http://localhost:5050/api/users/${userId}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
+      const response = await fetch(
+        `http://localhost:5050/api/users/${userId}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            username: form.nama,
+            email: form.email,
+          }),
         },
-        body: JSON.stringify({
-          username: form.nama,
-          email: form.email,
-        }),
-      });
+      );
 
       const data = await response.json();
 
@@ -179,11 +183,6 @@ export default function ProfilePage() {
     } finally {
       setIsSubmitting(false);
     }
-  };
-
-  const handleLogout = () => {
-    localStorage.clear();
-    router.push("/login");
   };
 
   if (isPageLoading) {
@@ -232,18 +231,38 @@ export default function ProfilePage() {
             }}
             className="group mr-1 flex shrink-0 items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-3 py-2 text-xs font-semibold text-white/80 shadow-[0_0_20px_rgba(47,168,79,0.15)] backdrop-blur-md transition-all duration-300 hover:-translate-y-0.5 hover:border-[#2fa84f]/45 hover:bg-white/10 hover:text-white hover:shadow-[0_6px_28px_rgba(47,168,79,0.28)]"
           >
-            <svg className="shrink-0 transition-transform duration-300 group-hover:-translate-x-1" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <svg
+              className="shrink-0 transition-transform duration-300 group-hover:-translate-x-1"
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
               <line x1="19" y1="12" x2="5" y2="12" />
               <polyline points="12 19 5 12 12 5" />
             </svg>
             Kembali
           </button>
-          <Link href={dashboardHref} className="flex min-w-0 items-center gap-2 no-underline group">
+          <Link
+            href={dashboardHref}
+            className="flex min-w-0 items-center gap-2 no-underline group"
+          >
             <motion.div
               className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#2fa84f] to-[#1a7a35] shadow-lg sm:h-[36px] sm:w-[36px]"
               whileHover={{ scale: 1.05 }}
             >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5">
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="white"
+                strokeWidth="2.5"
+              >
                 <path d="M12 2L3 7v9c0 5 9 7 9 7s9-2 9-7V7l-9-5z" />
               </svg>
             </motion.div>
@@ -251,14 +270,24 @@ export default function ProfilePage() {
               Green<span className="text-[#2fa84f]">Market</span>
             </span>
           </Link>
-          
+
           {!isSeller && (
             <div className="hidden lg:flex items-center gap-4">
               <Link
                 href="/register-penjual"
                 className="bg-white/5 border border-white/10 text-white px-5 py-2.5 rounded-xl text-xs font-bold no-underline hover:bg-[#2fa84f] hover:border-transparent transition-all flex items-center gap-2"
               >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="3"
+                >
+                  <line x1="12" y1="5" x2="12" y2="19" />
+                  <line x1="5" y1="12" x2="19" y2="12" />
+                </svg>
                 Mulai Berjualan
               </Link>
             </div>
@@ -268,7 +297,14 @@ export default function ProfilePage() {
         <div className="mx-4 hidden max-w-xl flex-1 md:block">
           <div className="relative">
             <motion.div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6b7280" strokeWidth="2.5">
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="#6b7280"
+                strokeWidth="2.5"
+              >
                 <circle cx="11" cy="11" r="8" />
                 <line x1="21" y1="21" x2="16.65" y2="16.65" />
               </svg>
@@ -299,106 +335,11 @@ export default function ProfilePage() {
 
       <div className="relative z-10 mx-auto flex w-full max-w-[1600px] flex-grow flex-col gap-6 px-4 pt-24 pb-16 sm:px-6 lg:flex-row lg:gap-8 lg:px-6 lg:pt-28 lg:pb-20">
         {/* Sidebar */}
-        <aside className="w-full shrink-0 lg:w-[280px]">
-          <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.5 }}
-            className="sticky top-24 rounded-[28px] border border-white/10 bg-[#1a1f1b]/85 p-5 shadow-2xl backdrop-blur-xl sm:rounded-[32px] sm:p-6"
-          >
-            <div className="mb-6 flex flex-col items-center text-center sm:mb-8">
-              <ProfileAvatarEditor
-                src={avatarSrc}
-                name={profile.nama}
-                size={88}
-                onImageSelect={handleAvatarSelect}
-              />
-              <h3 className="mt-4 text-base font-extrabold tracking-tight text-white sm:text-lg">
-                {profile.nama}
-              </h3>
-              <div className="mt-2">
-                <RoleBadge role={profile.role} />
-              </div>
-            </div>
-
-            <nav className="flex flex-col gap-2">
-              <Link
-                href="/profile"
-                className="flex items-center gap-3 rounded-2xl bg-[#2fa84f] p-3.5 font-bold text-white no-underline shadow-[0_4px_15px_rgba(47,168,79,0.2)] transition"
-              >
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-                  <circle cx="12" cy="7" r="4" />
-                </svg>
-                <span className="text-sm">Profil Saya</span>
-              </Link>
-
-              <Link
-                href="/alamat"
-                className="group flex items-center gap-3 rounded-2xl p-3.5 font-semibold text-gray-400 no-underline transition hover:bg-white/5 hover:text-white"
-              >
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="transition-colors group-hover:text-[#2fa84f]">
-                  <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
-                  <circle cx="12" cy="10" r="3" />
-                </svg>
-                <span className="text-sm">Daftar Alamat</span>
-              </Link>
-
-              <Link
-                href="/pesanan"
-                className="group flex items-center gap-3 rounded-2xl p-3.5 font-semibold text-gray-400 no-underline transition hover:bg-white/5 hover:text-white"
-              >
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="transition-colors group-hover:text-[#2fa84f]">
-                  <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" />
-                  <line x1="3" y1="6" x2="21" y2="6" />
-                  <path d="M16 10a4 4 0 01-8 0" />
-                </svg>
-                <span className="text-sm">Pesanan Saya</span>
-              </Link>
-
-              {!isSeller ? (
-                <Link
-                  href="/register-penjual"
-                  className="mt-2 flex items-center gap-3 rounded-2xl border border-[#2fa84f]/20 bg-[#2fa84f]/10 p-3.5 font-bold text-[#2fa84f] no-underline shadow-sm transition hover:bg-[#2fa84f]/20"
-                >
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-                    <polyline points="9 22 9 12 15 12 15 22" />
-                  </svg>
-                  <span className="text-sm">Mulai Berjualan</span>
-                </Link>
-              ) : (
-                <Link
-                  href="/panel-penjual"
-                  className="mt-2 flex items-center gap-3 rounded-2xl border border-[#2fa84f]/20 bg-[#2fa84f]/10 p-3.5 font-bold text-[#2fa84f] no-underline shadow-sm transition hover:bg-[#2fa84f]/20"
-                >
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                    <rect x="3" y="3" width="7" height="7" />
-                    <rect x="14" y="3" width="7" height="7" />
-                    <rect x="14" y="14" width="7" height="7" />
-                    <rect x="3" y="14" width="7" height="7" />
-                  </svg>
-                  <span className="text-sm">Panel Inventaris</span>
-                </Link>
-              )}
-
-              <div className="my-3 border-t border-white/5 sm:my-4" />
-
-              <button
-                type="button"
-                onClick={handleLogout}
-                className="group flex w-full items-center gap-3 rounded-2xl border border-transparent p-3.5 text-left font-bold text-red-400 transition hover:border-red-500/20 hover:bg-red-500/10"
-              >
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="transition-transform group-hover:translate-x-1">
-                  <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-                  <polyline points="16 17 21 12 16 7" />
-                  <line x1="21" y1="12" x2="9" y2="12" />
-                </svg>
-                <span className="text-sm">Keluar</span>
-              </button>
-            </nav>
-          </motion.div>
-        </aside>
+        <ProfileSidebar
+          username={profile.nama || "User"}
+          role={profile.role || "BUYER"}
+          activeMenu="profile"
+        />
 
         {/* Main */}
         <main className="min-w-0 flex-1">
@@ -445,7 +386,11 @@ export default function ProfilePage() {
             >
               <div className="pointer-events-none absolute top-[-15%] right-[-8%] h-56 w-56 rounded-full bg-[#2fa84f]/15 blur-3xl" />
 
-              <motion.div variants={fadeUp} custom={2} className="relative z-10 mb-8">
+              <motion.div
+                variants={fadeUp}
+                custom={2}
+                className="relative z-10 mb-8"
+              >
                 <h2 className="m-0 text-2xl font-extrabold tracking-tight text-white sm:text-3xl">
                   Pengaturan Profil
                 </h2>
@@ -454,8 +399,15 @@ export default function ProfilePage() {
                 </p>
               </motion.div>
 
-              <form onSubmit={handleUpdateProfile} className="relative z-10 space-y-6">
-                <motion.div variants={fadeUp} custom={3} className="grid grid-cols-1 gap-5 md:grid-cols-2 md:gap-6">
+              <form
+                onSubmit={handleUpdateProfile}
+                className="relative z-10 space-y-6"
+              >
+                <motion.div
+                  variants={fadeUp}
+                  custom={3}
+                  className="grid grid-cols-1 gap-5 md:grid-cols-2 md:gap-6"
+                >
                   <FloatingInput
                     id="nama"
                     name="nama"
@@ -476,13 +428,19 @@ export default function ProfilePage() {
                   />
                 </motion.div>
 
-                <motion.div variants={fadeUp} custom={4} className="grid grid-cols-1 gap-5 md:grid-cols-2 md:gap-6">
+                <motion.div
+                  variants={fadeUp}
+                  custom={4}
+                  className="grid grid-cols-1 gap-5 md:grid-cols-2 md:gap-6"
+                >
                   <FloatingInput
                     id="password"
                     name="password"
                     label="Password Baru"
                     value={form.password}
-                    onChange={(e) => setForm({ ...form, password: e.target.value })}
+                    onChange={(e) =>
+                      setForm({ ...form, password: e.target.value })
+                    }
                     showToggle
                     placeholder="Kosongkan jika tidak diubah"
                     index={2}
@@ -524,7 +482,11 @@ export default function ProfilePage() {
                     <motion.span
                       className="pointer-events-none absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
                       animate={isSubmitting ? {} : { x: ["-100%", "100%"] }}
-                      transition={{ duration: 2.5, repeat: Infinity, repeatDelay: 1 }}
+                      transition={{
+                        duration: 2.5,
+                        repeat: Infinity,
+                        repeatDelay: 1,
+                      }}
                     />
                     <span className="relative z-10 flex items-center gap-2">
                       {isSubmitting ? (
@@ -532,7 +494,11 @@ export default function ProfilePage() {
                           <motion.span
                             className="inline-block h-4 w-4 rounded-full border-2 border-white/30 border-t-white"
                             animate={{ rotate: 360 }}
-                            transition={{ duration: 0.8, repeat: Infinity, ease: "linear" }}
+                            transition={{
+                              duration: 0.8,
+                              repeat: Infinity,
+                              ease: "linear",
+                            }}
                           />
                           Menyimpan...
                         </>
