@@ -338,25 +338,34 @@ export default function KeranjangPage() {
       <div className="absolute top-0 left-0 right-0 h-[360px] bg-[radial-gradient(circle_at_20%_20%,rgba(47,168,79,0.28),transparent_35%),radial-gradient(circle_at_80%_0%,rgba(238,251,232,0.7),transparent_36%)] pointer-events-none"></div>
       <div className="absolute right-[-160px] bottom-[80px] w-[520px] h-[520px] rounded-full bg-[#1f2a22]/45 blur-[120px] pointer-events-none"></div>
 
-      <nav className={`bg-[#1f2a22]/95 backdrop-blur-xl border-b border-white/10 sticky top-0 z-40 shadow-[0_10px_30px_rgba(10,17,11,0.22)] ${shouldAnimate ? 'animate-fade-in' : 'opacity-0'}`}>
-        <div className="max-w-[1200px] mx-auto px-5 sm:px-8 py-6 flex flex-col lg:flex-row lg:items-center gap-6">
-          <div className="flex items-center justify-between lg:justify-start gap-5 shrink-0">
-            <div className="flex items-center">
-              <Link
-                href={dashboardHref}
-                className="flex items-center gap-2 no-underline group"
-              >
-                <div className="w-[36px] h-[36px] rounded-xl bg-gradient-to-br from-[#2fa84f] to-[#1a7a35] flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5"><path d="M12 2L3 7v9c0 5 9 7 9 7s9-2 9-7V7l-9-5z"/></svg>
-                </div>
-                <span className="text-xl font-black text-white tracking-tight uppercase hidden sm:block">Green<span className="text-[#2fa84f]">Market</span></span>
-              </Link>
-              <div className="h-6 w-[2px] bg-white/20 mx-4 hidden sm:block"></div>
-              <span className="text-xl font-bold text-[#2fa84f] tracking-tight hidden sm:block">Keranjang Saya</span>
+      <nav className={`fixed top-0 left-0 right-0 z-[100] bg-[#1a1f1b]/90 backdrop-blur-xl border-b border-white/10 shadow-lg h-[72px] px-4 sm:px-8 flex items-center justify-between ${shouldAnimate ? "animate-fade-in" : "opacity-0"}`}>
+        <div className="flex min-w-0 items-center gap-4 sm:gap-8">
+          <button
+            type="button"
+            onClick={() => {
+              const role = localStorage.getItem("userRole");
+              if (role === "SELLER") router.push("/dashboard-seller");
+              else router.push("/dashboard-buyer");
+            }}
+            className="group mr-1 flex shrink-0 items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-3 py-2 text-xs font-semibold text-white/80 shadow-[0_0_20px_rgba(47,168,79,0.15)] backdrop-blur-md transition-all duration-300 hover:-translate-y-0.5 hover:border-[#2fa84f]/45 hover:bg-white/10 hover:text-white hover:shadow-[0_6px_28px_rgba(47,168,79,0.28)]"
+          >
+            <svg className="shrink-0 transition-transform duration-300 group-hover:-translate-x-1" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="19" y1="12" x2="5" y2="12" />
+              <polyline points="12 19 5 12 12 5" />
+            </svg>
+            Kembali
+          </button>
+          <Link href={dashboardHref} className="flex min-w-0 items-center gap-2 no-underline group">
+            <div className="w-[36px] h-[36px] rounded-xl bg-gradient-to-br from-[#2fa84f] to-[#1a7a35] flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5"><path d="M12 2L3 7v9c0 5 9 7 9 7s9-2 9-7V7l-9-5z"/></svg>
             </div>
-            
-            {user.role !== "SELLER" && (
-              <div className="hidden lg:flex items-center gap-4 ml-6">
+            <span className="text-xl font-black text-white tracking-tight uppercase hidden sm:block">
+              Green<span className="text-[#2fa84f]">Market</span>
+            </span>
+          </Link>
+
+          {user.role !== "SELLER" && (
+            <div className="hidden lg:flex items-center gap-4">
                 <Link
                   href="/register-penjual"
                   className="bg-white/5 border border-white/10 text-white px-5 py-2.5 rounded-xl text-xs font-bold no-underline hover:bg-[#2fa84f] hover:border-transparent transition-all flex items-center gap-2"
@@ -364,11 +373,11 @@ export default function KeranjangPage() {
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>
                   Mulai Berjualan
                 </Link>
-              </div>
-            )}
-          </div>
+            </div>
+          )}
+        </div>
 
-          <div className="flex-1 max-w-xl lg:ml-16 hidden md:block">
+        <div className="mx-4 hidden max-w-xl flex-1 md:block">
             <div className="relative group">
               <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6b7280" strokeWidth="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
@@ -381,10 +390,7 @@ export default function KeranjangPage() {
             </div>
           </div>
 
-          <Link
-            href="/profile"
-            className="hidden lg:flex items-center gap-3 no-underline text-right"
-          >
+        <Link href="/profile" className="hidden lg:flex shrink-0 items-center gap-3 no-underline text-right">
             <div>
               <p className="m-0 text-sm font-bold text-white">
                 {user.nama || "User"}
@@ -396,11 +402,13 @@ export default function KeranjangPage() {
             <div className="w-10 h-10 rounded-full bg-[#101a13] border-2 border-[#2fa84f] flex items-center justify-center text-white font-black uppercase">
               {user.nama ? user.nama.charAt(0) : "U"}
             </div>
-          </Link>
-        </div>
+        </Link>
       </nav>
 
-      <main className="max-w-[1200px] mx-auto px-4 sm:px-8 pt-8 relative z-10">
+      <main className="max-w-[1200px] mx-auto px-4 sm:px-8 pt-24 relative z-10">
+        <h1 className={`mb-6 text-2xl font-extrabold text-[#1a2e1f] ${shouldAnimate ? "animate-fade-in-up" : "opacity-0"}`}>
+          Keranjang Saya
+        </h1>
         <div className={`hidden lg:grid grid-cols-[56px_1.7fr_180px_180px_180px_150px] items-center gap-5 bg-[#1f2a22]/90 backdrop-blur-xl rounded-[18px] shadow-[0_18px_45px_rgba(10,17,11,0.22)] border border-white/10 h-20 px-8 text-slate-300 font-semibold ${shouldAnimate ? 'animate-fade-in-up' : 'opacity-0'}`}>
           <input
             checked={isAllSelected}

@@ -2,10 +2,16 @@
 
 import FloatingInput from "@/components/auth/FloatingInput";
 import RegisterHeroPanel from "@/components/auth/RegisterHeroPanel";
-import { motion, type Variants } from "framer-motion";
+import { AnimatePresence, motion, type Variants } from "framer-motion";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState, type ChangeEvent, type FormEvent } from "react";
+import { useCallback, useEffect, useState, type ChangeEvent, type FormEvent } from "react";
+
+type NotificationState = { type: "success" | "error"; message: string } | null;
+type FieldErrors = Partial<Record<"username" | "email" | "password" | "confirmPassword", string>>;
+
+const NOTIFICATION_DURATION = 4000;
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const fadeUp: Variants = {
   hidden: { opacity: 0, y: 20 },
@@ -24,6 +30,128 @@ const stagger: Variants = {
   hidden: {},
   visible: { transition: { staggerChildren: 0.08 } },
 };
+
+function mapRegisterError(message: string): { notification: string; fields: FieldErrors } {
+  const msg = (message || "").toLowerCase();
+
+  if (
+    msg.includes("email") &&
+    (msg.includes("sudah") || msg.includes("terdaftar") || msg.includes("exist") || msg.includes("duplicate"))
+  ) {
+    return {
+      notification: "Email sudah terdaftar",
+      fields: { email: "Email sudah terdaftar" },
+    };
+  }
+
+  if (
+    msg.includes("password") &&
+    (msg.includes("cocok") || msg.includes("match") || msg.includes("konfirmasi") || msg.includes("confirm"))
+  ) {
+    return {
+      notification: "Password dan konfirmasi password tidak cocok",
+      fields: { confirmPassword: "Password tidak cocok" },
+    };
+  }
+
+  if (msg.includes("username") && (msg.includes("minimal") || msg.includes("minimum") || msg.includes("5"))) {
+    return {
+      notification: "Username minimal 5 karakter",
+      fields: { username: "Username minimal 5 karakter" },
+    };
+  }
+
+  return {
+    notification: message || "Terjadi kesalahan saat mendaftar",
+    fields: {},
+  };
+}
+
+function FormNotification({ notification }: { notification: NotificationState }) {
+  if (!notification) return null;
+
+  const isSuccess = notification.type === "success";
+  const text = notification.message.replace(/^[⚠✓]\s*/, "");
+
+  return (
+    <motion.div
+      key={notification.message}
+      role="alert"
+      initial={{ opacity: 0, x: 32, scale: 0.94 }}
+      animate={{ opacity: 1, x: 0, scale: 1 }}
+      exit={{ opacity: 0, x: 24, scale: 0.96 }}
+      transition={{ duration: 0.38, ease: [0.22, 1, 0.36, 1] }}
+      className={
+        isSuccess
+          ? "pointer-events-auto fixed right-3 top-5 z-50 flex w-max max-w-[min(300px,calc(100vw-1.5rem))] items-center gap-2 rounded-full border border-[#2fa84f]/45 bg-[#111815]/90 px-3 py-1.5 shadow-[0_6px_28px_rgba(47,168,79,0.3)] backdrop-blur-xl sm:right-5 sm:top-6 lg:right-8 lg:top-8"
+          : "pointer-events-auto fixed right-3 top-5 z-50 flex w-max max-w-[min(300px,calc(100vw-1.5rem))] items-center gap-2 rounded-full border border-red-500/40 bg-[#111815]/90 px-3 py-1.5 shadow-[0_6px_28px_rgba(239,68,68,0.32)] backdrop-blur-xl sm:right-5 sm:top-6 lg:right-8 lg:top-8"
+      }
+    >
+      <span
+        className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full ${
+          isSuccess
+            ? "bg-[#2fa84f]/35 text-[#7ee8a0] shadow-[0_0_12px_rgba(47,168,79,0.4)]"
+            : "bg-red-500/35 text-red-300 shadow-[0_0_12px_rgba(239,68,68,0.45)]"
+        }`}
+      >
+        {isSuccess ? (
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="20 6 9 17 4 12" />
+          </svg>
+        ) : (
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+            <line x1="12" y1="9" x2="12" y2="13" />
+            <line x1="12" y1="17" x2="12.01" y2="17" />
+          </svg>
+        )}
+      </span>
+      <p className={`whitespace-nowrap text-xs font-semibold ${isSuccess ? "text-[#b8f5c8]" : "text-red-100"}`}>
+        {text}
+      </p>
+    </motion.div>
+  );
+}
+
+function FieldWrapper({
+  name,
+  error,
+  children,
+}: {
+  name: string;
+  error?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <motion.div className="flex flex-col">
+      <motion.div
+        animate={error ? { x: [0, -6, 6, -4, 4, 0] } : { x: 0 }}
+        transition={{ duration: 0.45 }}
+        className={
+          error
+            ? "[&_.rounded-2xl]:!border-red-500/70 [&_.rounded-2xl]:!bg-red-500/[0.08] [&_.rounded-2xl]:!shadow-[0_0_0_1px_rgba(239,68,68,0.45),0_0_28px_rgba(239,68,68,0.18)] [&_label]:!text-red-400"
+            : ""
+        }
+      >
+        {children}
+      </motion.div>
+      <AnimatePresence>
+        {error && (
+          <motion.p
+            key={`${name}-error`}
+            initial={{ opacity: 0, y: -4 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -4 }}
+            transition={{ duration: 0.25 }}
+            className="mt-1.5 pl-1 text-xs font-medium text-red-400"
+          >
+            {error}
+          </motion.p>
+        )}
+      </AnimatePresence>
+    </motion.div>
+  );
+}
 
 function LoadingScreen() {
   return (
@@ -67,12 +195,24 @@ export default function RegisterPage() {
   });
   const [isPageLoading, setIsPageLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [notification, setNotification] = useState<NotificationState>(null);
+  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const router = useRouter();
+
+  const showNotification = useCallback((type: "success" | "error", message: string) => {
+    setNotification({ type, message });
+  }, []);
 
   useEffect(() => {
     const timer = setTimeout(() => setIsPageLoading(false), 900);
     return () => clearTimeout(timer);
   }, []);
+
+  useEffect(() => {
+    if (!notification) return;
+    const timer = setTimeout(() => setNotification(null), NOTIFICATION_DURATION);
+    return () => clearTimeout(timer);
+  }, [notification]);
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target;
@@ -80,10 +220,67 @@ export default function RegisterPage() {
       ...prev,
       [name]: type === "checkbox" ? checked : value,
     }));
+
+    if (name in fieldErrors) {
+      setFieldErrors((prev) => {
+        if (!prev[name as keyof FieldErrors]) return prev;
+        const next = { ...prev };
+        delete next[name as keyof FieldErrors];
+        return next;
+      });
+    }
+  };
+
+  const validateForm = (): boolean => {
+    const errors: FieldErrors = {};
+
+    if (!form.username.trim()) {
+      errors.username = "Username wajib diisi";
+    } else if (form.username.trim().length < 5) {
+      errors.username = "Username minimal 5 karakter";
+    }
+
+    if (!form.email.trim()) {
+      errors.email = "Email wajib diisi";
+    } else if (!EMAIL_REGEX.test(form.email.trim())) {
+      errors.email = "Format email tidak valid";
+    }
+
+    if (!form.password) {
+      errors.password = "Password wajib diisi";
+    }
+
+    if (!form.confirmPassword) {
+      errors.confirmPassword = "Konfirmasi password wajib diisi";
+    } else if (form.password !== form.confirmPassword) {
+      errors.confirmPassword = "Password tidak cocok";
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors);
+
+      if (errors.confirmPassword === "Password tidak cocok") {
+        showNotification("error", "Password dan konfirmasi password tidak cocok");
+      } else if (errors.username === "Username minimal 5 karakter") {
+        showNotification("error", "Username minimal 5 karakter");
+      } else {
+        const firstError = Object.values(errors)[0];
+        showNotification("error", firstError);
+      }
+
+      return false;
+    }
+
+    return true;
   };
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    setFieldErrors({});
+    setNotification(null);
+
+    if (!validateForm()) return;
+
     setIsSubmitting(true);
     try {
       const response = await fetch("http://localhost:5050/register", {
@@ -100,14 +297,16 @@ export default function RegisterPage() {
       const data = await response.json();
 
       if (response.ok) {
-        alert("Registrasi Berhasil! Silakan Login.");
-        router.push("/login");
+        showNotification("success", "Registrasi berhasil! Silakan login");
+        setTimeout(() => router.push("/login"), 1500);
       } else {
-        alert(data.message || "Terjadi kesalahan saat mendaftar");
+        const { notification: errorMsg, fields } = mapRegisterError(data.message || "Terjadi kesalahan saat mendaftar");
+        setFieldErrors(fields);
+        showNotification("error", errorMsg);
       }
     } catch (error) {
       console.error("Connection Error:", error);
-      alert("Gagal terhubung ke server.");
+      showNotification("error", "Gagal terhubung ke server");
     } finally {
       setIsSubmitting(false);
     }
@@ -154,11 +353,16 @@ export default function RegisterPage() {
       </motion.div>
 
       {/* Form side — menyatu dengan gradasi hero */}
-      <div className="relative z-10 flex w-full flex-1 flex-col items-center justify-center bg-[#111815] px-5 py-10 lg:w-1/2 lg:bg-gradient-to-br lg:from-[#111815] lg:via-[#1a1f1b] lg:to-[#0a110b] lg:px-10 lg:py-12 lg:shadow-[-56px_0_72px_28px_#111815]">
-        <div
+      <motion.div className="relative z-10 flex w-full flex-1 flex-col items-center justify-center bg-[#111815] px-5 py-10 lg:w-1/2 lg:bg-gradient-to-br lg:from-[#111815] lg:via-[#1a1f1b] lg:to-[#0a110b] lg:px-10 lg:py-12 lg:shadow-[-56px_0_72px_28px_#111815]">
+        <motion.div
           className="pointer-events-none absolute inset-y-0 left-0 z-0 hidden w-28 bg-gradient-to-r from-[#111815] via-[#111815]/80 to-transparent lg:block"
           aria-hidden
         />
+
+        <AnimatePresence mode="wait">
+          {notification && <FormNotification notification={notification} />}
+        </AnimatePresence>
+
         <Link
           href="/"
           className="absolute left-5 top-6 z-20 flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold text-white/70 no-underline backdrop-blur-md transition hover:border-white/20 hover:bg-white/10 hover:text-white lg:left-8 lg:top-8"
@@ -171,7 +375,7 @@ export default function RegisterPage() {
         </Link>
 
         <motion.div
-          className="relative w-full max-w-[440px]"
+          className="w-full max-w-[440px]"
           initial="hidden"
           animate="visible"
           variants={stagger}
@@ -217,45 +421,53 @@ export default function RegisterPage() {
             </motion.div>
 
             <form onSubmit={handleSubmit} className="relative z-10 flex flex-col gap-4">
-              <FloatingInput
-                id="username"
-                name="username"
-                label="Username"
-                value={form.username}
-                onChange={handleChange}
-                required
-                index={0}
-              />
-              <FloatingInput
-                id="email"
-                name="email"
-                type="email"
-                label="Email"
-                value={form.email}
-                onChange={handleChange}
-                required
-                index={1}
-              />
-              <FloatingInput
-                id="password"
-                name="password"
-                label="Password"
-                value={form.password}
-                onChange={handleChange}
-                required
-                showToggle
-                index={2}
-              />
-              <FloatingInput
-                id="confirmPassword"
-                name="confirmPassword"
-                label="Confirm Password"
-                value={form.confirmPassword}
-                onChange={handleChange}
-                required
-                showToggle
-                index={3}
-              />
+              <FieldWrapper name="username" error={fieldErrors.username}>
+                <FloatingInput
+                  id="username"
+                  name="username"
+                  label="Username"
+                  value={form.username}
+                  onChange={handleChange}
+                  required
+                  index={0}
+                />
+              </FieldWrapper>
+              <FieldWrapper name="email" error={fieldErrors.email}>
+                <FloatingInput
+                  id="email"
+                  name="email"
+                  type="email"
+                  label="Email"
+                  value={form.email}
+                  onChange={handleChange}
+                  required
+                  index={1}
+                />
+              </FieldWrapper>
+              <FieldWrapper name="password" error={fieldErrors.password}>
+                <FloatingInput
+                  id="password"
+                  name="password"
+                  label="Password"
+                  value={form.password}
+                  onChange={handleChange}
+                  required
+                  showToggle
+                  index={2}
+                />
+              </FieldWrapper>
+              <FieldWrapper name="confirmPassword" error={fieldErrors.confirmPassword}>
+                <FloatingInput
+                  id="confirmPassword"
+                  name="confirmPassword"
+                  label="Confirm Password"
+                  value={form.confirmPassword}
+                  onChange={handleChange}
+                  required
+                  showToggle
+                  index={3}
+                />
+              </FieldWrapper>
 
               <motion.div
                 variants={fadeUp}
@@ -324,7 +536,7 @@ export default function RegisterPage() {
             </motion.div>
           </motion.div>
         </motion.div>
-      </div>
+      </motion.div>
     </main>
   );
 }

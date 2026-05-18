@@ -2,10 +2,10 @@
 
 import FloatingInput from "@/components/auth/FloatingInput";
 import LoginHeroPanel from "@/components/auth/LoginHeroPanel";
-import { motion, type Variants } from "framer-motion";
+import { AnimatePresence, motion, type Variants } from "framer-motion";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState, type ChangeEvent, type FormEvent } from "react";
+import { useCallback, useEffect, useState, type ChangeEvent, type FormEvent } from "react";
 
 interface LoginResponse {
   message?: string;
@@ -16,6 +16,12 @@ interface LoginResponse {
     role: "ADMIN" | "SELLER" | "BUYER" | string;
   };
 }
+
+type NotificationState = { type: "success" | "error"; message: string } | null;
+type FieldErrors = Partial<Record<"email" | "password", string>>;
+
+const NOTIFICATION_DURATION = 4000;
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const fadeUp: Variants = {
   hidden: { opacity: 0, y: 20 },
@@ -35,6 +41,121 @@ const stagger: Variants = {
   visible: { transition: { staggerChildren: 0.08 } },
 };
 
+function mapLoginError(message: string): { notification: string; fields: FieldErrors } {
+  const msg = (message || "").toLowerCase();
+
+  if (
+    msg.includes("password") &&
+    (msg.includes("salah") || msg.includes("wrong") || msg.includes("invalid") || msg.includes("incorrect"))
+  ) {
+    return {
+      notification: "Password salah",
+      fields: { password: "Password salah" },
+    };
+  }
+
+  if (
+    msg.includes("email") &&
+    (msg.includes("tidak") || msg.includes("not found") || msg.includes("ditemukan") || msg.includes("exist"))
+  ) {
+    return {
+      notification: "Email tidak ditemukan",
+      fields: { email: "Email tidak ditemukan" },
+    };
+  }
+
+  return {
+    notification: message || "Login gagal",
+    fields: {},
+  };
+}
+
+function FormNotification({ notification }: { notification: NotificationState }) {
+  if (!notification) return null;
+
+  const isSuccess = notification.type === "success";
+  const text = notification.message.replace(/^[⚠✓]\s*/, "");
+
+  return (
+    <motion.div
+      key={notification.message}
+      role="alert"
+      initial={{ opacity: 0, x: 32, scale: 0.94 }}
+      animate={{ opacity: 1, x: 0, scale: 1 }}
+      exit={{ opacity: 0, x: 24, scale: 0.96 }}
+      transition={{ duration: 0.38, ease: [0.22, 1, 0.36, 1] }}
+      className={
+        isSuccess
+          ? "pointer-events-auto fixed right-3 top-5 z-50 flex w-max max-w-[min(300px,calc(100vw-1.5rem))] items-center gap-2 rounded-full border border-[#2fa84f]/45 bg-[#111815]/90 px-3 py-1.5 shadow-[0_6px_28px_rgba(47,168,79,0.3)] backdrop-blur-xl sm:right-5 sm:top-6 lg:right-8 lg:top-8"
+          : "pointer-events-auto fixed right-3 top-5 z-50 flex w-max max-w-[min(300px,calc(100vw-1.5rem))] items-center gap-2 rounded-full border border-red-500/40 bg-[#111815]/90 px-3 py-1.5 shadow-[0_6px_28px_rgba(239,68,68,0.32)] backdrop-blur-xl sm:right-5 sm:top-6 lg:right-8 lg:top-8"
+      }
+    >
+      <span
+        className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full ${
+          isSuccess
+            ? "bg-[#2fa84f]/35 text-[#7ee8a0] shadow-[0_0_12px_rgba(47,168,79,0.4)]"
+            : "bg-red-500/35 text-red-300 shadow-[0_0_12px_rgba(239,68,68,0.45)]"
+        }`}
+      >
+        {isSuccess ? (
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="20 6 9 17 4 12" />
+          </svg>
+        ) : (
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+            <line x1="12" y1="9" x2="12" y2="13" />
+            <line x1="12" y1="17" x2="12.01" y2="17" />
+          </svg>
+        )}
+      </span>
+      <p className={`whitespace-nowrap text-xs font-semibold ${isSuccess ? "text-[#b8f5c8]" : "text-red-100"}`}>
+        {text}
+      </p>
+    </motion.div>
+  );
+}
+
+function FieldWrapper({
+  name,
+  error,
+  children,
+}: {
+  name: string;
+  error?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="flex flex-col">
+      <motion.div
+        animate={error ? { x: [0, -6, 6, -4, 4, 0] } : { x: 0 }}
+        transition={{ duration: 0.45 }}
+        className={
+          error
+            ? "[&_.rounded-2xl]:!border-red-500/70 [&_.rounded-2xl]:!bg-red-500/[0.08] [&_.rounded-2xl]:!shadow-[0_0_0_1px_rgba(239,68,68,0.45),0_0_28px_rgba(239,68,68,0.18)] [&_label]:!text-red-400"
+            : ""
+        }
+      >
+        {children}
+      </motion.div>
+      <AnimatePresence>
+        {error && (
+          <motion.p
+            key={`${name}-error`}
+            initial={{ opacity: 0, y: -4 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -4 }}
+            transition={{ duration: 0.25 }}
+            className="mt-1.5 pl-1 text-xs font-medium text-red-400"
+          >
+            {error}
+          </motion.p>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
 function LoadingScreen() {
   return (
     <motion.div
@@ -47,7 +168,7 @@ function LoadingScreen() {
         animate={{ rotate: 360 }}
         transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
       >
-        <div className="absolute inset-0 rounded-full border-4 border-[#2fa84f]/20" />
+        <motion.div className="absolute inset-0 rounded-full border-4 border-[#2fa84f]/20" />
         <motion.div className="absolute inset-0 rounded-full border-4 border-transparent border-t-[#2fa84f]" />
       </motion.div>
       <motion.p
@@ -69,7 +190,13 @@ export default function LoginPage() {
   });
   const [isPageLoading, setIsPageLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [notification, setNotification] = useState<NotificationState>(null);
+  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const router = useRouter();
+
+  const showNotification = useCallback((type: "success" | "error", message: string) => {
+    setNotification({ type, message });
+  }, []);
 
   useEffect(() => {
     const timer = setTimeout(() => setIsPageLoading(false), 800);
@@ -83,16 +210,58 @@ export default function LoginPage() {
     }
   }, []);
 
+  useEffect(() => {
+    if (!notification) return;
+    const timer = setTimeout(() => setNotification(null), NOTIFICATION_DURATION);
+    return () => clearTimeout(timer);
+  }, [notification]);
+
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target;
     setForm((prev) => ({
       ...prev,
       [name]: type === "checkbox" ? checked : value,
     }));
+
+    if (name === "email" || name === "password") {
+      setFieldErrors((prev) => {
+        if (!prev[name as keyof FieldErrors]) return prev;
+        const next = { ...prev };
+        delete next[name as keyof FieldErrors];
+        return next;
+      });
+    }
+  };
+
+  const validateForm = (): boolean => {
+    const errors: FieldErrors = {};
+
+    if (!form.email.trim()) {
+      errors.email = "Email wajib diisi";
+    } else if (!EMAIL_REGEX.test(form.email.trim())) {
+      errors.email = "Format email tidak valid";
+    }
+
+    if (!form.password) {
+      errors.password = "Password wajib diisi";
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors);
+      const firstError = Object.values(errors)[0];
+      showNotification("error", firstError);
+      return false;
+    }
+
+    return true;
   };
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    setFieldErrors({});
+    setNotification(null);
+
+    if (!validateForm()) return;
 
     localStorage.clear();
 
@@ -120,21 +289,28 @@ export default function LoginPage() {
           localStorage.setItem("rememberedEmail", form.email);
         }
 
-        alert("Login Berhasil! Selamat datang kembali.");
+        showNotification("success", "Login berhasil! Selamat datang kembali");
 
-        if (data.user.role === "ADMIN") {
-          router.push("/admin-panel");
-        } else if (data.user.role === "SELLER") {
-          router.push("/dashboard-seller");
-        } else if (data.user.role === "BUYER") {
-          router.push("/dashboard-buyer");
+        const redirectPath =
+          data.user.role === "ADMIN"
+            ? "/admin-panel"
+            : data.user.role === "SELLER"
+              ? "/dashboard-seller"
+              : data.user.role === "BUYER"
+                ? "/dashboard-buyer"
+                : null;
+
+        if (redirectPath) {
+          setTimeout(() => router.push(redirectPath), 1500);
         }
       } else {
-        alert(data.message || "Login Gagal");
+        const { notification: errorMsg, fields } = mapLoginError(data.message || "Login gagal");
+        setFieldErrors(fields);
+        showNotification("error", errorMsg);
       }
     } catch (error) {
       console.error("Login Error:", error);
-      alert("Gagal terhubung ke server. Pastikan Backend jalan di port 5050");
+      showNotification("error", "Gagal terhubung ke server");
     } finally {
       setIsSubmitting(false);
     }
@@ -167,7 +343,7 @@ export default function LoginPage() {
               "url('https://images.unsplash.com/photo-1536882240095-0379873feb4e?q=80&w=1200&auto=format&fit=crop')",
           }}
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-[#111815] via-[#0a110b]/85 to-[#0a110b]/50" />
+        <motion.div className="absolute inset-0 bg-gradient-to-t from-[#111815] via-[#0a110b]/85 to-[#0a110b]/50" />
         <p className="relative z-10 text-lg font-extrabold leading-snug text-white">
           Masa Depan Bumi{" "}
           <span className="text-[#2fa84f]">Ada di Tangan Kita</span>
@@ -180,6 +356,11 @@ export default function LoginPage() {
           className="pointer-events-none absolute inset-y-0 left-0 z-0 hidden w-28 bg-gradient-to-r from-[#111815] via-[#111815]/80 to-transparent lg:block"
           aria-hidden
         />
+
+        <AnimatePresence mode="wait">
+          {notification && <FormNotification notification={notification} />}
+        </AnimatePresence>
+
         <Link
           href="/"
           className="absolute left-5 top-6 z-20 flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold text-white/70 no-underline backdrop-blur-md transition hover:border-white/20 hover:bg-white/10 hover:text-white lg:left-8 lg:top-8"
@@ -205,7 +386,7 @@ export default function LoginPage() {
             transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
           >
             <div className="pointer-events-none absolute -right-16 -top-16 h-44 w-44 rounded-full bg-[#2fa84f]/20 blur-[60px]" />
-            <div
+            <motion.div
               className="pointer-events-none absolute inset-0 rounded-[32px]"
               style={{
                 background:
@@ -235,28 +416,32 @@ export default function LoginPage() {
             </motion.div>
 
             <form onSubmit={handleSubmit} className="relative z-10 flex flex-col gap-4">
-              <FloatingInput
-                id="email"
-                name="email"
-                type="email"
-                label="Email"
-                value={form.email}
-                onChange={handleChange}
-                required
-                autoComplete="email"
-                index={0}
-              />
-              <FloatingInput
-                id="password"
-                name="password"
-                label="Password"
-                value={form.password}
-                onChange={handleChange}
-                required
-                showToggle
-                autoComplete="current-password"
-                index={1}
-              />
+              <FieldWrapper name="email" error={fieldErrors.email}>
+                <FloatingInput
+                  id="email"
+                  name="email"
+                  type="email"
+                  label="Email"
+                  value={form.email}
+                  onChange={handleChange}
+                  required
+                  autoComplete="email"
+                  index={0}
+                />
+              </FieldWrapper>
+              <FieldWrapper name="password" error={fieldErrors.password}>
+                <FloatingInput
+                  id="password"
+                  name="password"
+                  label="Password"
+                  value={form.password}
+                  onChange={handleChange}
+                  required
+                  showToggle
+                  autoComplete="current-password"
+                  index={1}
+                />
+              </FieldWrapper>
 
               <motion.div
                 variants={fadeUp}

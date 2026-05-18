@@ -1,7 +1,6 @@
 "use client";
 
 import FloatingInput from "@/components/auth/FloatingInput";
-import BackButton from "@/components/profile/BackButton";
 import ProfileAvatarEditor from "@/components/profile/ProfileAvatarEditor";
 import RoleBadge from "@/components/profile/RoleBadge";
 import { motion, type Variants } from "framer-motion";
@@ -223,7 +222,22 @@ export default function ProfilePage() {
 
       {/* Navbar */}
       <nav className="fixed top-0 right-0 left-0 z-[100] flex h-[72px] items-center justify-between border-b border-white/10 bg-[#1a1f1b]/90 px-4 shadow-lg backdrop-blur-xl sm:px-6 lg:px-8">
-        <div className="flex min-w-0 items-center gap-2 sm:gap-3">
+        <motion.div className="flex min-w-0 items-center gap-2 sm:gap-3">
+          <button
+            type="button"
+            onClick={() => {
+              const role = localStorage.getItem("userRole");
+              if (role === "SELLER") router.push("/dashboard-seller");
+              else router.push("/dashboard-buyer");
+            }}
+            className="group mr-1 flex shrink-0 items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-3 py-2 text-xs font-semibold text-white/80 shadow-[0_0_20px_rgba(47,168,79,0.15)] backdrop-blur-md transition-all duration-300 hover:-translate-y-0.5 hover:border-[#2fa84f]/45 hover:bg-white/10 hover:text-white hover:shadow-[0_6px_28px_rgba(47,168,79,0.28)]"
+          >
+            <svg className="shrink-0 transition-transform duration-300 group-hover:-translate-x-1" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="19" y1="12" x2="5" y2="12" />
+              <polyline points="12 19 5 12 12 5" />
+            </svg>
+            Kembali
+          </button>
           <Link href={dashboardHref} className="flex min-w-0 items-center gap-2 no-underline group">
             <motion.div
               className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#2fa84f] to-[#1a7a35] shadow-lg sm:h-[36px] sm:w-[36px]"
@@ -249,7 +263,7 @@ export default function ProfilePage() {
               </Link>
             </div>
           )}
-        </div>
+        </motion.div>
 
         <div className="mx-4 hidden max-w-xl flex-1 md:block">
           <div className="relative">
