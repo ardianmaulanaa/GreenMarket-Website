@@ -14,6 +14,7 @@ interface InfoCardProps {
   href: string;
   cta: string;
   variant: "light" | "dark";
+  onClick?: () => void;
 }
 
 export default function InfoCard({
@@ -26,6 +27,7 @@ export default function InfoCard({
   href,
   cta,
   variant,
+  onClick
 }: InfoCardProps) {
   const ref = useRef<HTMLDivElement>(null);
   const x = useMotionValue(0.5);
@@ -151,6 +153,12 @@ export default function InfoCard({
             <div className="mt-8 border-t border-dashed border-[#2fa84f]/20 pt-6">
               <Link
                 href={href}
+                onClick={(e) => {
+                  if (onClick) {
+                    e.preventDefault();
+                    onClick();
+                  }
+                }}
                 className={`inline-flex items-center gap-2 text-sm font-bold no-underline transition ${
                   isLight
                     ? "text-[#2fa84f] hover:text-[#1a7a35]"

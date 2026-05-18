@@ -140,4 +140,5 @@ enum Role {
   BUYER
   SELLER
   ADMIN
+  GUEST
 }

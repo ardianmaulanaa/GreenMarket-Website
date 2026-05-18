@@ -115,10 +115,25 @@ function GradientHighlight({ children }: { children: string }) {
   return <span className="gradient-text-shine">{children}</span>;
 }
 
-export default function LandingPage() {
+  export default function LandingPage() {
   const [scrolled, setScrolled] = useState(false);
   const [mouse, setMouse] = useState({ x: 0, y: 0 });
   const heroRef = useRef<HTMLElement>(null);
+
+  const handleGuestExplore = () => {
+  const guestUser = {
+    id: 21,
+    username: "Guest User",
+    email: "guest@greenmarket.local",
+    role: "GUEST",
+  };
+
+  localStorage.setItem("userId", String(guestUser.id));
+  localStorage.setItem("userRole", guestUser.role);
+  localStorage.setItem("user", JSON.stringify(guestUser));
+
+  window.location.href = "/dashboard-buyer";
+};
 
   const { scrollYProgress } = useScroll({
     target: heroRef,
@@ -178,13 +193,14 @@ export default function LandingPage() {
           </Link>
 
           <div className="flex items-center gap-4 md:gap-6">
-            <Link
-              href="/beranda-dashboard"
-              className={`hidden text-sm font-semibold no-underline transition hover:text-[#2fa84f] sm:inline ${scrolled ? "text-[#1a2e1f]/80" : "text-white/90"
+            <button
+              type="button"
+              onClick={handleGuestExplore}
+              className={`hidden text-sm font-semibold transition hover:text-[#2fa84f] sm:inline bg-transparent border-0 cursor-pointer ${scrolled ? "text-[#1a2e1f]/80" : "text-white/90"
                 }`}
             >
               Jelajahi
-            </Link>
+          </button>
             <Link
               href="/login"
               className={`text-sm font-semibold no-underline transition hover:text-[#2fa84f] ${scrolled ? "text-[#1a2e1f]" : "text-white"
@@ -268,9 +284,16 @@ export default function LandingPage() {
             </motion.p>
 
             <motion.div variants={fadeUp} custom={3} className="mt-10 flex flex-wrap gap-4">
-              <MagneticButton href="/dashboard-seller" variant="primary" showArrow>
+              <motion.button
+                type="button"
+                onClick={handleGuestExplore}
+                whileHover={{ scale: 1.04 }}
+                whileTap={{ scale: 0.97 }}
+                className="inline-flex items-center gap-2 rounded-xl bg-[#2fa84f] px-6 py-3 text-sm font-bold text-white shadow-[0_4px_24px_rgba(47,168,79,0.35)] transition hover:bg-[#268c41]"
+              >
                 Mulai Jelajahi Produk
-              </MagneticButton>
+                <span>→</span>
+            </motion.button>
               <MagneticButton href="/register" variant="secondary" showArrow>
                 Daftar Gratis
               </MagneticButton>
@@ -385,7 +408,7 @@ export default function LandingPage() {
               badge="EcoTransact"
               title="Transaksi lebih hijau dan berkelanjutan"
               desc="Setiap transaksi mendukung ekonomi sirkular dan mengurangi limbah yang mencemari bumi."
-              href="/beranda-dashboard"
+              href="/dashboard-buyer"
               cta="Jelajahi produk"
               icon={
                 <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

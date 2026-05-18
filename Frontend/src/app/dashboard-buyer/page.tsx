@@ -291,9 +291,25 @@ export default function DashboardBuyer() {
           </Link>
 
           <div className="hidden lg:flex items-center gap-4">
-            <Link
-              href="/register-penjual"
-              className="bg-white/5 border border-white/10 text-white px-5 py-2.5 rounded-xl text-xs font-bold no-underline hover:bg-[#2fa84f] hover:border-transparent transition-all flex items-center gap-2"
+            <button
+              type="button"
+              onClick={() => {
+                const userRole = localStorage.getItem("userRole");
+
+                if (userRole === "GUEST") {
+                  alert("Silakan daftar terlebih dahulu sebelum mulai berjualan.");
+
+                  localStorage.removeItem("user");
+                  localStorage.removeItem("userId");
+                  localStorage.removeItem("userRole");
+
+                  router.push("/login");
+                  return;
+                }
+
+                router.push("/register-penjual");
+              }}
+              className="bg-white/5 border border-white/10 text-white px-5 py-2.5 rounded-xl text-xs font-bold no-underline hover:bg-[#2fa84f] hover:border-transparent transition-all flex items-center gap-2 cursor-pointer"
             >
               <svg
                 width="14"
@@ -307,7 +323,7 @@ export default function DashboardBuyer() {
                 <line x1="5" y1="12" x2="19" y2="12" />
               </svg>
               Mulai Berjualan
-            </Link>
+            </button>
           </div>
         </div>
 
@@ -364,24 +380,35 @@ export default function DashboardBuyer() {
             Logout
           </button>
 
-          <Link
-            href="/profile"
-            className="flex items-center gap-3 group no-underline border-l border-white/10 pl-4"
-          >
-            <div className="text-right hidden sm:block">
-              <p className="text-xs font-bold text-white m-0 group-hover:text-[#2fa84f] transition-colors">
-                {userName}
-              </p>
-              <p className="text-[10px] text-[#2fa84f] m-0 font-black uppercase">
-                Buyer
-              </p>
-            </div>
-            <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-[#2fa84f] to-[#1a7a35] p-[2px]">
-              <div className="w-full h-full rounded-full bg-[#0a110b] flex items-center justify-center text-white font-bold uppercase">
-                {userName.charAt(0)}
+              <button
+              type="button"
+                onClick={() => {
+                  const userRole = localStorage.getItem("userRole");
+
+                  if (userRole === "GUEST") {
+                    alert("Fitur ini tidak tersedia pada akun guest.");
+                    return;
+                  }
+
+                  router.push("/profile");
+                }}
+                className="flex items-center gap-3 group no-underline border-l border-white/10 pl-4 bg-transparent border-y-0 border-r-0 cursor-pointer"
+              >
+                <div className="text-right hidden sm:block">
+                  <p className="text-xs font-bold text-white m-0 group-hover:text-[#2fa84f] transition-colors">
+                    {userName}
+                  </p>
+                  <p className="text-[10px] text-[#2fa84f] m-0 font-black uppercase">
+                    Buyer
+                  </p>
+                </div>
+
+                <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-[#2fa84f] to-[#1a7a35] p-[2px]">
+                  <div className="w-full h-full rounded-full bg-[#0a110b] flex items-center justify-center text-white font-bold uppercase">
+                    {userName.charAt(0)}
+                  </div>
               </div>
-            </div>
-          </Link>
+    </button>
         </div>
       </nav>
 

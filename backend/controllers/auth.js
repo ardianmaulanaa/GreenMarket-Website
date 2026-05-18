@@ -57,6 +57,43 @@ const register = async (req, res) => {
     }
   };
 
+const loginGuest = async (req, res) => {
+  try {
+    let guest = await prisma.user.findUnique({
+      where: {
+        email: "guest@greenmarket.local",
+      },
+    });
+
+    if (!guest) {
+      guest = await prisma.user.create({
+        data: {
+          username: "Guest User",
+          email: "guest@greenmarket.local",
+          password: "guest-no-login",
+          role: "GUEST",
+        },
+      });
+    }
+
+    res.json({
+      message: "Masuk sebagai guest berhasil",
+      user: {
+        id: guest.id,
+        username: guest.username,
+        email: guest.email,
+        role: guest.role,
+      },
+    });
+  } catch (error) {
+    console.error("Error login guest:", error);
+    res.status(500).json({
+      message: "Gagal masuk sebagai guest",
+      detail: error.message,
+    });
+  }
+};
+
 const login = async (req, res) => {
   try {
       const { email, password } = req.body;
@@ -82,4 +119,4 @@ const login = async (req, res) => {
     }
   };
 
-module.exports = {register, login};
+module.exports = {register, login, loginGuest};
