@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import Footer from "@/components/Footer";
 
 // Animation styles for smooth entrance effects
 const animationStyles = `
@@ -437,35 +438,35 @@ export default function DashboardBuyer() {
             </button>
           )}
 
-              <button
-              type="button"
-                onClick={() => {
-                  const userRole = localStorage.getItem("userRole");
+          <button
+            type="button"
+            onClick={() => {
+              const userRole = localStorage.getItem("userRole");
 
-                  if (userRole === "GUEST") {
-                    alert("Fitur ini tidak tersedia pada akun guest.");
-                    return;
-                  }
+              if (userRole === "GUEST") {
+                alert("Fitur ini tidak tersedia pada akun guest.");
+                return;
+              }
 
-                  router.push("/profile");
-                }}
-                className="flex items-center gap-3 group no-underline border-l border-white/10 pl-4 bg-transparent border-y-0 border-r-0 cursor-pointer"
-              >
-                <div className="text-right hidden sm:block">
-                  <p className="text-xs font-bold text-white m-0 group-hover:text-[#2fa84f] transition-colors">
-                    {userName}
-                  </p>
-                  <p className="text-[10px] text-[#2fa84f] m-0 font-black uppercase">
-                    Buyer
-                  </p>
-                </div>
+              router.push("/profile");
+            }}
+            className="flex items-center gap-3 group no-underline border-l border-white/10 pl-4 bg-transparent border-y-0 border-r-0 cursor-pointer"
+          >
+            <div className="text-right hidden sm:block">
+              <p className="text-xs font-bold text-white m-0 group-hover:text-[#2fa84f] transition-colors">
+                {userName}
+              </p>
+              <p className="text-[10px] text-[#2fa84f] m-0 font-black uppercase">
+                Buyer
+              </p>
+            </div>
 
-                <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-[#2fa84f] to-[#1a7a35] p-[2px]">
-                  <div className="w-full h-full rounded-full bg-[#0a110b] flex items-center justify-center text-white font-bold uppercase">
-                    {userName.charAt(0)}
-                  </div>
+            <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-[#2fa84f] to-[#1a7a35] p-[2px]">
+              <div className="w-full h-full rounded-full bg-[#0a110b] flex items-center justify-center text-white font-bold uppercase">
+                {userName.charAt(0)}
               </div>
-    </button>
+            </div>
+          </button>
         </div>
       </nav>
 
@@ -697,11 +698,7 @@ export default function DashboardBuyer() {
         </div>
       </main>
 
-      <footer className="bg-transparent py-8 text-center border-t border-[#1a2e1f]/10 mt-auto relative z-10">
-        <p className="text-[#1a2e1f]/50 text-[10px] font-black tracking-[4px] uppercase m-0">
-          © 2026 GREENMARKET. BUYER CATALOG.
-        </p>
-      </footer>
+      <Footer />
     </div>
   );
 }

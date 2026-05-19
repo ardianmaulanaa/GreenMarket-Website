@@ -8,6 +8,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState, type SyntheticEvent } from "react";
 import ProfileSidebar from "@/components/profile/ProfileSidebar";
+import Footer from "@/components/Footer";
 
 const fadeUp: Variants = {
   hidden: { opacity: 0, y: 24 },
@@ -514,11 +515,7 @@ export default function ProfilePage() {
         </main>
       </div>
 
-      <footer className="relative z-10 mt-auto border-t border-[#1a2e1f]/10 bg-transparent py-6 text-center sm:py-8">
-        <p className="m-0 text-[10px] font-black tracking-[0.25em] text-[#1a2e1f]/50 uppercase">
-          © 2026 GREENMARKET. ALL SELLER & BUYER CATALOG.
-        </p>
-      </footer>
+      <Footer />
     </div>
   );
 }

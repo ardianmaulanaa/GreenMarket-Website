@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import ProfileSidebar from "@/components/profile/ProfileSidebar";
+import Footer from "@/components/Footer";
 
 // Animation styles for smooth entrance effects
 const animationStyles = `
@@ -871,11 +872,7 @@ export default function PesananPage() {
       )}
 
       {/* ── FOOTER ── */}
-      <footer className="bg-transparent py-8 text-center border-t border-[#1a2e1f]/10 mt-auto relative z-10">
-        <p className="text-[#1a2e1f]/50 text-[10px] font-black tracking-[4px] uppercase m-0">
-          © 2026 GREENMARKET. ALL SELLER & BUYER CATALOG.
-        </p>
-      </footer>
+      <Footer />
     </div>
   );
 }

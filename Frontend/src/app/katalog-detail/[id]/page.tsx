@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useParams, useRouter } from "next/navigation";
+import Footer from "@/components/Footer";
 
 interface Produk {
   id_produk: string;
@@ -295,6 +296,23 @@ export default function DetailProdukPage() {
           <Link href="/keranjang" className="w-[42px] h-[42px] rounded-xl border border-white/10 bg-white/5 flex items-center justify-center text-white/70 hover:text-[#2fa84f] transition-all">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
           </Link>
+          {user.role === "GUEST" && (
+            <div className="flex items-center gap-3 mx-2 border-l border-white/10 pl-6 h-8">
+              <Link
+                href="/login"
+                className="bg-transparent border border-[#2fa84f] text-[#2fa84f] px-5 py-2 rounded-xl text-xs font-bold no-underline hover:bg-[#2fa84f]/10 transition-colors"
+              >
+                Masuk
+              </Link>
+              <Link
+                href="/register"
+                className="bg-[#2fa84f] text-white px-5 py-2 rounded-xl text-xs font-bold no-underline hover:bg-[#268c41] transition-colors shadow-[0_4px_15px_rgba(47,168,79,0.2)] hover:-translate-y-0.5"
+              >
+                Daftar
+              </Link>
+            </div>
+          )}
+
           <button
             type="button"
             onClick={() => {
@@ -321,9 +339,9 @@ export default function DetailProdukPage() {
             <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-[#2fa84f] to-[#1a7a35] p-[2px]">
               <div className="w-full h-full rounded-full bg-[#0a110b] flex items-center justify-center text-white font-bold uppercase">
                 {user.nama ? user.nama.charAt(0) : "U"}
-    </div>
-  </div>
-</button>
+              </div>
+            </div>
+          </button>
         </div>
       </nav>
 
@@ -491,11 +509,7 @@ export default function DetailProdukPage() {
         </div>
       </main>
 
-      <footer className="bg-transparent py-8 text-center border-t border-[#1a2e1f]/10 mt-auto relative z-10">
-         <p className="text-[#1a2e1f]/50 text-[10px] font-black tracking-[4px] uppercase m-0">
-            © 2026 GREENMARKET. ALL SELLER & BUYER CATALOG.
-         </p>
-      </footer>
+      <Footer />
     </div>
   );
 }

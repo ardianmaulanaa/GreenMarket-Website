@@ -3,6 +3,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import Footer from "@/components/Footer";
 
 // Animation styles for smooth entrance effects
 const animationStyles = `
@@ -369,6 +370,23 @@ export default function KeranjangPage() {
             </div>
           </div>
 
+          {user.role === "GUEST" && (
+            <div className="flex items-center gap-3 mx-2 border-l border-white/10 pl-6 h-8">
+              <Link
+                href="/login"
+                className="bg-transparent border border-[#2fa84f] text-[#2fa84f] px-5 py-2 rounded-xl text-xs font-bold no-underline hover:bg-[#2fa84f]/10 transition-colors"
+              >
+                Masuk
+              </Link>
+              <Link
+                href="/register"
+                className="bg-[#2fa84f] text-white px-5 py-2 rounded-xl text-xs font-bold no-underline hover:bg-[#268c41] transition-colors shadow-[0_4px_15px_rgba(47,168,79,0.2)] hover:-translate-y-0.5"
+              >
+                Daftar
+              </Link>
+            </div>
+          )}
+
           <button
             type="button"
               onClick={() => {
@@ -399,6 +417,24 @@ export default function KeranjangPage() {
       </nav>
 
       <main className="max-w-[1200px] mx-auto px-4 sm:px-8 pt-8 relative z-10">
+        <div className={`mb-6 ${shouldAnimate ? 'animate-fade-in-up' : 'opacity-0'}`}>
+          <button
+            type="button"
+            onClick={() => {
+              const role = localStorage.getItem("userRole");
+              if (role === "SELLER") router.push("/dashboard-seller");
+              else router.push("/dashboard-buyer");
+            }}
+            className="group inline-flex shrink-0 items-center gap-1.5 rounded-full border border-[#1a2e1f]/15 bg-[#1a2e1f]/5 px-5 py-2 text-xs font-bold text-[#1a2e1f]/85 backdrop-blur-md transition-all duration-300 hover:-translate-y-0.5 hover:bg-[#2fa84f] hover:text-white hover:border-transparent hover:shadow-[0_6px_20px_rgba(47,168,79,0.25)]"
+          >
+            <svg className="shrink-0 transition-transform duration-300 group-hover:-translate-x-1" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="19" y1="12" x2="5" y2="12" />
+              <polyline points="12 19 5 12 12 5" />
+            </svg>
+            Kembali
+          </button>
+        </div>
+
         <div className={`hidden lg:grid grid-cols-[56px_1.7fr_180px_180px_180px_150px] items-center gap-5 bg-[#1f2a22]/90 backdrop-blur-xl rounded-[18px] shadow-[0_18px_45px_rgba(10,17,11,0.22)] border border-white/10 h-20 px-8 text-slate-300 font-semibold ${shouldAnimate ? 'animate-fade-in-up' : 'opacity-0'}`}>
           <input
             checked={isAllSelected}
@@ -637,6 +673,7 @@ export default function KeranjangPage() {
           </div>
         </div>
       )}
+      <Footer />
     </div>
   );
 }
