@@ -1,9 +1,10 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Footer from "@/components/Footer";
+import { AnimatePresence, motion } from "framer-motion";
 
 // Animation styles for smooth entrance effects
 const animationStyles = `
@@ -99,6 +100,74 @@ interface Produk {
   seller?: { username: string; email: string };
 }
 
+type NotificationState = { type: "success" | "error"; message: string } | null;
+
+function FormNotification({ notification }: { notification: NotificationState }) {
+  if (!notification) return null;
+
+  const isSuccess = notification.type === "success";
+  const text = notification.message.replace(/^[⚠✓]\s*/, "");
+
+  return (
+    <div className="fixed inset-x-0 top-24 sm:inset-x-auto sm:right-5 sm:top-28 lg:right-8 lg:top-28 z-[200] flex justify-center sm:justify-end pointer-events-none">
+      <motion.div
+        key={notification.message}
+        role="alert"
+        initial={{ opacity: 0, x: 32, scale: 0.94 }}
+        animate={{ opacity: 1, x: 0, scale: 1 }}
+        exit={{ opacity: 0, x: 24, scale: 0.96 }}
+        transition={{ duration: 0.38, ease: [0.22, 1, 0.36, 1] }}
+        className={
+          isSuccess
+            ? "pointer-events-auto flex w-max max-w-[min(400px,calc(100vw-2rem))] items-center gap-2 rounded-full border border-[#2fa84f]/45 bg-[#111815]/90 px-3 py-1.5 shadow-[0_6px_28px_rgba(47,168,79,0.3)] backdrop-blur-xl"
+            : "pointer-events-auto flex w-max max-w-[min(400px,calc(100vw-2rem))] items-center gap-2 rounded-full border border-red-500/40 bg-[#111815]/90 px-3 py-1.5 shadow-[0_6px_28px_rgba(239,68,68,0.32)] backdrop-blur-xl"
+        }
+      >
+        <span
+          className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full ${
+            isSuccess
+              ? "bg-[#2fa84f]/35 text-[#7ee8a0] shadow-[0_0_12px_rgba(47,168,79,0.4)]"
+              : "bg-red-500/35 text-red-300 shadow-[0_0_12px_rgba(239,68,68,0.45)]"
+          }`}
+        >
+          {isSuccess ? (
+            <svg
+              width="12"
+              height="12"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <polyline points="20 6 9 17 4 12" />
+            </svg>
+          ) : (
+            <svg
+              width="12"
+              height="12"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+              <line x1="12" y1="9" x2="12" y2="13" />
+              <line x1="12" y1="17" x2="12.01" y2="17" />
+            </svg>
+          )}
+        </span>
+        <p className={`whitespace-nowrap text-xs font-semibold ${isSuccess ? "text-[#b8f5c8]" : "text-red-100"}`}>
+          {text}
+        </p>
+      </motion.div>
+    </div>
+  );
+}
+
 export default function DashboardBuyer() {
   const [isPageLoading, setIsPageLoading] = useState(true);
   const [shouldAnimate, setShouldAnimate] = useState(false);
@@ -111,6 +180,17 @@ export default function DashboardBuyer() {
   const [prevSlide, setPrevSlide] = useState(0);
   const [isGoingForward, setIsGoingForward] = useState(true);
   const [showSellerPopup, setShowSellerPopup] = useState(false);
+  const [notification, setNotification] = useState<NotificationState>(null);
+
+  const showNotification = useCallback((type: "success" | "error", message: string) => {
+    setNotification({ type, message });
+  }, []);
+
+  useEffect(() => {
+    if (!notification) return;
+    const timer = setTimeout(() => setNotification(null), 4000);
+    return () => clearTimeout(timer);
+  }, [notification]);
 
   const carouselSlides = [
     {
@@ -269,6 +349,10 @@ export default function DashboardBuyer() {
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-[#f1f8e9] via-[#2fa84f]/15 to-[#0a110b] font-sans text-[#1a2e1f] relative overflow-hidden">
       <style>{animationStyles}</style>
       <div className="absolute top-[-10%] right-[-5%] w-[600px] h-[600px] bg-[#2fa84f] opacity-20 blur-[150px] rounded-full pointer-events-none"></div>
+
+      <AnimatePresence mode="wait">
+        {notification && <FormNotification notification={notification} />}
+      </AnimatePresence>
 
       {showSellerPopup && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center pointer-events-auto">
@@ -444,7 +528,7 @@ export default function DashboardBuyer() {
               const userRole = localStorage.getItem("userRole");
 
               if (userRole === "GUEST") {
-                alert("Fitur ini tidak tersedia pada akun guest.");
+                showNotification("error", "Fitur ini tidak tersedia pada akun guest");
                 return;
               }
 

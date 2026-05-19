@@ -1,5 +1,19 @@
 const prisma = require('../lib/prisma');
 
+const normalizePhoneNumber = (phone) => {
+  if (!phone) return null;
+  let cleaned = phone.toString().replace(/\D/g, '');
+  if (cleaned.startsWith('0')) {
+    cleaned = '62' + cleaned.substring(1);
+  } else if (!cleaned.startsWith('62')) {
+    cleaned = '62' + cleaned;
+  }
+  if (cleaned.length < 11 || cleaned.length > 15) {
+    return null;
+  }
+  return '+' + cleaned;
+};
+
 // GET semua alamat milik user
 const getAddresses = async (req, res) => {
   try {
@@ -28,11 +42,16 @@ const addAddress = async (req, res) => {
       return res.status(400).json({ message: "Data tidak boleh kosong" });
     }
 
+    const normalizedPhone = normalizePhoneNumber(nomor_hp);
+    if (!normalizedPhone) {
+      return res.status(400).json({ message: "Nomor telepon Indonesia tidak valid" });
+    }
+
     const result = await prisma.alamat.create({
       data: {
         id_user: id_user,
         nama_penerima: nama_penerima,
-        nomor_hp: nomor_hp,
+        nomor_hp: normalizedPhone,
         alamat_lengkap: alamat_lengkap
       }
     });
@@ -58,6 +77,11 @@ const updateAddress = async (req, res) => {
       return res.status(400).json({ message: "Data tidak boleh kosong" });
     }
 
+    const normalizedPhone = normalizePhoneNumber(nomor_hp);
+    if (!normalizedPhone) {
+      return res.status(400).json({ message: "Nomor telepon Indonesia tidak valid" });
+    }
+
     // Pastikan alamat milik user yang benar
     const alamat = await prisma.alamat.findUnique({
       where: {
@@ -75,7 +99,7 @@ const updateAddress = async (req, res) => {
       },
       data: {
         nama_penerima: nama_penerima,
-        nomor_hp: nomor_hp,
+        nomor_hp: normalizedPhone,
         alamat_lengkap: alamat_lengkap
       }
     });

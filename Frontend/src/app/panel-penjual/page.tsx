@@ -53,8 +53,8 @@ interface Kategori {
 interface Produk {
   id_produk?: string;
   nama_produk: string;
-  harga: number;
-  stok: number;
+  harga: number | "";
+  stok: number | "";
   foto_produk?: string;
   foto_produk_list?: string[];
   id_kategori: string;
@@ -75,6 +75,7 @@ export default function PanelPenjual() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Produk | null>(null);
+  const [nameError, setNameError] = useState("");
   const [deleteModal, setDeleteModal] = useState<{isOpen: boolean, productId: string | null, productName: string | null}>({ isOpen: false, productId: null, productName: null });
 
   const [imageFiles, setImageFiles] = useState<File[]>([]);
@@ -85,8 +86,8 @@ export default function PanelPenjual() {
 
   const [formData, setFormData] = useState<Produk>({
     nama_produk: "",
-    harga: 0,
-    stok: 0,
+    harga: "",
+    stok: "",
     foto_produk: "",
     foto_produk_list: [],
     id_kategori: "",
@@ -216,8 +217,8 @@ export default function PanelPenjual() {
       setEditingProduct(null);
       setFormData({
         nama_produk: "",
-        harga: 0,
-        stok: 0,
+        harga: "",
+        stok: "",
         foto_produk: "",
         foto_produk_list: [],
         id_kategori: categories[0]?.id_kategori || "",
@@ -228,7 +229,18 @@ export default function PanelPenjual() {
       setImagePreviews([]);
       setImageFiles([]);
     }
+    setNameError("");
     setShowModal(true);
+  };
+
+  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    setFormData({ ...formData, nama_produk: val });
+    if (val && !/^[a-zA-Z\s'.]+$/.test(val)) {
+      setNameError("Nama produk hanya boleh huruf");
+    } else {
+      setNameError("");
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -246,6 +258,12 @@ export default function PanelPenjual() {
 
     if (imageFiles.length === 0 && existingFotoList.length === 0 && !editingProduct?.foto_produk) {
       alert("Harap upload minimal 1 foto produk.");
+      setIsSubmitting(false);
+      return;
+    }
+
+    if (nameError) {
+      alert("Data tidak valid, periksa kembali input Anda.");
       setIsSubmitting(false);
       return;
     }
@@ -524,23 +542,28 @@ export default function PanelPenjual() {
                   <input
                     type="text"
                     required
-                    className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white outline-none focus:border-[#2fa84f]"
+                    className={`w-full bg-white/5 border rounded-xl p-3 text-white outline-none transition-all ${nameError ? 'border-red-500 shadow-[0_0_10px_rgba(239,68,68,0.3)]' : 'border-white/10 focus:border-[#2fa84f]'}`}
                     value={formData.nama_produk}
-                    onChange={(e) => setFormData({ ...formData, nama_produk: e.target.value })}
+                    onChange={handleNameChange}
                   />
+                  {nameError && (
+                    <p className="mt-1.5 ml-1 text-xs text-red-400 font-medium">
+                      {nameError}
+                    </p>
+                  )}
                 </div>
                 <div>
                   <label className="text-[10px] text-gray-400 uppercase font-bold block mb-1">
                     Kategori Label
                   </label>
                   <select
-                    className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white"
+                    className="w-full bg-[#111815] border border-white/10 rounded-xl p-3 text-white outline-none focus:border-[#2fa84f] focus:shadow-[0_0_10px_rgba(47,168,79,0.3)] transition-all cursor-pointer"
                     value={formData.deskripsi}
                     onChange={(e) => setFormData({ ...formData, deskripsi: e.target.value })}
                   >
-                    <option value="Produk ramah lingkungan.">Umum</option>
-                    <option value="Pakaian Organik">Pakaian Organik</option>
-                    <option value="Daur Ulang">Daur Ulang</option>
+                    <option className="bg-[#111815] text-white hover:bg-[#2fa84f]" value="Produk ramah lingkungan.">Umum</option>
+                    <option className="bg-[#111815] text-white hover:bg-[#2fa84f]" value="Pakaian Organik">Pakaian Organik</option>
+                    <option className="bg-[#111815] text-white hover:bg-[#2fa84f]" value="Daur Ulang">Daur Ulang</option>
                   </select>
                 </div>
               </div>
@@ -553,12 +576,13 @@ export default function PanelPenjual() {
                   <input
                     type="number"
                     required
-                    className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white"
-                    value={Number.isNaN(formData.harga) ? "" : formData.harga}
+                    placeholder="Masukkan harga"
+                    className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white outline-none focus:border-[#2fa84f] focus:shadow-[0_0_10px_rgba(47,168,79,0.3)] transition-all"
+                    value={formData.harga}
                     onChange={(e) =>
                       setFormData({
                         ...formData,
-                        harga: e.target.value === "" ? 0 : Number(e.target.value),
+                        harga: e.target.value === "" ? "" : Number(e.target.value),
                       })
                     }
                   />
@@ -570,12 +594,13 @@ export default function PanelPenjual() {
                   <input
                     type="number"
                     required
-                    className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white"
-                    value={Number.isNaN(formData.stok) ? "" : formData.stok}
+                    placeholder="Masukkan stok"
+                    className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white outline-none focus:border-[#2fa84f] focus:shadow-[0_0_10px_rgba(47,168,79,0.3)] transition-all"
+                    value={formData.stok}
                     onChange={(e) =>
                       setFormData({
                         ...formData,
-                        stok: e.target.value === "" ? 0 : Number(e.target.value),
+                        stok: e.target.value === "" ? "" : Number(e.target.value),
                       })
                     }
                   />
@@ -587,15 +612,13 @@ export default function PanelPenjual() {
                   ID Kategori (Database)
                 </label>
                 <select
-                  className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white"
+                  className="w-full bg-[#111815] border border-white/10 rounded-xl p-3 text-white outline-none focus:border-[#2fa84f] focus:shadow-[0_0_10px_rgba(47,168,79,0.3)] transition-all cursor-pointer"
                   value={formData.id_kategori}
                   onChange={(e) => setFormData({ ...formData, id_kategori: e.target.value })}
                 >
-                  {categories.map((c) => (
-                    <option key={c.id_kategori} value={c.id_kategori}>
-                      {c.nama_kategori}
-                    </option>
-                  ))}
+                  <option className="bg-[#111815] text-white hover:bg-[#2fa84f]" value="Reduce">Reduce</option>
+                  <option className="bg-[#111815] text-white hover:bg-[#2fa84f]" value="Reuse">Reuse</option>
+                  <option className="bg-[#111815] text-white hover:bg-[#2fa84f]" value="Recycle">Recycle</option>
                 </select>
               </div>
 

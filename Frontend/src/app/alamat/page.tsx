@@ -1,11 +1,12 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import ProfileSidebar from "@/components/profile/ProfileSidebar";
 import Footer from "@/components/Footer";
+import { AnimatePresence, motion } from "framer-motion";
 
 // Animation styles for smooth entrance effects
 const animationStyles = `
@@ -63,6 +64,74 @@ const MapPicker = dynamic(() => import("./MapPicker"), {
   ),
 });
 
+type NotificationState = { type: "success" | "error"; message: string } | null;
+
+function FormNotification({ notification }: { notification: NotificationState }) {
+  if (!notification) return null;
+
+  const isSuccess = notification.type === "success";
+  const text = notification.message.replace(/^[⚠✓]\s*/, "");
+
+  return (
+    <div className="fixed inset-x-0 top-24 sm:inset-x-auto sm:right-5 sm:top-28 lg:right-8 lg:top-28 z-[200] flex justify-center sm:justify-end pointer-events-none">
+      <motion.div
+        key={notification.message}
+        role="alert"
+        initial={{ opacity: 0, x: 32, scale: 0.94 }}
+        animate={{ opacity: 1, x: 0, scale: 1 }}
+        exit={{ opacity: 0, x: 24, scale: 0.96 }}
+        transition={{ duration: 0.38, ease: [0.22, 1, 0.36, 1] }}
+        className={
+          isSuccess
+            ? "pointer-events-auto flex w-max max-w-[min(400px,calc(100vw-2rem))] items-center gap-2 rounded-full border border-[#2fa84f]/45 bg-[#111815]/90 px-3 py-1.5 shadow-[0_6px_28px_rgba(47,168,79,0.3)] backdrop-blur-xl"
+            : "pointer-events-auto flex w-max max-w-[min(400px,calc(100vw-2rem))] items-center gap-2 rounded-full border border-red-500/40 bg-[#111815]/90 px-3 py-1.5 shadow-[0_6px_28px_rgba(239,68,68,0.32)] backdrop-blur-xl"
+        }
+      >
+        <span
+          className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full ${
+            isSuccess
+              ? "bg-[#2fa84f]/35 text-[#7ee8a0] shadow-[0_0_12px_rgba(47,168,79,0.4)]"
+              : "bg-red-500/35 text-red-300 shadow-[0_0_12px_rgba(239,68,68,0.45)]"
+          }`}
+        >
+          {isSuccess ? (
+            <svg
+              width="12"
+              height="12"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <polyline points="20 6 9 17 4 12" />
+            </svg>
+          ) : (
+            <svg
+              width="12"
+              height="12"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+              <line x1="12" y1="9" x2="12" y2="13" />
+              <line x1="12" y1="17" x2="12.01" y2="17" />
+            </svg>
+          )}
+        </span>
+        <p className={`whitespace-nowrap text-xs font-semibold ${isSuccess ? "text-[#b8f5c8]" : "text-red-100"}`}>
+          {text}
+        </p>
+      </motion.div>
+    </div>
+  );
+}
+
 export default function AlamatPage() {
   const router = useRouter();
 
@@ -72,6 +141,20 @@ export default function AlamatPage() {
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [coords, setCoords] = useState<[number, number]>([-6.9175, 107.6191]);
+  const [phoneError, setPhoneError] = useState("");
+  const [nameError, setNameError] = useState("");
+  const [notification, setNotification] = useState<NotificationState>(null);
+  const [deleteModalId, setDeleteModalId] = useState<string | null>(null);
+
+  const showNotification = useCallback((type: "success" | "error", message: string) => {
+    setNotification({ type, message });
+  }, []);
+
+  useEffect(() => {
+    if (!notification) return;
+    const timer = setTimeout(() => setNotification(null), 4000);
+    return () => clearTimeout(timer);
+  }, [notification]);
 
   interface Address {
     id_alamat: string;
@@ -103,12 +186,13 @@ export default function AlamatPage() {
       );
       const data = await response.json();
       if (!response.ok) {
-        alert(data.message || "Gagal mengambil data alamat");
+        showNotification("error", data.message || "Gagal mengambil data alamat");
         return;
       }
       setAddresses(data);
     } catch (error) {
       console.error("Gagal mengambil alamat:", error);
+      showNotification("error", "Gagal mengambil alamat");
     }
   };
 
@@ -141,36 +225,80 @@ export default function AlamatPage() {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
+  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    setFormData({ ...formData, nama_penerima: val });
+    
+    if (val && !/^[a-zA-Z\s'.]+$/.test(val)) {
+      setNameError("Nama hanya boleh huruf");
+    } else {
+      setNameError("");
+    }
+  };
+
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    let val = e.target.value.replace(/\D/g, '');
+    if (val.startsWith('0')) {
+      val = val.substring(1);
+    }
+    if (val.length > 13) val = val.substring(0, 13);
+    setFormData({ ...formData, nomor_hp: val });
+    
+    if (val.length > 0 && val.length < 9) {
+      setPhoneError("Nomor tidak valid (minimal 9 angka)");
+    } else {
+      setPhoneError("");
+    }
+  };
+
   const handleSubmit = async (e: React.SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault();
     const userId = localStorage.getItem("userId");
     if (!userId) {
-      alert("Silakan login terlebih dahulu");
+      showNotification("error", "Silakan login terlebih dahulu");
       router.push("/login");
       return;
     }
+    if (formData.nomor_hp.length < 9) {
+      setPhoneError("Nomor tidak valid (minimal 9 angka)");
+      showNotification("error", "Data tidak valid");
+      return;
+    }
+    if (formData.nama_penerima && !/^[a-zA-Z\s'.]+$/.test(formData.nama_penerima)) {
+      setNameError("Nama hanya boleh huruf");
+      showNotification("error", "Data tidak valid");
+      return;
+    }
+
     try {
       const url = editingId
         ? `http://localhost:5050/api/alamat/${userId}/${editingId}`
         : `http://localhost:5050/api/alamat/${userId}`;
       const method = editingId ? "PUT" : "POST";
+      
+      const payload = {
+        ...formData,
+        nomor_hp: "+62" + formData.nomor_hp
+      };
+
       const response = await fetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(payload),
       });
       const data = await response.json();
       if (!response.ok) {
-        alert(data.message || "Gagal menyimpan alamat");
+        showNotification("error", data.message || "Gagal menyimpan alamat");
         return;
       }
-      alert(data.message || "Alamat berhasil disimpan");
+      showNotification("success", editingId ? "Alamat berhasil diperbarui" : "Alamat berhasil ditambahkan");
       await fetchAddresses();
       resetForm();
       setEditingId(null);
       setShowForm(false);
     } catch (error) {
       console.error("Gagal menyimpan alamat:", error);
+      showNotification("error", "Gagal menyimpan alamat");
     }
   };
 
@@ -182,29 +310,44 @@ export default function AlamatPage() {
       latitude: "",
       longitude: "",
     });
+    setPhoneError("");
+    setNameError("");
     setCoords([-6.9175, 107.6191]);
   };
 
   const handleEdit = (address: Address) => {
+    let phone = address.nomor_hp.replace(/\D/g, '');
+    if (phone.startsWith('62')) phone = phone.substring(2);
+    else if (phone.startsWith('0')) phone = phone.substring(1);
+
     setFormData({
       nama_penerima: address.nama_penerima,
-      nomor_hp: address.nomor_hp,
+      nomor_hp: phone,
       alamat_lengkap: address.alamat_lengkap,
       latitude: "",
       longitude: "",
     });
     setEditingId(address.id_alamat);
+    setPhoneError("");
+    setNameError("");
     setShowForm(true);
   };
 
-  const handleDelete = async (id_alamat: string) => {
+  const handleDelete = (id_alamat: string) => {
+    setDeleteModalId(id_alamat);
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteModalId) return;
+    const id_alamat = deleteModalId;
+    setDeleteModalId(null);
+    
     const userId = localStorage.getItem("userId");
     if (!userId) {
-      alert("Silakan login terlebih dahulu");
+      showNotification("error", "Silakan login terlebih dahulu");
       router.push("/login");
       return;
     }
-    if (!confirm("Apakah Anda yakin ingin menghapus alamat ini?")) return;
     try {
       const response = await fetch(
         `http://localhost:5050/api/alamat/${userId}/${id_alamat}`,
@@ -212,13 +355,14 @@ export default function AlamatPage() {
       );
       const data = await response.json();
       if (!response.ok) {
-        alert(data.message || "Gagal menghapus alamat");
+        showNotification("error", data.message || "Gagal menghapus alamat");
         return;
       }
-      alert(data.message || "Alamat berhasil dihapus");
+      showNotification("success", data.message || "Alamat berhasil dihapus");
       await fetchAddresses();
     } catch (error) {
       console.error("Gagal menghapus alamat:", error);
+      showNotification("error", "Gagal menghapus alamat");
     }
   };
 
@@ -237,6 +381,10 @@ export default function AlamatPage() {
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-[#f1f8e9] via-[#2fa84f]/15 to-[#0a110b] font-sans text-[#1a2e1f] relative overflow-hidden">
       <style>{animationStyles}</style>
       <div className="absolute top-[-10%] right-[-5%] w-[600px] h-[600px] bg-[#2fa84f] opacity-20 blur-[150px] rounded-full pointer-events-none"></div>
+
+      <AnimatePresence mode="wait">
+        {notification && <FormNotification notification={notification} />}
+      </AnimatePresence>
 
       {/* NAVBAR */}
       <nav
@@ -470,22 +618,40 @@ export default function AlamatPage() {
                 <input
                   name="nama_penerima"
                   value={formData.nama_penerima}
-                  onChange={handleInputChange}
-                  className="w-full px-4 py-3 border border-white/10 rounded-xl outline-none focus:border-[#2fa84f] focus:ring-1 focus:ring-[#2fa84f] text-sm text-white bg-[#1a1f1b]/50 shadow-inner transition-all"
+                  onChange={handleNameChange}
+                  className={`w-full px-4 py-3 border rounded-xl outline-none transition-all shadow-inner bg-[#1a1f1b]/50 text-sm text-white ${nameError ? 'border-red-500 shadow-[0_0_10px_rgba(239,68,68,0.3)]' : 'border-white/10 focus:border-[#2fa84f] focus:ring-1 focus:ring-[#2fa84f]'}`}
                   required
                 />
+                {nameError && (
+                  <p className="mt-1.5 ml-1 text-xs text-red-400 font-medium">
+                    {nameError}
+                  </p>
+                )}
               </div>
               <div className="col-span-2 md:col-span-1">
                 <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1 mb-1.5 block">
                   Nomor Telepon
                 </label>
-                <input
-                  name="nomor_hp"
-                  value={formData.nomor_hp}
-                  onChange={handleInputChange}
-                  className="w-full px-4 py-3 border border-white/10 rounded-xl outline-none focus:border-[#2fa84f] focus:ring-1 focus:ring-[#2fa84f] text-sm text-white bg-[#1a1f1b]/50 shadow-inner transition-all"
-                  required
-                />
+                <div className={`flex items-stretch bg-[#1a1f1b]/50 border rounded-xl shadow-inner transition-all overflow-hidden ${phoneError ? 'border-red-500 shadow-[0_0_10px_rgba(239,68,68,0.3)]' : 'border-white/10 focus-within:border-[#2fa84f] focus-within:ring-1 focus-within:ring-[#2fa84f]'}`}>
+                  <div className="w-[100px] flex shrink-0 items-center justify-center gap-2 bg-white/5 border-r border-white/10 select-none">
+                    <span className="text-lg leading-none flex items-center justify-center">🇮🇩</span>
+                    <span className="text-sm font-bold text-white/80 flex items-center justify-center">+62</span>
+                  </div>
+                  <input
+                    name="nomor_hp"
+                    type="tel"
+                    value={formData.nomor_hp}
+                    onChange={handlePhoneChange}
+                    className="w-full px-4 py-3 outline-none text-sm text-white bg-transparent"
+                    placeholder="81234567890"
+                    required
+                  />
+                </div>
+                {phoneError && (
+                  <p className="mt-1.5 ml-1 text-xs text-red-400 font-medium">
+                    {phoneError}
+                  </p>
+                )}
               </div>
               <div className="col-span-2">
                 <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1 mb-1.5 block">
@@ -541,6 +707,58 @@ export default function AlamatPage() {
           </div>
         </div>
       )}
+
+      {/* MODAL HAPUS */}
+      <AnimatePresence>
+        {deleteModalId && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 z-[300] flex items-center justify-center bg-black/60 backdrop-blur-md p-4"
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              transition={{ type: "spring", damping: 25, stiffness: 300 }}
+              className="bg-[#1a1f1b] border border-white/10 p-8 rounded-[24px] shadow-[0_20px_50px_rgba(0,0,0,0.5)] w-full max-w-sm text-center relative overflow-hidden"
+            >
+              <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-transparent via-red-500 to-transparent opacity-50"></div>
+              
+              <div className="w-16 h-16 bg-red-500/10 border border-red-500/20 rounded-2xl mx-auto flex items-center justify-center mb-6 text-red-500 shadow-[0_0_20px_rgba(239,68,68,0.15)]">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M3 6h18" />
+                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                  <line x1="10" y1="11" x2="10" y2="17" />
+                  <line x1="14" y1="11" x2="14" y2="17" />
+                </svg>
+              </div>
+              
+              <h3 className="text-xl font-[800] text-white mb-2 tracking-tight">Hapus Alamat?</h3>
+              <p className="text-sm text-gray-400 mb-8 font-medium">
+                Apakah Anda yakin ingin menghapus alamat ini?
+              </p>
+              
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setDeleteModalId(null)}
+                  className="flex-1 py-3 rounded-xl font-[800] text-sm text-gray-400 bg-white/5 border border-white/10 hover:bg-white/10 hover:text-white transition-all cursor-pointer"
+                >
+                  Batal
+                </button>
+                <button
+                  onClick={confirmDelete}
+                  className="flex-1 py-3 rounded-xl font-[800] text-sm text-white bg-red-500 hover:bg-red-600 transition-all border-none cursor-pointer shadow-[0_10px_20px_rgba(239,68,68,0.3)] hover:-translate-y-1"
+                >
+                  Hapus
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* FOOTER */}
       <Footer />
