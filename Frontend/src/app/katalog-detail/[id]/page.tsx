@@ -33,6 +33,7 @@ export default function DetailProdukPage() {
   const [activeImage, setActiveImage] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [showPopup, setShowPopup] = useState(false);
+  const [showLoginPopup, setShowLoginPopup] = useState(false);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -74,13 +75,11 @@ export default function DetailProdukPage() {
     return () => clearTimeout(timer);
   }, [productId]);
 
-      const isGuestUser = () => {
+    const isGuestUser = () => {
       const userRole = localStorage.getItem("userRole");
 
       if (userRole === "GUEST") {
-        alert("Daftar terlebih dahulu sebelum melakukan transaksi.");
-
-        router.push("/dashboard-buyer");
+        setShowLoginPopup(true);
         return true;
       }
 
@@ -210,6 +209,46 @@ export default function DetailProdukPage() {
             <p className="text-white text-[19px] font-medium tracking-wide text-center leading-snug drop-shadow-md">
               Produk telah ditambahkan ke keranjang belanja
             </p>
+          </div>
+        </div>
+      )}
+
+      {showLoginPopup && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center pointer-events-auto">
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowLoginPopup(false)}></div>
+          
+          <div className="relative z-10 flex flex-col items-center justify-center bg-[#0a110b] border border-[#2fa84f]/20 rounded-[24px] p-8 w-[420px] shadow-2xl popup-bounce">
+            <button 
+              onClick={() => setShowLoginPopup(false)}
+              className="absolute top-5 right-5 text-gray-400 hover:text-white transition-colors"
+            >
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+            </button>
+            
+            <div className="w-[84px] h-[84px] bg-[#2fa84f] rounded-[24px] flex items-center justify-center mb-6 shadow-[0_0_30px_rgba(47,168,79,0.3)]">
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="9" cy="21" r="2"></circle>
+                <circle cx="20" cy="21" r="2"></circle>
+                <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+              </svg>
+            </div>
+            
+            <h2 className="text-white text-2xl font-bold mb-3 tracking-tight text-center">Login Diperlukan</h2>
+            <p className="text-gray-300 text-sm font-medium tracking-wide text-center leading-relaxed mb-8">
+              Anda harus login terlebih dahulu untuk melanjutkan<br/>pembelian produk.
+            </p>
+            
+            <div className="flex gap-4 w-full">
+              <Link href="/login" className="flex-1 py-3.5 rounded-[16px] font-bold text-sm text-white bg-[#2fa84f] hover:bg-[#268c41] transition-all shadow-[0_4px_15px_rgba(47,168,79,0.3)] hover:-translate-y-0.5 text-center flex items-center justify-center">
+                Login
+              </Link>
+              <Link href="/register" className="flex-1 py-3.5 rounded-[16px] font-bold text-sm text-white bg-transparent border border-white/20 hover:bg-white/5 transition-all text-center flex items-center justify-center">
+                Daftar
+              </Link>
+            </div>
           </div>
         </div>
       )}
@@ -411,7 +450,6 @@ export default function DetailProdukPage() {
                   {(product.seller?.username || "TO").substring(0, 2).toUpperCase()}
                   </span>
                 </div>
-                <div className="absolute bottom-0 right-0 w-4 h-4 bg-[#2fa84f] border-2 border-[#1a1f1b] rounded-full"></div>
              </div>
              <div className="flex-1 flex justify-between items-center pr-4">
                <div>

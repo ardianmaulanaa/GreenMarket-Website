@@ -104,10 +104,12 @@ export default function DashboardBuyer() {
   const [dbProducts, setDbProducts] = useState<Produk[]>([]);
   const [loading, setLoading] = useState(true);
   const [userName, setUserName] = useState<string>("User");
+  const [userRoleState, setUserRoleState] = useState<string>("");
   const [searchTerm, setSearchTerm] = useState("");
   const [currentSlide, setCurrentSlide] = useState(0);
   const [prevSlide, setPrevSlide] = useState(0);
   const [isGoingForward, setIsGoingForward] = useState(true);
+  const [showSellerPopup, setShowSellerPopup] = useState(false);
 
   const carouselSlides = [
     {
@@ -176,6 +178,8 @@ export default function DashboardBuyer() {
         router.push("/login");
         return;
       }
+      
+      if (storedRole) setUserRoleState(storedRole);
 
       if (storedRole === "SELLER") {
         router.push("/dashboard-seller");
@@ -265,6 +269,48 @@ export default function DashboardBuyer() {
       <style>{animationStyles}</style>
       <div className="absolute top-[-10%] right-[-5%] w-[600px] h-[600px] bg-[#2fa84f] opacity-20 blur-[150px] rounded-full pointer-events-none"></div>
 
+      {showSellerPopup && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center pointer-events-auto">
+          <style>{`
+            .popup-bounce {
+              animation: bounceIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+            }
+            @keyframes bounceIn {
+              0% { transform: scale(0.8); opacity: 0; }
+              100% { transform: scale(1); opacity: 1; }
+            }
+          `}</style>
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowSellerPopup(false)}></div>
+          
+          <div className="relative z-10 flex flex-col items-center justify-center bg-[#0a110b] border border-[#2fa84f]/20 rounded-[24px] p-8 w-[420px] shadow-2xl popup-bounce">
+            <button 
+              onClick={() => setShowSellerPopup(false)}
+              className="absolute top-5 right-5 text-gray-400 hover:text-white transition-colors"
+            >
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+            </button>
+            
+
+            <h2 className="text-white text-2xl font-bold mb-3 tracking-tight text-center">Mulai Jualan, Yuk!</h2>
+            <p className="text-gray-300 text-sm font-medium tracking-wide text-center leading-relaxed mb-8">
+              Daftar gratis untuk upload produk dan kelola toko kamu.
+            </p>
+            
+            <div className="flex flex-col gap-3 w-full">
+              <Link href="/register" className="w-full py-3.5 rounded-[16px] font-bold text-sm text-white bg-[#2fa84f] hover:bg-[#268c41] transition-all shadow-[0_4px_15px_rgba(47,168,79,0.3)] hover:-translate-y-0.5 text-center flex items-center justify-center">
+                Daftar Sekarang
+              </Link>
+              <Link href="/login" className="w-full py-3.5 rounded-[16px] font-bold text-sm text-white bg-transparent border border-white/20 hover:bg-white/5 transition-all text-center flex items-center justify-center">
+                Sudah Punya Akun? Login
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
+
       <nav
         className={`fixed top-0 left-0 right-0 z-[100] bg-[#1a1f1b]/90 backdrop-blur-xl border-b border-white/10 shadow-lg h-[72px] px-8 flex items-center justify-between ${shouldAnimate ? "animate-fade-in" : "opacity-0"}`}
       >
@@ -297,13 +343,7 @@ export default function DashboardBuyer() {
                 const userRole = localStorage.getItem("userRole");
 
                 if (userRole === "GUEST") {
-                  alert("Silakan daftar terlebih dahulu sebelum mulai berjualan.");
-
-                  localStorage.removeItem("user");
-                  localStorage.removeItem("userId");
-                  localStorage.removeItem("userRole");
-
-                  router.push("/login");
+                  setShowSellerPopup(true);
                   return;
                 }
 
@@ -373,12 +413,29 @@ export default function DashboardBuyer() {
             </svg>
           </Link>
 
-          <button
-            onClick={handleLogout}
-            className="text-gray-400 hover:text-red-500 text-xs font-bold uppercase transition-colors bg-transparent border-none cursor-pointer mx-2"
-          >
-            Logout
-          </button>
+          {userRoleState === "GUEST" ? (
+            <div className="flex items-center gap-3 mx-2 border-l border-white/10 pl-6 h-8">
+              <Link
+                href="/login"
+                className="bg-transparent border border-[#2fa84f] text-[#2fa84f] px-5 py-2 rounded-xl text-xs font-bold no-underline hover:bg-[#2fa84f]/10 transition-colors"
+              >
+                Masuk
+              </Link>
+              <Link
+                href="/register"
+                className="bg-[#2fa84f] text-white px-5 py-2 rounded-xl text-xs font-bold no-underline hover:bg-[#268c41] transition-colors shadow-[0_4px_15px_rgba(47,168,79,0.2)] hover:-translate-y-0.5"
+              >
+                Daftar
+              </Link>
+            </div>
+          ) : (
+            <button
+              onClick={handleLogout}
+              className="text-gray-400 hover:text-red-500 text-xs font-bold uppercase transition-colors bg-transparent border-none cursor-pointer mx-2"
+            >
+              Logout
+            </button>
+          )}
 
               <button
               type="button"
