@@ -64,6 +64,110 @@ interface Produk {
   catatan_penjual?: string;
 }
 
+interface SelectOption {
+  label: string;
+  value: string;
+}
+
+function ProductSelect({
+  value,
+  options,
+  onChange,
+}: {
+  value: string;
+  options: SelectOption[];
+  onChange: (value: string) => void;
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+  const selectRef = useRef<HTMLDivElement | null>(null);
+  const selectedOption = options.find((option) => option.value === value);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        selectRef.current &&
+        !selectRef.current.contains(event.target as Node)
+      ) {
+        setIsOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  return (
+    <div ref={selectRef} className="relative">
+      <button
+        type="button"
+        onClick={() => setIsOpen((current) => !current)}
+        className={`flex w-full items-center justify-between rounded-xl border bg-white/5 px-3 py-3 text-left text-white outline-none transition-all ${
+          isOpen
+            ? "border-[#2fa84f] shadow-[0_0_10px_rgba(47,168,79,0.3)]"
+            : "border-white/10 hover:border-white/20"
+        }`}
+      >
+        <span className="truncate">
+          {selectedOption?.label || "Pilih kategori"}
+        </span>
+        <svg
+          className={`ml-3 h-4 w-4 shrink-0 text-slate-400 transition-transform ${
+            isOpen ? "rotate-180 text-[#2fa84f]" : ""
+          }`}
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <polyline points="6 9 12 15 18 9" />
+        </svg>
+      </button>
+
+      {isOpen && (
+        <div className="absolute left-0 right-0 top-[calc(100%+8px)] z-[280] overflow-hidden rounded-xl border border-white/10 bg-[#101612] shadow-[0_18px_45px_rgba(0,0,0,0.45)]">
+          {options.map((option) => {
+            const isSelected = option.value === value;
+
+            return (
+              <button
+                key={option.value}
+                type="button"
+                onClick={() => {
+                  onChange(option.value);
+                  setIsOpen(false);
+                }}
+                className={`flex w-full items-center justify-between px-4 py-3 text-left text-sm transition-colors ${
+                  isSelected
+                    ? "bg-[#2fa84f]/15 text-[#64d681]"
+                    : "text-slate-200 hover:bg-white/7 hover:text-white"
+                }`}
+              >
+                <span>{option.label}</span>
+                {isSelected && (
+                  <svg
+                    className="h-4 w-4 text-[#2fa84f]"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
+                )}
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function PanelPenjual() {
   const router = useRouter();
   const [userName, setUserName] = useState<string>("User");
@@ -76,6 +180,10 @@ export default function PanelPenjual() {
   const [showModal, setShowModal] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Produk | null>(null);
   const [nameError, setNameError] = useState("");
+  const [successModal, setSuccessModal] = useState<{
+    title: string;
+    message: string;
+  } | null>(null);
   const [deleteModal, setDeleteModal] = useState<{isOpen: boolean, productId: string | null, productName: string | null}>({ isOpen: false, productId: null, productName: null });
 
   const [imageFiles, setImageFiles] = useState<File[]>([]);
@@ -147,7 +255,9 @@ export default function PanelPenjual() {
     if (storedUser) {
       try {
         const parsed = JSON.parse(storedUser);
-        if (parsed.username) setUserName(parsed.username);
+        if (parsed.username) {
+          queueMicrotask(() => setUserName(parsed.username));
+        }
       } catch (e) {
         console.error("Gagal membaca user dari localStorage:", e);
       }
@@ -161,6 +271,18 @@ export default function PanelPenjual() {
       }, 100);
     });
   }, []);
+
+  useEffect(() => {
+    if (!successModal) {
+      return;
+    }
+
+    const timer = window.setTimeout(() => {
+      setSuccessModal(null);
+    }, 1800);
+
+    return () => window.clearTimeout(timer);
+  }, [successModal]);
 
   const handleLogout = () => {
     localStorage.clear();
@@ -306,7 +428,12 @@ export default function PanelPenjual() {
       });
 
       if (response.ok) {
-        alert(editingProduct ? "Berhasil diperbarui!" : "Produk berhasil diunggah!");
+        setSuccessModal({
+          title: editingProduct ? "Berhasil diperbarui" : "Produk berhasil diunggah",
+          message: editingProduct
+            ? "Perubahan produk sudah tersimpan di inventaris."
+            : "Produk baru sudah masuk ke inventaris toko kamu.",
+        });
         setShowModal(false);
         fetchInitialData();
       } else {
@@ -556,15 +683,17 @@ export default function PanelPenjual() {
                   <label className="text-[10px] text-gray-400 uppercase font-bold block mb-1">
                     Kategori Label
                   </label>
-                  <select
-                    className="w-full bg-[#111815] border border-white/10 rounded-xl p-3 text-white outline-none focus:border-[#2fa84f] focus:shadow-[0_0_10px_rgba(47,168,79,0.3)] transition-all cursor-pointer"
+                  <ProductSelect
                     value={formData.deskripsi}
-                    onChange={(e) => setFormData({ ...formData, deskripsi: e.target.value })}
-                  >
-                    <option className="bg-[#111815] text-white hover:bg-[#2fa84f]" value="Produk ramah lingkungan.">Umum</option>
-                    <option className="bg-[#111815] text-white hover:bg-[#2fa84f]" value="Pakaian Organik">Pakaian Organik</option>
-                    <option className="bg-[#111815] text-white hover:bg-[#2fa84f]" value="Daur Ulang">Daur Ulang</option>
-                  </select>
+                    onChange={(value) =>
+                      setFormData({ ...formData, deskripsi: value })
+                    }
+                    options={[
+                      { label: "Umum", value: "Produk ramah lingkungan." },
+                      { label: "Pakaian Organik", value: "Pakaian Organik" },
+                      { label: "Daur Ulang", value: "Daur Ulang" },
+                    ]}
+                  />
                 </div>
               </div>
 
@@ -609,17 +738,19 @@ export default function PanelPenjual() {
 
               <div>
                 <label className="text-[10px] text-gray-400 uppercase font-bold block mb-1">
-                  ID Kategori (Database)
+                  Kategori
                 </label>
-                <select
-                  className="w-full bg-[#111815] border border-white/10 rounded-xl p-3 text-white outline-none focus:border-[#2fa84f] focus:shadow-[0_0_10px_rgba(47,168,79,0.3)] transition-all cursor-pointer"
+                <ProductSelect
                   value={formData.id_kategori}
-                  onChange={(e) => setFormData({ ...formData, id_kategori: e.target.value })}
-                >
-                  <option className="bg-[#111815] text-white hover:bg-[#2fa84f]" value="Reduce">Reduce</option>
-                  <option className="bg-[#111815] text-white hover:bg-[#2fa84f]" value="Reuse">Reuse</option>
-                  <option className="bg-[#111815] text-white hover:bg-[#2fa84f]" value="Recycle">Recycle</option>
-                </select>
+                  onChange={(value) =>
+                    setFormData({ ...formData, id_kategori: value })
+                  }
+                  options={[
+                    { label: "Reduce", value: "Reduce" },
+                    { label: "Reuse", value: "Reuse" },
+                    { label: "Recycle", value: "Recycle" },
+                  ]}
+                />
               </div>
 
               <div>
@@ -773,6 +904,45 @@ export default function PanelPenjual() {
           </div>
         </div>
       )}
+      {successModal && (
+        <div className="fixed inset-0 z-[320] flex items-center justify-center p-6 bg-black/45 backdrop-blur-sm">
+          <div className="relative w-full max-w-[420px] overflow-hidden rounded-[32px] border border-white/10 bg-[#111815] p-8 text-center shadow-[0_30px_90px_rgba(0,0,0,0.45)] animate-[scaleIn_0.2s_ease-out_forwards]">
+            <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-[#2fa84f] via-[#63d683] to-[#2fa84f]" />
+
+            <div className="mx-auto mb-6 flex h-24 w-24 items-center justify-center rounded-[30px] bg-[#2fa84f]/10 ring-1 ring-[#2fa84f]/25">
+              <div className="flex h-16 w-16 items-center justify-center rounded-[22px] bg-[#2fa84f] text-white shadow-[0_14px_30px_rgba(47,168,79,0.28)]">
+                <svg
+                  width="34"
+                  height="34"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.8"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+              </div>
+            </div>
+
+            <h3 className="mb-3 text-2xl font-black tracking-tight text-white">
+              {successModal.title}
+            </h3>
+            <p className="mx-auto mb-8 max-w-[300px] text-sm leading-relaxed text-slate-400">
+              {successModal.message}
+            </p>
+
+            <button
+              type="button"
+              onClick={() => setSuccessModal(null)}
+              className="h-12 w-full rounded-2xl border-none bg-[#2fa84f] font-bold text-white shadow-[0_10px_24px_rgba(47,168,79,0.24)] transition-colors hover:bg-[#268c41]"
+            >
+              Selesai
+            </button>
+          </div>
+        </div>
+      )}
       {deleteModal.isOpen && (
         <div className="fixed inset-0 z-[300] flex items-center justify-center p-6 bg-black/40 backdrop-blur-sm">
           <div className="bg-white w-full max-w-[420px] rounded-[32px] p-8 md:p-10 shadow-2xl relative text-center scale-95 animate-[scaleIn_0.2s_ease-out_forwards]">
@@ -798,7 +968,7 @@ export default function PanelPenjual() {
 
             <h3 className="text-2xl font-bold text-slate-900 mb-3 tracking-tight">Hapus produk ini?</h3>
             <p className="text-[15px] text-slate-500 mb-8 leading-relaxed px-2">
-              Kamu akan menghapus <span className="text-[#059669] font-bold">"{deleteModal.productName}"</span> dari inventaris. Tindakan ini tidak bisa dibatalkan.
+              Kamu akan menghapus <span className="text-[#059669] font-bold">&quot;{deleteModal.productName}&quot;</span> dari inventaris. Tindakan ini tidak bisa dibatalkan.
             </p>
 
             <div className="flex gap-4">

@@ -1,10 +1,8 @@
 "use client";
 
-import Link from "next/link";
-
 export default function Footer() {
   return (
-    <footer className="border-t border-white/10 bg-[#0a110b] px-5 py-16 text-white md:px-10 md:py-20 mt-auto relative z-10 w-full">
+    <footer className="mt-auto w-full border-t border-white/10 bg-[#0a110b] px-5 py-16 text-white md:px-10 md:py-20 relative z-10">
       <div className="mx-auto grid max-w-7xl gap-12 md:grid-cols-2 md:gap-16">
         <div>
           <div className="mb-5 flex items-center gap-2.5">

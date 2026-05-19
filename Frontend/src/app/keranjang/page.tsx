@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Footer from "@/components/Footer";
@@ -51,22 +51,22 @@ const animationStyles = `
 
   .animate-fade-in-up {
     opacity: 0;
-    animation: fadeInUp 1s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+    animation: fadeInUp 0.45s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
   }
 
   .animate-fade-in {
     opacity: 0;
-    animation: fadeIn 0.8s ease-out forwards;
+    animation: fadeIn 0.35s ease-out forwards;
   }
 
   .animate-slide-in-left {
     opacity: 0;
-    animation: slideInLeft 0.9s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+    animation: slideInLeft 0.45s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
   }
 
   .animate-slide-in-up {
     opacity: 0;
-    animation: slideInUp 0.9s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+    animation: slideInUp 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
   }
 `;
 
@@ -105,6 +105,8 @@ export default function KeranjangPage() {
   const [keranjangItems, setKeranjangItems] = useState<KeranjangItem[]>([]);
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [quantities, setQuantities] = useState<Record<string, number>>({});
+  const [isCheckoutDocked, setIsCheckoutDocked] = useState(false);
+  const checkoutDockRef = useRef<HTMLDivElement | null>(null);
 
   const dashboardHref =
     user.role === "SELLER" ? "/dashboard-seller" : "/dashboard-buyer";
@@ -181,12 +183,36 @@ export default function KeranjangPage() {
     // Trigger animations after a short delay
     setTimeout(() => {
       setShouldAnimate(true);
-    }, 300);
+    }, 100);
 
     return () => {
       isMounted = false;
     };
   }, [router]);
+
+  useEffect(() => {
+    const updateCheckoutDock = () => {
+      const dock = checkoutDockRef.current;
+
+      if (!dock) {
+        setIsCheckoutDocked(false);
+        return;
+      }
+
+      setIsCheckoutDocked(dock.getBoundingClientRect().top <= window.innerHeight);
+    };
+
+    const frame = window.requestAnimationFrame(updateCheckoutDock);
+
+    window.addEventListener("scroll", updateCheckoutDock, { passive: true });
+    window.addEventListener("resize", updateCheckoutDock);
+
+    return () => {
+      window.cancelAnimationFrame(frame);
+      window.removeEventListener("scroll", updateCheckoutDock);
+      window.removeEventListener("resize", updateCheckoutDock);
+    };
+  }, [keranjangItems.length]);
 
   const groupedItems = useMemo(() => {
     const groups: Record<string, KeranjangItem[]> = {};
@@ -334,7 +360,7 @@ export default function KeranjangPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#eefbe8] via-[#c7e5c5] to-[#253229] font-sans text-white pb-32 relative overflow-hidden">
+    <div className="relative flex min-h-screen flex-col overflow-x-hidden bg-gradient-to-br from-[#eefbe8] via-[#c7e5c5] to-[#253229] font-sans text-white">
       <style>{animationStyles}</style>
       <div className="absolute top-0 left-0 right-0 h-[360px] bg-[radial-gradient(circle_at_20%_20%,rgba(47,168,79,0.28),transparent_35%),radial-gradient(circle_at_80%_0%,rgba(238,251,232,0.7),transparent_36%)] pointer-events-none"></div>
       <div className="absolute right-[-160px] bottom-[80px] w-[520px] h-[520px] rounded-full bg-[#1f2a22]/45 blur-[120px] pointer-events-none"></div>
@@ -416,7 +442,7 @@ export default function KeranjangPage() {
         </div>
       </nav>
 
-      <main className="max-w-[1200px] mx-auto px-4 sm:px-8 pt-8 relative z-10">
+      <main className="relative z-10 mx-auto w-full max-w-[1200px] flex-1 px-4 pt-8 pb-8 sm:px-8 md:pb-10">
         <div className={`mb-6 ${shouldAnimate ? 'animate-fade-in-up' : 'opacity-0'}`}>
           <button
             type="button"
@@ -485,7 +511,7 @@ export default function KeranjangPage() {
               <section
                 key={group.sellerName}
                 className={`bg-[#1f2a22]/92 backdrop-blur-xl rounded-[22px] border border-white/10 shadow-[0_20px_50px_rgba(10,17,11,0.25)] overflow-hidden ${shouldAnimate ? 'animate-slide-in-up' : 'opacity-0'}`}
-                style={shouldAnimate ? { animationDelay: `${200 + groupIndex * 150}ms` } : {}}
+                style={shouldAnimate ? { animationDelay: `${80 + groupIndex * 60}ms` } : {}}
               >
                 <div className="h-[72px] px-5 sm:px-8 flex items-center gap-4 border-b border-white/10">
                   <input
@@ -629,50 +655,105 @@ export default function KeranjangPage() {
             ))}
           </div>
         )}
+
+        {keranjangItems.length > 0 && (
+          <div
+            className={`fixed bottom-0 left-0 right-0 z-30 px-4 transition-opacity duration-200 sm:px-8 ${shouldAnimate && !isCheckoutDocked ? 'animate-slide-in-up opacity-100' : 'pointer-events-none opacity-0'}`}
+            style={{
+              animationDelay: shouldAnimate ? '120ms' : undefined,
+            }}
+          >
+            <div className="mx-auto w-full max-w-[1200px] overflow-hidden rounded-t-[14px] border border-white/10 bg-[#1f2a22]/95 shadow-[0_-10px_34px_rgba(10,17,11,0.28)] backdrop-blur-xl">
+              <div className="flex flex-col gap-4 px-4 py-4 sm:px-8 lg:flex-row lg:items-center">
+                <div className="flex flex-wrap items-center gap-4 text-[15px] sm:gap-7 sm:text-[17px]">
+                  <label className="flex cursor-pointer items-center gap-3">
+                    <input
+                      checked={isAllSelected}
+                      onChange={toggleSelectAll}
+                      type="checkbox"
+                      className="h-5 w-5 accent-[#2fa84f]"
+                    />
+                    <span>Pilih Semua ({keranjangItems.length})</span>
+                  </label>
+                  <button
+                    type="button"
+                    onClick={deleteSelectedItems}
+                    className="text-slate-200 hover:text-red-400"
+                  >
+                    Hapus
+                  </button>
+                </div>
+
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between lg:ml-auto lg:justify-end lg:gap-6">
+                  <div className="text-left sm:text-right">
+                    <p className="m-0 text-[16px] font-semibold text-slate-200 sm:text-[17px]">
+                      Total ({selectedItems.length} produk):
+                      <span className="ml-2 text-[26px] font-black text-[#2fa84f] sm:text-[30px]">
+                        {formatRupiah(selectedTotal)}
+                      </span>
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={checkoutSelected}
+                    className="h-14 w-full rounded-[4px] bg-[#2fa84f] px-10 font-bold text-white transition-colors hover:bg-[#268c41] sm:w-auto sm:px-14"
+                  >
+                    Checkout
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </main>
 
       {keranjangItems.length > 0 && (
-        <div className={`fixed bottom-0 left-0 right-0 z-50 bg-[#1f2a22]/95 backdrop-blur-xl border-t border-white/10 shadow-[0_-10px_34px_rgba(10,17,11,0.28)] ${shouldAnimate ? 'animate-slide-in-up' : 'opacity-0'}`} style={shouldAnimate ? { animationDelay: '600ms' } : {}}>
-          <div className="max-w-[1200px] mx-auto px-4 sm:px-8 py-4 flex flex-col lg:flex-row lg:items-center gap-4">
-            <div className="flex flex-wrap items-center gap-4 sm:gap-7 text-[15px] sm:text-[17px]">
-              <label className="flex items-center gap-3 cursor-pointer">
-                <input
-                  checked={isAllSelected}
-                  onChange={toggleSelectAll}
-                  type="checkbox"
-                  className="w-5 h-5 accent-[#2fa84f]"
-                />
-                <span>Pilih Semua ({keranjangItems.length})</span>
-              </label>
-              <button
-                type="button"
-                onClick={deleteSelectedItems}
-                className="text-slate-200 hover:text-red-400"
-              >
-                Hapus
-              </button>
-            </div>
-
-            <div className="lg:ml-auto flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6">
-              <div className="text-right">
-                <p className="m-0 text-[17px] font-semibold text-slate-200">
-                  Total ({selectedItems.length} produk):
-                  <span className="ml-2 text-[30px] font-black text-[#2fa84f]">
-                    {formatRupiah(selectedTotal)}
-                  </span>
-                </p>
+        <div
+          ref={checkoutDockRef}
+          className="relative z-10 mx-auto w-full max-w-[1200px] px-4 pb-8 sm:px-8"
+        >
+          <div className="overflow-hidden rounded-[14px] border border-white/10 bg-[#1f2a22]/95 shadow-[0_16px_40px_rgba(10,17,11,0.22)] backdrop-blur-xl">
+            <div className="flex flex-col gap-4 px-4 py-4 sm:px-8 lg:flex-row lg:items-center">
+              <div className="flex flex-wrap items-center gap-4 text-[15px] sm:gap-7 sm:text-[17px]">
+                <label className="flex cursor-pointer items-center gap-3">
+                  <input
+                    checked={isAllSelected}
+                    onChange={toggleSelectAll}
+                    type="checkbox"
+                    className="h-5 w-5 accent-[#2fa84f]"
+                  />
+                  <span>Pilih Semua ({keranjangItems.length})</span>
+                </label>
+                <button
+                  type="button"
+                  onClick={deleteSelectedItems}
+                  className="text-slate-200 hover:text-red-400"
+                >
+                  Hapus
+                </button>
               </div>
-              <button
-                type="button"
-                onClick={checkoutSelected}
-                className="h-14 px-14 bg-[#2fa84f] text-white font-bold rounded-[4px] hover:bg-[#268c41] transition-colors"
-              >
-                Checkout
-              </button>
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between lg:ml-auto lg:justify-end lg:gap-6">
+                <div className="text-left sm:text-right">
+                  <p className="m-0 text-[16px] font-semibold text-slate-200 sm:text-[17px]">
+                    Total ({selectedItems.length} produk):
+                    <span className="ml-2 text-[26px] font-black text-[#2fa84f] sm:text-[30px]">
+                      {formatRupiah(selectedTotal)}
+                    </span>
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={checkoutSelected}
+                  className="h-14 w-full rounded-[4px] bg-[#2fa84f] px-10 font-bold text-white transition-colors hover:bg-[#268c41] sm:w-auto sm:px-14"
+                >
+                  Checkout
+                </button>
+              </div>
             </div>
           </div>
         </div>
       )}
+
       <Footer />
     </div>
   );
