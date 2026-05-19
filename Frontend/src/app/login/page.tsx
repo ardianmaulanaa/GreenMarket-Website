@@ -13,7 +13,7 @@ interface LoginResponse {
     id: number | string;
     username?: string;
     email?: string;
-    role: "ADMIN" | "SELLER" | "BUYER" | string;
+    role: "ADMIN" | "SELLER" | "BUYER" | "GUEST" | string;
   };
 }
 
@@ -98,11 +98,29 @@ function FormNotification({ notification }: { notification: NotificationState })
         }`}
       >
         {isSuccess ? (
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+          <svg
+            width="12"
+            height="12"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
             <polyline points="20 6 9 17 4 12" />
           </svg>
         ) : (
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+          <svg
+            width="12"
+            height="12"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
             <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
             <line x1="12" y1="9" x2="12" y2="13" />
             <line x1="12" y1="17" x2="12.01" y2="17" />
@@ -188,10 +206,12 @@ export default function LoginPage() {
     password: "",
     rememberMe: false,
   });
+
   const [isPageLoading, setIsPageLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [notification, setNotification] = useState<NotificationState>(null);
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
+
   const router = useRouter();
 
   const showNotification = useCallback((type: "success" | "error", message: string) => {
@@ -218,6 +238,7 @@ export default function LoginPage() {
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target;
+
     setForm((prev) => ({
       ...prev,
       [name]: type === "checkbox" ? checked : value,
@@ -226,6 +247,7 @@ export default function LoginPage() {
     if (name === "email" || name === "password") {
       setFieldErrors((prev) => {
         if (!prev[name as keyof FieldErrors]) return prev;
+
         const next = { ...prev };
         delete next[name as keyof FieldErrors];
         return next;
@@ -248,25 +270,74 @@ export default function LoginPage() {
 
     if (Object.keys(errors).length > 0) {
       setFieldErrors(errors);
+
       const firstError = Object.values(errors)[0];
-      showNotification("error", firstError);
+      showNotification("error", firstError || "Data belum lengkap");
+
       return false;
     }
 
     return true;
   };
 
+  const handleGuestLogin = async () => {
+    setFieldErrors({});
+    setNotification(null);
+    setIsSubmitting(true);
+
+    try {
+      const rememberedEmail = localStorage.getItem("rememberedEmail");
+
+      localStorage.clear();
+
+      if (rememberedEmail) {
+        localStorage.setItem("rememberedEmail", rememberedEmail);
+      }
+
+      const response = await fetch("http://localhost:5050/guest", {
+        method: "POST",
+      });
+
+      const data = (await response.json()) as LoginResponse;
+
+      if (response.ok && data.user) {
+        localStorage.setItem("user", JSON.stringify(data.user));
+        localStorage.setItem("userId", String(data.user.id));
+        localStorage.setItem("userRole", data.user.role);
+
+        showNotification("success", "Masuk sebagai guest berhasil");
+
+        setTimeout(() => router.push("/dashboard-buyer"), 1000);
+      } else {
+        showNotification("error", data.message || "Gagal masuk sebagai guest");
+      }
+    } catch (error) {
+      console.error("Guest Login Error:", error);
+      showNotification("error", "Gagal terhubung ke server");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+
     setFieldErrors({});
     setNotification(null);
 
     if (!validateForm()) return;
 
-    localStorage.clear();
-
     setIsSubmitting(true);
+
     try {
+      const rememberedEmail = localStorage.getItem("rememberedEmail");
+
+      localStorage.clear();
+
+      if (rememberedEmail) {
+        localStorage.setItem("rememberedEmail", rememberedEmail);
+      }
+
       const response = await fetch("http://localhost:5050/login", {
         method: "POST",
         headers: {
@@ -296,15 +367,18 @@ export default function LoginPage() {
             ? "/admin-panel"
             : data.user.role === "SELLER"
               ? "/dashboard-seller"
-              : data.user.role === "BUYER"
+              : data.user.role === "BUYER" || data.user.role === "GUEST"
                 ? "/dashboard-buyer"
                 : null;
 
         if (redirectPath) {
           setTimeout(() => router.push(redirectPath), 1500);
+        } else {
+          showNotification("error", "Role akun tidak dikenali");
         }
       } else {
         const { notification: errorMsg, fields } = mapLoginError(data.message || "Login gagal");
+
         setFieldErrors(fields);
         showNotification("error", errorMsg);
       }
@@ -330,7 +404,6 @@ export default function LoginPage() {
 
       <LoginHeroPanel />
 
-      {/* Mobile hero */}
       <motion.div
         className="relative flex min-h-[180px] items-end overflow-hidden p-6 lg:hidden"
         initial={{ opacity: 0 }}
@@ -345,12 +418,10 @@ export default function LoginPage() {
         />
         <motion.div className="absolute inset-0 bg-gradient-to-t from-[#111815] via-[#0a110b]/85 to-[#0a110b]/50" />
         <p className="relative z-10 text-lg font-extrabold leading-snug text-white">
-          Masa Depan Bumi{" "}
-          <span className="text-[#2fa84f]">Ada di Tangan Kita</span>
+          Masa Depan Bumi <span className="text-[#2fa84f]">Ada di Tangan Kita</span>
         </p>
       </motion.div>
 
-      {/* Form panel — warna & shadow menyatu dengan gradasi hero */}
       <motion.div className="relative z-10 flex w-full flex-1 flex-col items-center justify-center bg-[#111815] px-5 py-10 lg:w-1/2 lg:bg-gradient-to-br lg:from-[#111815] lg:via-[#1a1f1b] lg:to-[#0a110b] lg:px-10 lg:py-12 lg:shadow-[-56px_0_72px_28px_#111815]">
         <motion.div
           className="pointer-events-none absolute inset-y-0 left-0 z-0 hidden w-28 bg-gradient-to-r from-[#111815] via-[#111815]/80 to-transparent lg:block"
@@ -365,19 +436,23 @@ export default function LoginPage() {
           href="/"
           className="absolute left-5 top-6 z-20 flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold text-white/70 no-underline backdrop-blur-md transition hover:border-white/20 hover:bg-white/10 hover:text-white lg:left-8 lg:top-8"
         >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
             <line x1="19" y1="12" x2="5" y2="12" />
             <polyline points="12 19 5 12 12 5" />
           </svg>
           Kembali
         </Link>
 
-        <motion.div
-          className="w-full max-w-[440px]"
-          initial="hidden"
-          animate="visible"
-          variants={stagger}
-        >
+        <motion.div className="w-full max-w-[440px]" initial="hidden" animate="visible" variants={stagger}>
           <motion.div
             variants={fadeUp}
             custom={0}
@@ -386,6 +461,7 @@ export default function LoginPage() {
             transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
           >
             <div className="pointer-events-none absolute -right-16 -top-16 h-44 w-44 rounded-full bg-[#2fa84f]/20 blur-[60px]" />
+
             <motion.div
               className="pointer-events-none absolute inset-0 rounded-[32px]"
               style={{
@@ -400,10 +476,20 @@ export default function LoginPage() {
                   className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-[#2fa84f] to-[#1a7a35] shadow-[0_4px_20px_rgba(47,168,79,0.4)]"
                   whileHover={{ scale: 1.06 }}
                 >
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <svg
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="white"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
                     <path d="M12 2L3 7v9c0 5 9 7 9 7s9-2 9-7V7l-9-5z" />
                   </svg>
                 </motion.div>
+
                 <span className="text-xl font-extrabold tracking-tight text-white">GreenMarket</span>
               </Link>
             </motion.div>
@@ -429,6 +515,7 @@ export default function LoginPage() {
                   index={0}
                 />
               </FieldWrapper>
+
               <FieldWrapper name="password" error={fieldErrors.password}>
                 <FloatingInput
                   id="password"
@@ -458,6 +545,7 @@ export default function LoginPage() {
                   />
                   <span className="text-xs font-medium text-white/55">Remember Me</span>
                 </label>
+
                 <Link
                   href="#"
                   className="text-xs font-semibold text-[#2fa84f] no-underline transition hover:text-[#7ee8a0]"
@@ -480,6 +568,7 @@ export default function LoginPage() {
                   animate={isSubmitting ? {} : { x: ["-100%", "100%"] }}
                   transition={{ duration: 2.5, repeat: Infinity, repeatDelay: 1.2 }}
                 />
+
                 <span className="relative z-10 flex items-center justify-center gap-2">
                   {isSubmitting ? (
                     <>
@@ -495,11 +584,26 @@ export default function LoginPage() {
                   )}
                 </span>
               </motion.button>
+
+              <motion.button
+                type="button"
+                disabled={isSubmitting}
+                onClick={handleGuestLogin}
+                variants={fadeUp}
+                custom={5}
+                whileHover={!isSubmitting ? { y: -3, scale: 1.01 } : {}}
+                whileTap={!isSubmitting ? { scale: 0.98 } : {}}
+                className="relative mt-1 w-full overflow-hidden rounded-2xl border border-white/15 bg-white/[0.06] py-4 text-sm font-bold text-white shadow-[0_8px_32px_rgba(255,255,255,0.08)] transition hover:border-[#2fa84f]/50 hover:bg-[#2fa84f]/10 disabled:cursor-not-allowed disabled:opacity-70"
+              >
+                <span className="relative z-10 flex items-center justify-center gap-2">
+                  Masuk sebagai Guest
+                </span>
+              </motion.button>
             </form>
 
             <motion.div
               variants={fadeUp}
-              custom={5}
+              custom={6}
               className="relative z-10 mt-8 border-t border-white/10 pt-6 text-center"
             >
               <p className="text-sm text-white/45">
