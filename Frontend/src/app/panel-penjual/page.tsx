@@ -184,7 +184,11 @@ export default function PanelPenjual() {
     title: string;
     message: string;
   } | null>(null);
-  const [deleteModal, setDeleteModal] = useState<{isOpen: boolean, productId: string | null, productName: string | null}>({ isOpen: false, productId: null, productName: null });
+  const [deleteModal, setDeleteModal] = useState<{
+    isOpen: boolean;
+    productId: string | null;
+    productName: string | null;
+  }>({ isOpen: false, productId: null, productName: null });
 
   const [imageFiles, setImageFiles] = useState<File[]>([]);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
@@ -213,7 +217,8 @@ export default function PanelPenjual() {
         fetch(`http://localhost:5050/api/products?userId=${storedUserId}`),
       ]);
 
-      if (!catRes.ok || !prodRes.ok) throw new Error("Gagal mengambil data dari server");
+      if (!catRes.ok || !prodRes.ok)
+        throw new Error("Gagal mengambil data dari server");
 
       const catData = (await catRes.json()) as Kategori[];
       const prodData = (await prodRes.json()) as Produk[];
@@ -232,7 +237,9 @@ export default function PanelPenjual() {
 
       if (catData.length > 0) {
         setFormData((prev) =>
-          prev.id_kategori ? prev : { ...prev, id_kategori: catData[0].id_kategori },
+          prev.id_kategori
+            ? prev
+            : { ...prev, id_kategori: catData[0].id_kategori },
         );
       }
     } catch (error) {
@@ -245,13 +252,13 @@ export default function PanelPenjual() {
   useEffect(() => {
     const storedUserId = localStorage.getItem("userId");
     const storedUser = localStorage.getItem("user");
-    
+
     if (!storedUserId) {
       alert("Silakan login terlebih dahulu");
       window.location.href = "/login";
       return;
     }
-    
+
     if (storedUser) {
       try {
         const parsed = JSON.parse(storedUser);
@@ -332,7 +339,7 @@ export default function PanelPenjual() {
           ? product.foto_produk_list
           : product.foto_produk
             ? [product.foto_produk]
-            : []
+            : [],
       );
       setImageFiles([]);
     } else {
@@ -378,7 +385,11 @@ export default function PanelPenjual() {
 
     const existingFotoList = editingProduct?.foto_produk_list || [];
 
-    if (imageFiles.length === 0 && existingFotoList.length === 0 && !editingProduct?.foto_produk) {
+    if (
+      imageFiles.length === 0 &&
+      existingFotoList.length === 0 &&
+      !editingProduct?.foto_produk
+    ) {
       alert("Harap upload minimal 1 foto produk.");
       setIsSubmitting(false);
       return;
@@ -412,7 +423,8 @@ export default function PanelPenjual() {
 
     if (editingProduct && imageFiles.length === 0) {
       const existingList =
-        editingProduct.foto_produk_list && editingProduct.foto_produk_list.length > 0
+        editingProduct.foto_produk_list &&
+        editingProduct.foto_produk_list.length > 0
           ? editingProduct.foto_produk_list
           : editingProduct.foto_produk
             ? [editingProduct.foto_produk]
@@ -429,7 +441,9 @@ export default function PanelPenjual() {
 
       if (response.ok) {
         setSuccessModal({
-          title: editingProduct ? "Berhasil diperbarui" : "Produk berhasil diunggah",
+          title: editingProduct
+            ? "Berhasil diperbarui"
+            : "Produk berhasil diunggah",
           message: editingProduct
             ? "Perubahan produk sudah tersimpan di inventaris."
             : "Produk baru sudah masuk ke inventaris toko kamu.",
@@ -459,7 +473,7 @@ export default function PanelPenjual() {
     try {
       const response = await fetch(
         `http://localhost:5050/api/products/${deleteModal.productId}?userId=${storedUserId}`,
-        { method: "DELETE" }
+        { method: "DELETE" },
       );
 
       if (response.ok) {
@@ -490,7 +504,9 @@ export default function PanelPenjual() {
       <style>{animationStyles}</style>
       <div className="absolute top-[-10%] right-[-5%] w-[600px] h-[600px] bg-[#2fa84f] opacity-10 blur-[150px] rounded-full pointer-events-none"></div>
 
-      <nav className={`fixed top-0 left-0 right-0 z-[100] bg-[#1a1f1b]/90 backdrop-blur-xl border-b border-white/10 shadow-lg h-[72px] px-4 md:px-8 flex items-center justify-between ${shouldAnimate ? 'animate-fade-in' : 'opacity-0'}`}>
+      <nav
+        className={`fixed top-0 left-0 right-0 z-[100] bg-[#1a1f1b]/90 backdrop-blur-xl border-b border-white/10 shadow-lg h-[72px] px-4 md:px-8 flex items-center justify-between ${shouldAnimate ? "animate-fade-in" : "opacity-0"}`}
+      >
         <div className="flex items-center gap-8">
           <button
             type="button"
@@ -501,7 +517,17 @@ export default function PanelPenjual() {
             }}
             className="group mr-1 flex shrink-0 items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-3 py-2 text-xs font-semibold text-white/80 shadow-[0_0_20px_rgba(47,168,79,0.15)] backdrop-blur-md transition-all duration-300 hover:-translate-y-0.5 hover:border-[#2fa84f]/45 hover:bg-white/10 hover:text-white hover:shadow-[0_6px_28px_rgba(47,168,79,0.28)]"
           >
-            <svg className="shrink-0 transition-transform duration-300 group-hover:-translate-x-1" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <svg
+              className="shrink-0 transition-transform duration-300 group-hover:-translate-x-1"
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
               <line x1="19" y1="12" x2="5" y2="12" />
               <polyline points="12 19 5 12 12 5" />
             </svg>
@@ -558,19 +584,32 @@ export default function PanelPenjual() {
         </div>
       </nav>
 
-      <main className={`max-w-[1200px] mx-auto pt-28 pb-20 px-4 sm:px-8 flex-1 w-full relative z-10 ${shouldAnimate ? 'animate-fade-in-up' : 'opacity-0'}`}>
+      <main
+        className={`max-w-[1200px] mx-auto pt-28 pb-20 px-4 sm:px-8 flex-1 w-full relative z-10 ${shouldAnimate ? "animate-fade-in-up" : "opacity-0"}`}
+      >
         <div className="flex flex-col md:flex-row md:items-end justify-between mb-10 gap-6">
           <div>
             <span className="text-[11px] font-[800] text-[#2fa84f] uppercase tracking-[3px] mb-2 block">
               Seller Hub
             </span>
-            <h1 className="text-[32px] font-[800] text-[#1a2e1f] m-0">Panel Inventaris</h1>
+            <h1 className="text-[32px] font-[800] text-[#1a2e1f] m-0">
+              Panel Inventaris
+            </h1>
           </div>
           <button
             onClick={() => handleOpenModal()}
             className="bg-[#2fa84f] text-white px-8 py-4 rounded-2xl font-[800] text-[13px] hover:bg-[#268c41] transition-all uppercase tracking-widest border-none cursor-pointer flex items-center justify-center gap-2"
           >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="3"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
               <line x1="12" y1="5" x2="12" y2="19" />
               <line x1="5" y1="12" x2="19" y2="12" />
             </svg>
@@ -591,19 +630,28 @@ export default function PanelPenjual() {
             <tbody className="divide-y divide-white/10 text-white">
               {loading ? (
                 <tr>
-                  <td colSpan={4} className="p-20 text-center text-[#2fa84f] font-bold">
+                  <td
+                    colSpan={4}
+                    className="p-20 text-center text-[#2fa84f] font-bold"
+                  >
                     Memuat data produk...
                   </td>
                 </tr>
               ) : products.length === 0 ? (
                 <tr>
-                  <td colSpan={4} className="p-20 text-center text-slate-400 font-medium">
+                  <td
+                    colSpan={4}
+                    className="p-20 text-center text-slate-400 font-medium"
+                  >
                     Belum ada produk. Klik Unggah Produk untuk memulai.
                   </td>
                 </tr>
               ) : (
                 products.map((p) => (
-                  <tr key={p.id_produk} className="hover:bg-white/[0.04] transition-colors">
+                  <tr
+                    key={p.id_produk}
+                    className="hover:bg-white/[0.04] transition-colors"
+                  >
                     <td className="p-6 px-8">
                       <div className="flex items-center gap-4">
                         <img
@@ -616,7 +664,9 @@ export default function PanelPenjual() {
                           className="w-14 h-14 rounded-xl object-cover border border-white/10 shadow-sm"
                         />
                         <div>
-                          <div className="font-[800] text-white text-[15px]">{p.nama_produk}</div>
+                          <div className="font-[800] text-white text-[15px]">
+                            {p.nama_produk}
+                          </div>
                           <div className="text-[11px] text-slate-400 italic mt-0.5">
                             {p.konten_deskripsi?.substring(0, 40)}...
                           </div>
@@ -638,7 +688,10 @@ export default function PanelPenjual() {
                           Edit
                         </button>
                         <button
-                          onClick={() => p.id_produk && handleDelete(p.id_produk, p.nama_produk)}
+                          onClick={() =>
+                            p.id_produk &&
+                            handleDelete(p.id_produk, p.nama_produk)
+                          }
                           className="px-4 py-2 bg-red-500/10 rounded-xl text-red-400 hover:bg-red-500 hover:text-white font-bold cursor-pointer border border-transparent transition-all shadow-sm"
                         >
                           Hapus
@@ -669,7 +722,7 @@ export default function PanelPenjual() {
                   <input
                     type="text"
                     required
-                    className={`w-full bg-white/5 border rounded-xl p-3 text-white outline-none transition-all ${nameError ? 'border-red-500 shadow-[0_0_10px_rgba(239,68,68,0.3)]' : 'border-white/10 focus:border-[#2fa84f]'}`}
+                    className={`w-full bg-white/5 border rounded-xl p-3 text-white outline-none transition-all ${nameError ? "border-red-500 shadow-[0_0_10px_rgba(239,68,68,0.3)]" : "border-white/10 focus:border-[#2fa84f]"}`}
                     value={formData.nama_produk}
                     onChange={handleNameChange}
                   />
@@ -711,7 +764,8 @@ export default function PanelPenjual() {
                     onChange={(e) =>
                       setFormData({
                         ...formData,
-                        harga: e.target.value === "" ? "" : Number(e.target.value),
+                        harga:
+                          e.target.value === "" ? "" : Number(e.target.value),
                       })
                     }
                   />
@@ -729,7 +783,8 @@ export default function PanelPenjual() {
                     onChange={(e) =>
                       setFormData({
                         ...formData,
-                        stok: e.target.value === "" ? "" : Number(e.target.value),
+                        stok:
+                          e.target.value === "" ? "" : Number(e.target.value),
                       })
                     }
                   />
@@ -745,17 +800,16 @@ export default function PanelPenjual() {
                   onChange={(value) =>
                     setFormData({ ...formData, id_kategori: value })
                   }
-                  options={[
-                    { label: "Reduce", value: "Reduce" },
-                    { label: "Reuse", value: "Reuse" },
-                    { label: "Recycle", value: "Recycle" },
-                  ]}
+                  options={categories.map((item) => ({
+                    label: item.nama_kategori,
+                    value: item.id_kategori,
+                  }))}
                 />
               </div>
 
               <div>
                 <label className="text-[10px] text-gray-400 uppercase font-bold block mb-1">
-                  Deskripsi Manual
+                  Deskripsi
                 </label>
                 <textarea
                   required
@@ -764,7 +818,10 @@ export default function PanelPenjual() {
                   placeholder="Jelaskan detail produk..."
                   value={formData.konten_deskripsi}
                   onChange={(e) =>
-                    setFormData({ ...formData, konten_deskripsi: e.target.value })
+                    setFormData({
+                      ...formData,
+                      konten_deskripsi: e.target.value,
+                    })
                   }
                 />
               </div>
@@ -836,32 +893,39 @@ export default function PanelPenjual() {
                       </div>
                     ))}
 
-                    {Array.from({ length: 4 - imagePreviews.length }).map((_, i) => (
-                      <label
-                        key={`slot-${i}`}
-                        className="aspect-square rounded-2xl border-2 border-dashed border-white/10 flex flex-col items-center justify-center cursor-pointer hover:border-[#2fa84f]/40 hover:bg-white/[0.03] transition-all"
-                      >
-                        <span className="text-white/20 text-3xl leading-none">+</span>
-                        <span className="text-[10px] text-gray-600 mt-1">Tambah</span>
-                        <input
-                          ref={(el) => {
-                            slotInputRefs.current[i] = el;
-                          }}
-                          type="file"
-                          accept=".png,.jpg,.jpeg"
-                          multiple
-                          className="hidden"
-                          onChange={handleFileChange}
-                        />
-                      </label>
-                    ))}
+                    {Array.from({ length: 4 - imagePreviews.length }).map(
+                      (_, i) => (
+                        <label
+                          key={`slot-${i}`}
+                          className="aspect-square rounded-2xl border-2 border-dashed border-white/10 flex flex-col items-center justify-center cursor-pointer hover:border-[#2fa84f]/40 hover:bg-white/[0.03] transition-all"
+                        >
+                          <span className="text-white/20 text-3xl leading-none">
+                            +
+                          </span>
+                          <span className="text-[10px] text-gray-600 mt-1">
+                            Tambah
+                          </span>
+                          <input
+                            ref={(el) => {
+                              slotInputRefs.current[i] = el;
+                            }}
+                            type="file"
+                            accept=".png,.jpg,.jpeg"
+                            multiple
+                            className="hidden"
+                            onChange={handleFileChange}
+                          />
+                        </label>
+                      ),
+                    )}
                   </div>
                 )}
 
                 <div className="flex items-center justify-between mt-2">
                   <span className="text-[11px] text-gray-500">
                     {imagePreviews.length} dari 4 foto dipilih
-                    {imagePreviews.length > 0 && " · Foto pertama jadi gambar utama produk"}
+                    {imagePreviews.length > 0 &&
+                      " · Foto pertama jadi gambar utama produk"}
                   </span>
                   {imagePreviews.length > 0 && imagePreviews.length < 4 && (
                     <button
@@ -947,10 +1011,25 @@ export default function PanelPenjual() {
         <div className="fixed inset-0 z-[300] flex items-center justify-center p-6 bg-black/40 backdrop-blur-sm">
           <div className="bg-white w-full max-w-[420px] rounded-[32px] p-8 md:p-10 shadow-2xl relative text-center scale-95 animate-[scaleIn_0.2s_ease-out_forwards]">
             <button
-              onClick={() => setDeleteModal({ isOpen: false, productId: null, productName: null })}
+              onClick={() =>
+                setDeleteModal({
+                  isOpen: false,
+                  productId: null,
+                  productName: null,
+                })
+              }
               className="absolute top-5 right-5 text-gray-400 hover:text-gray-600 bg-transparent border-none cursor-pointer transition-colors"
             >
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <svg
+                width="22"
+                height="22"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
                 <line x1="18" y1="6" x2="6" y2="18" />
                 <line x1="6" y1="6" x2="18" y2="18" />
               </svg>
@@ -958,7 +1037,16 @@ export default function PanelPenjual() {
 
             <div className="bg-red-50 w-28 h-28 rounded-[36px] mx-auto flex items-center justify-center mb-6">
               <div className="bg-red-100/80 w-20 h-20 rounded-[28px] flex items-center justify-center text-[#ff1e56]">
-                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <svg
+                  width="40"
+                  height="40"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
                   <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
                   <line x1="12" y1="9" x2="12" y2="13" />
                   <line x1="12" y1="17" x2="12.01" y2="17" />
@@ -966,14 +1054,26 @@ export default function PanelPenjual() {
               </div>
             </div>
 
-            <h3 className="text-2xl font-bold text-slate-900 mb-3 tracking-tight">Hapus produk ini?</h3>
+            <h3 className="text-2xl font-bold text-slate-900 mb-3 tracking-tight">
+              Hapus produk ini?
+            </h3>
             <p className="text-[15px] text-slate-500 mb-8 leading-relaxed px-2">
-              Kamu akan menghapus <span className="text-[#059669] font-bold">&quot;{deleteModal.productName}&quot;</span> dari inventaris. Tindakan ini tidak bisa dibatalkan.
+              Kamu akan menghapus{" "}
+              <span className="text-[#059669] font-bold">
+                &quot;{deleteModal.productName}&quot;
+              </span>{" "}
+              dari inventaris. Tindakan ini tidak bisa dibatalkan.
             </p>
 
             <div className="flex gap-4">
               <button
-                onClick={() => setDeleteModal({ isOpen: false, productId: null, productName: null })}
+                onClick={() =>
+                  setDeleteModal({
+                    isOpen: false,
+                    productId: null,
+                    productName: null,
+                  })
+                }
                 className="flex-1 py-3.5 rounded-2xl border border-gray-200 text-slate-700 font-bold hover:bg-gray-50 transition-colors cursor-pointer bg-white shadow-sm"
               >
                 Batal

@@ -3,11 +3,12 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import Footer from "@/components/Footer";
 
 interface Produk {
   id_produk: string;
+  id_user_seller: number;
   nama_produk: string;
   harga: number;
   stok: number;
@@ -27,6 +28,8 @@ export default function DetailProdukPage() {
   const router = useRouter();
   const params = useParams();
   const productId = params?.id;
+  const searchParams = useSearchParams();
+  const fromToko = searchParams.get("fromToko");
 
   const [isPageLoading, setIsPageLoading] = useState(true);
   const [user, setUser] = useState({ nama: "", role: "" });
@@ -47,7 +50,7 @@ export default function DetailProdukPage() {
       queueMicrotask(() => {
         setUser({
           nama: userData.username || userData.name || "User",
-          role: userData.role || "BUYER"
+          role: userData.role || "BUYER",
         });
       });
     }
@@ -59,7 +62,9 @@ export default function DetailProdukPage() {
       }
 
       try {
-        const response = await fetch(`http://localhost:5050/api/products/${productId}`);
+        const response = await fetch(
+          `http://localhost:5050/api/products/${productId}`,
+        );
         if (!response.ok) throw new Error("Gagal mengambil detail produk");
 
         const data = await response.json();
@@ -76,27 +81,27 @@ export default function DetailProdukPage() {
     return () => clearTimeout(timer);
   }, [productId]);
 
-    const isGuestUser = () => {
-      const userRole = localStorage.getItem("userRole");
+  const isGuestUser = () => {
+    const userRole = localStorage.getItem("userRole");
 
-      if (userRole === "GUEST") {
-        setShowLoginPopup(true);
-        return true;
-      }
+    if (userRole === "GUEST") {
+      setShowLoginPopup(true);
+      return true;
+    }
 
-      return false;
-    };
+    return false;
+  };
 
   const handleAddKeranjang = async () => {
-  if (isGuestUser()) return;
+    if (isGuestUser()) return;
 
-  const userId = localStorage.getItem("userId");
+    const userId = localStorage.getItem("userId");
 
-  if (!userId) {
-    alert("Silakan login terlebih dahulu");
-    router.push("/login");
-    return;
-  }
+    if (!userId) {
+      alert("Silakan login terlebih dahulu");
+      router.push("/login");
+      return;
+    }
 
     if (!product?.id_produk) {
       alert("Produk tidak ditemukan");
@@ -104,15 +109,18 @@ export default function DetailProdukPage() {
     }
 
     try {
-      const response = await fetch(`http://localhost:5050/api/keranjang/${userId}`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
+      const response = await fetch(
+        `http://localhost:5050/api/keranjang/${userId}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            id_produk: product.id_produk,
+          }),
         },
-        body: JSON.stringify({
-          id_produk: product.id_produk,
-        }),
-      });
+      );
 
       const data = await response.json();
 
@@ -130,15 +138,15 @@ export default function DetailProdukPage() {
   };
 
   const handleBeliSekarang = () => {
-  if (isGuestUser()) return;
+    if (isGuestUser()) return;
 
-  if (!product?.id_produk) {
-    alert("Produk tidak ditemukan");
-    return;
-  }
+    if (!product?.id_produk) {
+      alert("Produk tidak ditemukan");
+      return;
+    }
 
-      router.push(`/pembayaran?produk=${product.id_produk}&qty=${quantity}`);
-    };
+    router.push(`/pembayaran?produk=${product.id_produk}&qty=${quantity}`);
+  };
 
   const handleQuantity = (type: "min" | "plus") => {
     if (!product) return;
@@ -161,7 +169,12 @@ export default function DetailProdukPage() {
     return (
       <div className="min-h-screen bg-[#0a110b] flex flex-col items-center justify-center font-sans text-white">
         <h2 className="text-2xl font-bold mb-4">Produk Tidak Ditemukan</h2>
-        <Link href="/dashboard-buyer" className="text-[#2fa84f] hover:underline">Kembali ke Beranda</Link>
+        <Link
+          href="/dashboard-buyer"
+          className="text-[#2fa84f] hover:underline"
+        >
+          Kembali ke Beranda
+        </Link>
       </div>
     );
   }
@@ -179,7 +192,10 @@ export default function DetailProdukPage() {
       <div className="absolute bottom-[-15%] left-[-10%] w-[500px] h-[500px] bg-[#2fa84f] opacity-10 blur-[120px] rounded-full pointer-events-none z-0"></div>
 
       {showPopup && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center pointer-events-auto" onClick={() => setShowPopup(false)}>
+        <div
+          className="fixed inset-0 z-[200] flex items-center justify-center pointer-events-auto"
+          onClick={() => setShowPopup(false)}
+        >
           <style>{`
             .animate-checkmark {
               stroke-dasharray: 50;
@@ -198,13 +214,25 @@ export default function DetailProdukPage() {
               100% { transform: scale(1); opacity: 1; }
             }
           `}</style>
-          
+
           <div className="absolute inset-0 bg-black/40 backdrop-blur-sm animate-fade-in"></div>
-          
+
           <div className="relative z-10 flex flex-col items-center justify-center bg-[#2c2c2c]/95 backdrop-blur-md rounded-[16px] p-8 w-[340px] shadow-2xl popup-bounce border border-white/5">
             <div className="w-[84px] h-[84px] bg-[#00c09d] rounded-full flex items-center justify-center mb-6 shadow-lg">
-              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round">
-                <polyline className="animate-checkmark" points="20 6 9 17 4 12"></polyline>
+              <svg
+                width="48"
+                height="48"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="white"
+                strokeWidth="3.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <polyline
+                  className="animate-checkmark"
+                  points="20 6 9 17 4 12"
+                ></polyline>
               </svg>
             </div>
             <p className="text-white text-[19px] font-medium tracking-wide text-center leading-snug drop-shadow-md">
@@ -216,37 +244,68 @@ export default function DetailProdukPage() {
 
       {showLoginPopup && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center pointer-events-auto">
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowLoginPopup(false)}></div>
-          
+          <div
+            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            onClick={() => setShowLoginPopup(false)}
+          ></div>
+
           <div className="relative z-10 flex flex-col items-center justify-center bg-[#0a110b] border border-[#2fa84f]/20 rounded-[24px] p-8 w-[420px] shadow-2xl popup-bounce">
-            <button 
+            <button
               onClick={() => setShowLoginPopup(false)}
               className="absolute top-5 right-5 text-gray-400 hover:text-white transition-colors"
             >
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <svg
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
                 <line x1="18" y1="6" x2="6" y2="18"></line>
                 <line x1="6" y1="6" x2="18" y2="18"></line>
               </svg>
             </button>
-            
+
             <div className="w-[84px] h-[84px] bg-[#2fa84f] rounded-[24px] flex items-center justify-center mb-6 shadow-[0_0_30px_rgba(47,168,79,0.3)]">
-              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <svg
+                width="40"
+                height="40"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="white"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
                 <circle cx="9" cy="21" r="2"></circle>
                 <circle cx="20" cy="21" r="2"></circle>
                 <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
               </svg>
             </div>
-            
-            <h2 className="text-white text-2xl font-bold mb-3 tracking-tight text-center">Login Diperlukan</h2>
+
+            <h2 className="text-white text-2xl font-bold mb-3 tracking-tight text-center">
+              Login Diperlukan
+            </h2>
             <p className="text-gray-300 text-sm font-medium tracking-wide text-center leading-relaxed mb-8">
-              Anda harus login terlebih dahulu untuk melanjutkan<br/>pembelian produk.
+              Anda harus login terlebih dahulu untuk melanjutkan
+              <br />
+              pembelian produk.
             </p>
-            
+
             <div className="flex gap-4 w-full">
-              <Link href="/login" className="flex-1 py-3.5 rounded-[16px] font-bold text-sm text-white bg-[#2fa84f] hover:bg-[#268c41] transition-all shadow-[0_4px_15px_rgba(47,168,79,0.3)] hover:-translate-y-0.5 text-center flex items-center justify-center">
+              <Link
+                href="/login"
+                className="flex-1 py-3.5 rounded-[16px] font-bold text-sm text-white bg-[#2fa84f] hover:bg-[#268c41] transition-all shadow-[0_4px_15px_rgba(47,168,79,0.3)] hover:-translate-y-0.5 text-center flex items-center justify-center"
+              >
                 Login
               </Link>
-              <Link href="/register" className="flex-1 py-3.5 rounded-[16px] font-bold text-sm text-white bg-transparent border border-white/20 hover:bg-white/5 transition-all text-center flex items-center justify-center">
+              <Link
+                href="/register"
+                className="flex-1 py-3.5 rounded-[16px] font-bold text-sm text-white bg-transparent border border-white/20 hover:bg-white/5 transition-all text-center flex items-center justify-center"
+              >
                 Daftar
               </Link>
             </div>
@@ -265,24 +324,58 @@ export default function DetailProdukPage() {
             }}
             className="group mr-1 flex shrink-0 items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-3 py-2 text-xs font-semibold text-white/80 shadow-[0_0_20px_rgba(47,168,79,0.15)] backdrop-blur-md transition-all duration-300 hover:-translate-y-0.5 hover:border-[#2fa84f]/45 hover:bg-white/10 hover:text-white hover:shadow-[0_6px_28px_rgba(47,168,79,0.28)]"
           >
-            <svg className="shrink-0 transition-transform duration-300 group-hover:-translate-x-1" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <svg
+              className="shrink-0 transition-transform duration-300 group-hover:-translate-x-1"
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
               <line x1="19" y1="12" x2="5" y2="12" />
               <polyline points="12 19 5 12 12 5" />
             </svg>
             Kembali
           </button>
-          <Link href="/dashboard-buyer" className="flex items-center gap-2 no-underline group">
+          <Link
+            href="/dashboard-buyer"
+            className="flex items-center gap-2 no-underline group"
+          >
             <div className="w-[36px] h-[36px] rounded-xl bg-gradient-to-br from-[#2fa84f] to-[#1a7a35] flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5"><path d="M12 2L3 7v9c0 5 9 7 9 7s9-2 9-7V7l-9-5z"/></svg>
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="white"
+                strokeWidth="2.5"
+              >
+                <path d="M12 2L3 7v9c0 5 9 7 9 7s9-2 9-7V7l-9-5z" />
+              </svg>
             </div>
-            <span className="text-xl font-black text-white tracking-tight uppercase hidden sm:block">Green<span className="text-[#2fa84f]">Market</span></span>
+            <span className="text-xl font-black text-white tracking-tight uppercase hidden sm:block">
+              Green<span className="text-[#2fa84f]">Market</span>
+            </span>
           </Link>
         </div>
 
         <div className="flex-1 max-w-xl mx-10 hidden md:block">
           <div className="relative group">
             <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6b7280" strokeWidth="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="#6b7280"
+                strokeWidth="2.5"
+              >
+                <circle cx="11" cy="11" r="8" />
+                <line x1="21" y1="21" x2="16.65" y2="16.65" />
+              </svg>
             </div>
             <input
               type="text"
@@ -293,8 +386,24 @@ export default function DetailProdukPage() {
         </div>
 
         <div className="flex items-center gap-4">
-          <Link href="/keranjang" className="w-[42px] h-[42px] rounded-xl border border-white/10 bg-white/5 flex items-center justify-center text-white/70 hover:text-[#2fa84f] transition-all">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
+          <Link
+            href="/keranjang"
+            className="w-[42px] h-[42px] rounded-xl border border-white/10 bg-white/5 flex items-center justify-center text-white/70 hover:text-[#2fa84f] transition-all"
+          >
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.8"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" />
+              <line x1="3" y1="6" x2="21" y2="6" />
+              <path d="M16 10a4 4 0 01-8 0" />
+            </svg>
           </Link>
           {user.role === "GUEST" && (
             <div className="flex items-center gap-3 mx-2 border-l border-white/10 pl-6 h-8">
@@ -347,11 +456,27 @@ export default function DetailProdukPage() {
 
       <main className="flex-grow container max-w-[1200px] mx-auto pt-28 px-6 pb-20 relative z-10 w-full">
         <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-widest text-gray-500 mb-6">
-          <Link href="/dashboard-buyer" className="hover:text-[#2fa84f] transition-colors">GreenMarket</Link>
+          <Link
+            href="/dashboard-buyer"
+            className="hover:text-[#2fa84f] transition-colors"
+          >
+            GreenMarket
+          </Link>
+          {fromToko && (
+            <>
+              <span>/</span>
+              <Link
+                href={`/toko/${product.id_user_seller}`}
+                className="hover:text-[#2fa84f] transition-colors truncate max-w-[160px]"
+              >
+                {fromToko}
+              </Link>
+            </>
+          )}
           <span>/</span>
-          <span className="hover:text-[#2fa84f] transition-colors cursor-pointer">{product.kategori?.nama_kategori}</span>
-          <span>/</span>
-          <span className="text-[#2fa84f] truncate max-w-[200px] sm:max-w-none">{product.nama_produk}</span>
+          <span className="text-[#2fa84f] truncate max-w-[200px] sm:max-w-none">
+            {product.nama_produk}
+          </span>
         </div>
 
         <div className="bg-[#1a1f1b]/80 backdrop-blur-xl rounded-[32px] p-6 lg:p-10 border border-white/5 shadow-2xl mb-8">
@@ -396,11 +521,20 @@ export default function DetailProdukPage() {
               <div className="flex items-center gap-4 text-sm font-bold text-gray-400 mb-6">
                 <div className="flex items-center gap-1 border-b border-[#2fa84f] pb-0.5">
                   <span className="text-lg text-white">4.8</span>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="#eab308" className="text-[#eab308]"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="#eab308"
+                    className="text-[#eab308]"
+                  >
+                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                  </svg>
                 </div>
                 <div className="h-4 w-[1px] bg-white/20"></div>
                 <div>
-                  <span className="text-white text-base">Terverifikasi</span> Sistem
+                  <span className="text-white text-base">Terverifikasi</span>{" "}
+                  Sistem
                 </div>
                 <div className="h-4 w-[1px] bg-white/20"></div>
                 <div>
@@ -417,42 +551,108 @@ export default function DetailProdukPage() {
               </div>
 
               <div className="grid grid-cols-[120px_1fr] gap-4 mb-8 text-sm font-bold">
-                <span className="text-gray-500 uppercase tracking-widest text-[11px] mt-1">Pengiriman</span>
+                <span className="text-gray-500 uppercase tracking-widest text-[11px] mt-1">
+                  Pengiriman
+                </span>
                 <div className="flex flex-col gap-2">
-                   <div className="flex items-start gap-2 text-white">
-                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2fa84f" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="mt-0.5"><rect x="3" y="6" width="13" height="11" rx="2"/><path d="M16 10h4l3 3v4h-7"/><circle cx="7" cy="17" r="2"/><circle cx="17" cy="17" r="2"/></svg>
-                     <div>
-                        <span>Pengiriman Ramah Lingkungan</span>
-                        <p className="text-gray-400 text-xs mt-1 font-medium leading-relaxed">Emisi karbon dari pengiriman ini dikompensasi oleh GreenMarket.</p>
-                     </div>
-                   </div>
+                  <div className="flex items-start gap-2 text-white">
+                    <svg
+                      width="18"
+                      height="18"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="#2fa84f"
+                      strokeWidth="2.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="mt-0.5"
+                    >
+                      <rect x="3" y="6" width="13" height="11" rx="2" />
+                      <path d="M16 10h4l3 3v4h-7" />
+                      <circle cx="7" cy="17" r="2" />
+                      <circle cx="17" cy="17" r="2" />
+                    </svg>
+                    <div>
+                      <span>Pengiriman Ramah Lingkungan</span>
+                      <p className="text-gray-400 text-xs mt-1 font-medium leading-relaxed">
+                        Emisi karbon dari pengiriman ini dikompensasi oleh
+                        GreenMarket.
+                      </p>
+                    </div>
+                  </div>
                 </div>
               </div>
 
               <div className="grid grid-cols-[120px_1fr] gap-4 items-center mb-10">
-                <span className="text-gray-500 uppercase tracking-widest text-[11px] font-bold">Kuantitas</span>
+                <span className="text-gray-500 uppercase tracking-widest text-[11px] font-bold">
+                  Kuantitas
+                </span>
                 <div className="flex items-center gap-5">
                   <div className="flex items-center border border-white/20 rounded-xl overflow-hidden bg-white/5">
-                    <button onClick={() => handleQuantity("min")} className="w-10 h-10 flex items-center justify-center text-white hover:bg-white/10 transition-colors border-r border-white/10">
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    <button
+                      onClick={() => handleQuantity("min")}
+                      className="w-10 h-10 flex items-center justify-center text-white hover:bg-white/10 transition-colors border-r border-white/10"
+                    >
+                      <svg
+                        width="16"
+                        height="16"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2.5"
+                      >
+                        <line x1="5" y1="12" x2="19" y2="12" />
+                      </svg>
                     </button>
                     <div className="w-14 h-10 flex items-center justify-center text-white font-bold text-sm bg-[#1a1f1b]">
                       {quantity}
                     </div>
-                    <button onClick={() => handleQuantity("plus")} className="w-10 h-10 flex items-center justify-center text-white hover:bg-white/10 transition-colors border-l border-white/10">
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    <button
+                      onClick={() => handleQuantity("plus")}
+                      className="w-10 h-10 flex items-center justify-center text-white hover:bg-white/10 transition-colors border-l border-white/10"
+                    >
+                      <svg
+                        width="16"
+                        height="16"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2.5"
+                      >
+                        <line x1="12" y1="5" x2="12" y2="19" />
+                        <line x1="5" y1="12" x2="19" y2="12" />
+                      </svg>
                     </button>
                   </div>
-                  <span className="text-sm font-bold text-gray-400">Tersisa {product.stok} buah</span>
+                  <span className="text-sm font-bold text-gray-400">
+                    Tersisa {product.stok} buah
+                  </span>
                 </div>
               </div>
 
               <div className="flex gap-4 mt-auto">
-                <button onClick={handleAddKeranjang} className="flex-1 lg:flex-none lg:w-[220px] py-4 rounded-2xl font-[800] text-sm text-[#2fa84f] bg-[#2fa84f]/10 border border-[#2fa84f]/30 hover:bg-[#2fa84f]/20 transition-all flex items-center justify-center gap-2">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
+                <button
+                  onClick={handleAddKeranjang}
+                  className="flex-1 lg:flex-none lg:w-[220px] py-4 rounded-2xl font-[800] text-sm text-[#2fa84f] bg-[#2fa84f]/10 border border-[#2fa84f]/30 hover:bg-[#2fa84f]/20 transition-all flex items-center justify-center gap-2"
+                >
+                  <svg
+                    width="18"
+                    height="18"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                  >
+                    <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" />
+                    <line x1="3" y1="6" x2="21" y2="6" />
+                    <path d="M16 10a4 4 0 01-8 0" />
+                  </svg>
                   Masukkan Keranjang
                 </button>
-                <button onClick={handleBeliSekarang} className="flex-1 lg:flex-none lg:w-[220px] py-4 rounded-2xl font-[800] text-sm text-white bg-[#2fa84f] hover:bg-[#268c41] transition-all shadow-[0_10px_25px_rgba(47,168,79,0.3)] hover:-translate-y-1">
+                <button
+                  onClick={handleBeliSekarang}
+                  className="flex-1 lg:flex-none lg:w-[220px] py-4 rounded-2xl font-[800] text-sm text-white bg-[#2fa84f] hover:bg-[#268c41] transition-all shadow-[0_10px_25px_rgba(47,168,79,0.3)] hover:-translate-y-1"
+                >
                   Beli Sekarang
                 </button>
               </div>
@@ -461,41 +661,62 @@ export default function DetailProdukPage() {
         </div>
 
         <div className="bg-[#1a1f1b]/80 backdrop-blur-xl rounded-[32px] p-6 lg:p-8 border border-white/5 shadow-2xl mb-8 flex flex-col md:flex-row items-center gap-8">
-           <div className="flex items-center gap-5 w-full shrink-0">
-             <div className="w-20 h-20 rounded-full border-[3px] border-[#2fa84f]/30 p-1 relative">
-                <div className="w-full h-full bg-[#0a110b] rounded-full flex items-center justify-center overflow-hidden">
-                  <span className="text-2xl font-black text-white">
-                  {(product.seller?.username || "TO").substring(0, 2).toUpperCase()}
-                  </span>
-                </div>
-             </div>
-             <div className="flex-1 flex justify-between items-center pr-4">
-               <div>
-                 <h3 className="text-lg font-[800] text-white mb-1 tracking-tight">{product.seller?.username || "Toko Hijau"}</h3>
-                 <p className="text-[11px] text-[#2fa84f] font-bold uppercase tracking-widest">Toko Terverifikasi</p>
-               </div>
-               <div className="text-right">
-                  <span className="text-[11px] font-bold text-gray-500 uppercase tracking-widest block mb-1">Bergabung</span>
-                  <span className="font-black text-white text-sm">Baru Saja</span>
-               </div>
-             </div>
-           </div>
+          <div className="flex items-center gap-5 w-full shrink-0">
+            <div className="w-20 h-20 rounded-full border-[3px] border-[#2fa84f]/30 p-1 relative">
+              <div className="w-full h-full bg-[#0a110b] rounded-full flex items-center justify-center overflow-hidden">
+                <span className="text-2xl font-black text-white">
+                  {(product.seller?.username || "TO")
+                    .substring(0, 2)
+                    .toUpperCase()}
+                </span>
+              </div>
+            </div>
+            <div className="flex-1 flex justify-between items-center pr-4">
+              <div>
+                <Link
+                  href={`/toko/${product.id_user_seller}`}
+                  className="text-lg font-[800] text-white mb-1 tracking-tight hover:text-[#2fa84f] transition-colors no-underline inline-block"
+                >
+                  {product.seller?.username}
+                </Link>
+                <p className="text-[11px] text-[#2fa84f] font-bold uppercase tracking-widest">
+                  Toko Terverifikasi
+                </p>
+              </div>
+              <div className="text-right">
+                <span className="text-[11px] font-bold text-gray-500 uppercase tracking-widest block mb-1">
+                  Bergabung
+                </span>
+                <span className="font-black text-white text-sm">Baru Saja</span>
+              </div>
+            </div>
+          </div>
         </div>
 
         <div className="bg-[#1a1f1b]/80 backdrop-blur-xl rounded-[32px] p-8 lg:p-12 border border-white/5 shadow-2xl">
           <div className="mb-6 flex items-center gap-3">
-             <div className="w-1.5 h-6 bg-[#2fa84f] rounded-full shadow-[0_0_8px_#2fa84f]"></div>
-             <h2 className="text-xl font-[800] text-white m-0 tracking-tight uppercase">Spesifikasi & Deskripsi</h2>
+            <div className="w-1.5 h-6 bg-[#2fa84f] rounded-full shadow-[0_0_8px_#2fa84f]"></div>
+            <h2 className="text-xl font-[800] text-white m-0 tracking-tight uppercase">
+              Spesifikasi & Deskripsi
+            </h2>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] gap-4 mb-8 text-sm font-bold">
-            <span className="text-gray-500 uppercase tracking-widest text-[11px]">Kategori</span>
-            <span className="text-[#2fa84f]">{product.kategori?.nama_kategori || "Umum"}</span>
+            <span className="text-gray-500 uppercase tracking-widest text-[11px]">
+              Kategori
+            </span>
+            <span className="text-[#2fa84f]">
+              {product.kategori?.nama_kategori || "Umum"}
+            </span>
 
-            <span className="text-gray-500 uppercase tracking-widest text-[11px]">Stok Tersedia</span>
+            <span className="text-gray-500 uppercase tracking-widest text-[11px]">
+              Stok Tersedia
+            </span>
             <span className="text-white">{product.stok}</span>
 
-            <span className="text-gray-500 uppercase tracking-widest text-[11px]">Dikirim Dari</span>
+            <span className="text-gray-500 uppercase tracking-widest text-[11px]">
+              Dikirim Dari
+            </span>
             <span className="text-white">KOTA JAKARTA SELATAN</span>
           </div>
 
@@ -503,7 +724,9 @@ export default function DetailProdukPage() {
 
           <div className="prose prose-invert max-w-none">
             <p className="text-gray-300 font-medium leading-relaxed text-sm whitespace-pre-line">
-              {product.konten_deskripsi || product.deskripsi || "Deskripsi produk tidak tersedia."}
+              {product.konten_deskripsi ||
+                product.deskripsi ||
+                "Deskripsi produk tidak tersedia."}
             </p>
           </div>
         </div>
