@@ -21,7 +21,16 @@ interface Produk {
   seller?: {
     username: string;
     email: string;
+    createdAt?: string;
+    toko?: {
+      id_toko: string;
+      nama_toko: string;
+      email_bisnis?: string | null;
+      alamat_toko?: string | null;
+      created_at?: string;
+    } | null;
   };
+  total_terjual?: number;
 }
 
 export default function DetailProdukPage() {
@@ -519,26 +528,26 @@ export default function DetailProdukPage() {
               </h1>
 
               <div className="flex items-center gap-4 text-sm font-bold text-gray-400 mb-6">
-                <div className="flex items-center gap-1 border-b border-[#2fa84f] pb-0.5">
-                  <span className="text-lg text-white">4.8</span>
-                  <svg
-                    width="16"
-                    height="16"
-                    viewBox="0 0 24 24"
-                    fill="#eab308"
-                    className="text-[#eab308]"
-                  >
-                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-                  </svg>
-                </div>
-                <div className="h-4 w-[1px] bg-white/20"></div>
                 <div>
-                  <span className="text-white text-base">Terverifikasi</span>{" "}
-                  Sistem
+                  <span className="text-white text-base">
+                    {product.kategori?.nama_kategori}
+                  </span>
                 </div>
+
                 <div className="h-4 w-[1px] bg-white/20"></div>
+
                 <div>
-                  <span className="text-white text-base">1400</span> Terjual
+                  <span className="text-white text-base">
+                    {product.total_terjual || 0}
+                  </span>{" "}
+                  Terjual
+                </div>
+
+                <div className="h-4 w-[1px] bg-white/20"></div>
+
+                <div>
+                  Stok{" "}
+                  <span className="text-white text-base">{product.stok}</span>
                 </div>
               </div>
 
@@ -554,6 +563,7 @@ export default function DetailProdukPage() {
                 <span className="text-gray-500 uppercase tracking-widest text-[11px] mt-1">
                   Pengiriman
                 </span>
+
                 <div className="flex flex-col gap-2">
                   <div className="flex items-start gap-2 text-white">
                     <svg
@@ -572,11 +582,14 @@ export default function DetailProdukPage() {
                       <circle cx="7" cy="17" r="2" />
                       <circle cx="17" cy="17" r="2" />
                     </svg>
+
                     <div>
-                      <span>Pengiriman Ramah Lingkungan</span>
+                      <span>
+                        Dikirim dari{" "}
+                        {product.seller?.toko?.alamat_toko || "lokasi toko"}
+                      </span>
                       <p className="text-gray-400 text-xs mt-1 font-medium leading-relaxed">
-                        Emisi karbon dari pengiriman ini dikompensasi oleh
-                        GreenMarket.
+                        Pilihan jasa kirim dapat dipilih saat pembayaran.
                       </p>
                     </div>
                   </div>
@@ -625,15 +638,15 @@ export default function DetailProdukPage() {
                     </button>
                   </div>
                   <span className="text-sm font-bold text-gray-400">
-                    Tersisa {product.stok} buah
+                    Maks. {product.stok} item
                   </span>
                 </div>
               </div>
 
-              <div className="flex gap-4 mt-auto">
+              <div className="flex gap-4 justify-end mt-10">
                 <button
                   onClick={handleAddKeranjang}
-                  className="flex-1 lg:flex-none lg:w-[220px] py-4 rounded-2xl font-[800] text-sm text-[#2fa84f] bg-[#2fa84f]/10 border border-[#2fa84f]/30 hover:bg-[#2fa84f]/20 transition-all flex items-center justify-center gap-2"
+                  className="flex-1 lg:flex-none lg:w-[230px] py-4 rounded-2xl font-[800] text-sm text-[#2fa84f] bg-[#2fa84f]/10 border border-[#2fa84f]/30 hover:bg-[#2fa84f]/20 transition-all flex items-center justify-center gap-2"
                 >
                   <svg
                     width="18"
@@ -665,7 +678,11 @@ export default function DetailProdukPage() {
             <div className="w-20 h-20 rounded-full border-[3px] border-[#2fa84f]/30 p-1 relative">
               <div className="w-full h-full bg-[#0a110b] rounded-full flex items-center justify-center overflow-hidden">
                 <span className="text-2xl font-black text-white">
-                  {(product.seller?.username || "TO")
+                  {(
+                    product.seller?.toko?.nama_toko ||
+                    product.seller?.username ||
+                    "TO"
+                  )
                     .substring(0, 2)
                     .toUpperCase()}
                 </span>
@@ -677,7 +694,9 @@ export default function DetailProdukPage() {
                   href={`/toko/${product.id_user_seller}`}
                   className="text-lg font-[800] text-white mb-1 tracking-tight hover:text-[#2fa84f] transition-colors no-underline inline-block"
                 >
-                  {product.seller?.username}
+                  {product.seller?.toko?.nama_toko ||
+                    product.seller?.username ||
+                    "Toko"}
                 </Link>
                 <p className="text-[11px] text-[#2fa84f] font-bold uppercase tracking-widest">
                   Toko Terverifikasi
@@ -687,7 +706,17 @@ export default function DetailProdukPage() {
                 <span className="text-[11px] font-bold text-gray-500 uppercase tracking-widest block mb-1">
                   Bergabung
                 </span>
-                <span className="font-black text-white text-sm">Baru Saja</span>
+                <span className="font-black text-white text-sm">
+                  {product.seller?.createdAt
+                    ? new Date(product.seller.createdAt).toLocaleDateString(
+                        "id-ID",
+                        {
+                          month: "short",
+                          year: "numeric",
+                        },
+                      )
+                    : "Baru"}
+                </span>
               </div>
             </div>
           </div>
@@ -717,7 +746,18 @@ export default function DetailProdukPage() {
             <span className="text-gray-500 uppercase tracking-widest text-[11px]">
               Dikirim Dari
             </span>
-            <span className="text-white">KOTA JAKARTA SELATAN</span>
+            <span className="text-white">
+              {product.seller?.toko?.alamat_toko || "Belum ditentukan"}
+            </span>
+
+            <span className="text-gray-500 uppercase tracking-widest text-[11px]">
+              Email Komplain
+            </span>
+            <span className="text-white">
+              {product.seller?.toko?.email_bisnis ||
+                product.seller?.email ||
+                "Belum tersedia"}
+            </span>
           </div>
 
           <div className="w-full h-[1px] bg-white/5 mb-8"></div>

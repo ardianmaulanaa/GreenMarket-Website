@@ -4,11 +4,11 @@ const prisma = require("../lib/prisma");
 const getProfile = async (req, res) => {
   try {
     const userId = parseInt(req.params.id);
-    
+
     const result = await prisma.user.findUnique({
       where: {
-        id: userId
-      }
+        id: userId,
+      },
     });
 
     if (!result) {
@@ -30,12 +30,12 @@ const updateProfile = async (req, res) => {
 
     const result = await prisma.user.update({
       where: {
-        id: userId
+        id: userId,
       },
       data: {
         username: username,
-        email: email
-      }
+        email: email,
+      },
     });
 
     res.json({
@@ -50,18 +50,45 @@ const updateProfile = async (req, res) => {
 
 const upgradeUserRole = async (req, res) => {
   const { id } = req.params;
+  const { nama_toko, email_bisnis, alamat_toko } = req.body;
+
   const userIdInt = parseInt(id);
 
   if (!id || id === "undefined" || isNaN(userIdInt)) {
     return res.status(400).json({
-      error: "ID User tidak valid (NaN). Pastikan kamu sudah login ulang di browser.",
+      error: "ID User tidak valid. Pastikan kamu sudah login ulang.",
+    });
+  }
+
+  if (!nama_toko || nama_toko.trim() === "") {
+    return res.status(400).json({
+      message: "Nama toko wajib diisi.",
     });
   }
 
   try {
     const updatedUser = await prisma.user.update({
       where: { id: userIdInt },
-      data: { role: "SELLER" },
+      data: {
+        role: "SELLER",
+        toko: {
+          upsert: {
+            create: {
+              nama_toko: nama_toko.trim(),
+              email_bisnis: email_bisnis?.trim() || null,
+              alamat_toko: alamat_toko?.trim() || null,
+            },
+            update: {
+              nama_toko: nama_toko.trim(),
+              email_bisnis: email_bisnis?.trim() || null,
+              alamat_toko: alamat_toko?.trim() || null,
+            },
+          },
+        },
+      },
+      include: {
+        toko: true,
+      },
     });
 
     res.status(200).json({
@@ -72,6 +99,7 @@ const upgradeUserRole = async (req, res) => {
     console.error("Error upgrade role:", error);
     res.status(500).json({
       error: "Gagal memproses pendaftaran penjual ke database.",
+      detail: error.message,
     });
   }
 };

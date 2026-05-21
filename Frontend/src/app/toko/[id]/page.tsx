@@ -20,6 +20,14 @@ interface Produk {
   seller?: {
     username: string;
     email: string;
+    createdAt?: string;
+    toko?: {
+      id_toko: string;
+      nama_toko: string;
+      email_bisnis?: string | null;
+      alamat_toko?: string | null;
+      created_at?: string;
+    } | null;
   };
 }
 
@@ -79,6 +87,8 @@ export default function TokoPage() {
   }, [sellerId]);
 
   const toko = products[0]?.seller;
+
+  const namaToko = toko?.toko?.nama_toko || toko?.username || "Toko";
   const isSeller = user.role === "SELLER";
   const dashboardHref = isSeller ? "/dashboard-seller" : "/dashboard-buyer";
 
@@ -242,14 +252,14 @@ export default function TokoPage() {
               <div className="w-20 h-20 rounded-full border-[3px] border-[#2fa84f]/30 p-1">
                 <div className="w-full h-full bg-[#0a110b] rounded-full flex items-center justify-center">
                   <span className="text-2xl font-black text-white">
-                    {(toko?.username || "TO").substring(0, 2).toUpperCase()}
+                    {namaToko.substring(0, 2).toUpperCase()}
                   </span>
                 </div>
               </div>
 
               <div>
                 <h1 className="text-2xl font-black text-white mb-1">
-                  {toko?.username || "Toko"}
+                  {namaToko}
                 </h1>
                 <p className="text-[11px] text-[#2fa84f] font-bold uppercase tracking-widest">
                   Toko Terverifikasi
@@ -290,7 +300,7 @@ export default function TokoPage() {
                 <Link
                   key={p.id_produk}
                   href={`/katalog-detail/${p.id_produk}?fromToko=${encodeURIComponent(
-                    toko?.username || p.seller?.username || "Toko",
+                    namaToko,
                   )}`}
                   className="no-underline block h-full group"
                 >
@@ -323,7 +333,9 @@ export default function TokoPage() {
 
                       <div className="flex justify-between items-center pt-4 border-t border-white/5">
                         <span className="text-[9px] text-gray-500 uppercase font-black truncate max-w-[100px]">
-                          {p.seller?.username || "Toko Hijau"}
+                          {p.seller?.toko?.nama_toko ||
+                            p.seller?.username ||
+                            "Toko Hijau"}
                         </span>
 
                         <span className="text-[9px] text-[#2fa84f] bg-[#2fa84f]/10 px-2 py-1 rounded font-black uppercase">

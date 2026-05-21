@@ -38,7 +38,9 @@ export default function RegisterPenjual() {
   const [isPageLoading, setIsPageLoading] = useState(true);
   const [shouldAnimate, setShouldAnimate] = useState(false);
   const [step, setStep] = useState(1);
-  const [umur, setUmur] = useState("");
+  const [namaToko, setNamaToko] = useState("");
+  const [emailBisnis, setEmailBisnis] = useState("");
+  const [alamatToko, setAlamatToko] = useState("");
   const [loading, setLoading] = useState(false);
   const [user, setUser] = useState({ nama: "", role: "" });
 
@@ -116,7 +118,12 @@ export default function RegisterPenjual() {
           headers: {
             "Content-Type": "application/json",
           },
-        }
+          body: JSON.stringify({
+            nama_toko: namaToko,
+            email_bisnis: emailBisnis,
+            alamat_toko: alamatToko,
+          }),
+        },
       );
 
       const data = await response.json().catch(() => null);
@@ -221,7 +228,9 @@ export default function RegisterPenjual() {
         <div className="absolute inset-0 bg-[#0a110b]/20"></div>
         <div className="absolute inset-y-0 right-0 w-[250px] bg-gradient-to-l from-[#0a110b] via-[#0a110b]/90 to-transparent z-10"></div>
 
-        <div className={`absolute bottom-20 left-16 max-w-md z-20 ${shouldAnimate ? 'animate-slide-in-left delay-200' : 'opacity-0'}`}>
+        <div
+          className={`absolute bottom-20 left-16 max-w-md z-20 ${shouldAnimate ? "animate-slide-in-left delay-200" : "opacity-0"}`}
+        >
           <h2 className="text-4xl font-black text-white leading-tight mb-4 tracking-tight shadow-black drop-shadow-lg">
             Buka Peluang Baru, <br />
             <span className="text-[#2fa84f]">Jadilah Penjual Hijau.</span>
@@ -239,7 +248,7 @@ export default function RegisterPenjual() {
 
         <Link
           href={dashboardHref}
-          className={`absolute top-8 left-8 flex items-center gap-2 text-gray-400 no-underline text-sm font-bold px-4 py-2 rounded-full border border-white/10 hover:text-white hover:bg-white/5 transition-all duration-300 z-30 ${shouldAnimate ? 'animate-fade-in delay-100' : 'opacity-0'}`}
+          className={`absolute top-8 left-8 flex items-center gap-2 text-gray-400 no-underline text-sm font-bold px-4 py-2 rounded-full border border-white/10 hover:text-white hover:bg-white/5 transition-all duration-300 z-30 ${shouldAnimate ? "animate-fade-in delay-100" : "opacity-0"}`}
         >
           <svg
             width="16"
@@ -257,7 +266,9 @@ export default function RegisterPenjual() {
           Kembali
         </Link>
 
-        <div className={`w-full max-w-[460px] relative z-10 py-16 my-auto ${shouldAnimate ? 'animate-fade-in-up delay-200' : 'opacity-0'}`}>
+        <div
+          className={`w-full max-w-[460px] relative z-10 py-16 my-auto ${shouldAnimate ? "animate-fade-in-up delay-200" : "opacity-0"}`}
+        >
           <div className="flex justify-center mb-6">
             <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#2fa84f] to-[#1a7a35] flex items-center justify-center shadow-[0_4px_15px_rgba(47,168,79,0.4)]">
               <svg
@@ -301,64 +312,11 @@ export default function RegisterPenjual() {
                       className="w-full px-5 py-4 border border-white/10 rounded-2xl outline-none focus:border-[#2fa84f] focus:ring-1 focus:ring-[#2fa84f] focus:bg-[#1a1f1b] text-sm text-white bg-[#1a1f1b]/50 shadow-inner transition-all placeholder:text-gray-600"
                     />
                   </div>
-
-                  <div className="space-y-2">
-                    <label className="text-[11px] font-bold text-gray-400 uppercase tracking-widest ml-1">
-                      Umur Anda
-                    </label>
-                    <select
-                      value={umur}
-                      onChange={(e) => setUmur(e.target.value)}
-                      className={`w-full px-5 py-4 border rounded-2xl outline-none focus:bg-[#1a1f1b] transition-all text-sm shadow-inner cursor-pointer appearance-none ${
-                        umur && parseInt(umur) < 18
-                          ? "bg-[#1a1f1b]/50 border-red-500/50 text-red-400 focus:border-red-500 focus:ring-1 focus:ring-red-500"
-                          : "bg-[#1a1f1b]/50 border-white/10 text-white focus:border-[#2fa84f] focus:ring-1 focus:ring-[#2fa84f]"
-                      }`}
-                    >
-                      <option value="" disabled className="text-gray-500">
-                        Pilih Umur Anda
-                      </option>
-                      {Array.from({ length: 61 }, (_, i) => i + 10).map(
-                        (val) => (
-                          <option
-                            key={val}
-                            value={val.toString()}
-                            className="bg-[#1a1f1b] text-white"
-                          >
-                            {val} Tahun
-                          </option>
-                        )
-                      )}
-                    </select>
-
-                    {umur && parseInt(umur) < 18 && (
-                      <p className="text-[10px] font-bold text-red-400 uppercase tracking-widest mt-2 ml-1 flex items-center gap-1">
-                        <svg
-                          width="12"
-                          height="12"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="3"
-                        >
-                          <circle cx="12" cy="12" r="10" />
-                          <line x1="12" y1="8" x2="12" y2="12" />
-                          <line x1="12" y1="16" x2="12.01" y2="16" />
-                        </svg>
-                        Minimal berusia 18 tahun.
-                      </p>
-                    )}
-                  </div>
                 </div>
 
                 <button
                   onClick={() => setStep(2)}
-                  disabled={!umur || parseInt(umur) < 18}
-                  className={`w-full py-4 rounded-2xl font-[800] text-sm uppercase tracking-widest transition-all mt-4 ${
-                    !umur || parseInt(umur) < 18
-                      ? "bg-white/5 text-gray-600 cursor-not-allowed border border-white/5"
-                      : "bg-[#2fa84f] text-white hover:bg-[#268c41] shadow-[0_10px_25px_rgba(47,168,79,0.3)] hover:-translate-y-1 border-none"
-                  }`}
+                  className="w-full py-4 rounded-2xl font-[800] text-sm uppercase tracking-widest transition-all mt-4 bg-[#2fa84f] text-white hover:bg-[#268c41] shadow-[0_10px_25px_rgba(47,168,79,0.3)] hover:-translate-y-1 border-none"
                 >
                   Langkah Berikutnya
                 </button>
@@ -375,6 +333,8 @@ export default function RegisterPenjual() {
                     <input
                       type="text"
                       placeholder="Contoh: Green Solutions"
+                      value={namaToko}
+                      onChange={(e) => setNamaToko(e.target.value)}
                       className="w-full px-5 py-4 border border-white/10 rounded-2xl outline-none focus:border-[#2fa84f] focus:ring-1 focus:ring-[#2fa84f] focus:bg-[#1a1f1b] text-sm text-white bg-[#1a1f1b]/50 shadow-inner transition-all placeholder:text-gray-600"
                     />
                   </div>
@@ -386,6 +346,21 @@ export default function RegisterPenjual() {
                     <input
                       type="email"
                       placeholder="toko@greenmarket.id"
+                      value={emailBisnis}
+                      onChange={(e) => setEmailBisnis(e.target.value)}
+                      className="w-full px-5 py-4 border border-white/10 rounded-2xl outline-none focus:border-[#2fa84f] focus:ring-1 focus:ring-[#2fa84f] focus:bg-[#1a1f1b] text-sm text-white bg-[#1a1f1b]/50 shadow-inner transition-all placeholder:text-gray-600"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-[11px] font-bold text-gray-400 uppercase tracking-widest ml-1">
+                      Alamat Toko
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Contoh: Bandung, Jawa Barat"
+                      value={alamatToko}
+                      onChange={(e) => setAlamatToko(e.target.value)}
                       className="w-full px-5 py-4 border border-white/10 rounded-2xl outline-none focus:border-[#2fa84f] focus:ring-1 focus:ring-[#2fa84f] focus:bg-[#1a1f1b] text-sm text-white bg-[#1a1f1b]/50 shadow-inner transition-all placeholder:text-gray-600"
                     />
                   </div>
@@ -399,7 +374,14 @@ export default function RegisterPenjual() {
                     Kembali
                   </button>
                   <button
-                    onClick={() => setStep(3)}
+                    onClick={() => {
+                      if (!namaToko.trim()) {
+                        alert("Nama toko wajib diisi.");
+                        return;
+                      }
+
+                      setStep(3);
+                    }}
                     className="flex-[2] bg-[#2fa84f] text-white py-4 rounded-2xl font-[800] text-xs uppercase tracking-widest shadow-[0_10px_25px_rgba(47,168,79,0.3)] hover:bg-[#268c41] transition-all hover:-translate-y-1 border-none cursor-pointer"
                   >
                     Lanjut

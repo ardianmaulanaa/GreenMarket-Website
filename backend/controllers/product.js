@@ -23,9 +23,7 @@ const uploadProductImages = async (files = []) => {
       throw new Error(`Gagal upload foto: ${error.message}`);
     }
 
-    const { data } = supabase.storage
-      .from("produk")
-      .getPublicUrl(filePath);
+    const { data } = supabase.storage.from("produk").getPublicUrl(filePath);
 
     uploadedUrls.push(data.publicUrl);
   }
@@ -36,18 +34,51 @@ const uploadProductImages = async (files = []) => {
 // 1. GET: Menampilkan produk
 const getProducts = async (req, res) => {
   try {
-    const { userId } = req.query;
+    const { userId, search, kategori } = req.query;
+
+    const where = {};
+
+    if (userId) {
+      where.id_user_seller = Number(userId);
+    }
+
+    if (kategori) {
+      const kategoriArray = String(kategori).split(",");
+
+      where.id_kategori = {
+        in: kategoriArray,
+      };
+    }
+
+    if (search) {
+      where.OR = [
+        {
+          nama_produk: {
+            contains: search,
+            mode: "insensitive",
+          },
+        },
+        {
+          kategori: {
+            nama_kategori: {
+              contains: search,
+              mode: "insensitive",
+            },
+          },
+        },
+      ];
+    }
 
     const products = await prisma.produk.findMany({
-      where: {
-        id_user_seller: userId ? Number(userId) : undefined,
-      },
+      where,
       include: {
         kategori: true,
         seller: {
           select: {
             username: true,
             email: true,
+            createdAt: true,
+            toko: true,
           },
         },
       },
@@ -81,6 +112,8 @@ const getProductById = async (req, res) => {
           select: {
             username: true,
             email: true,
+            createdAt: true,
+            toko: true,
           },
         },
       },
@@ -92,7 +125,22 @@ const getProductById = async (req, res) => {
       });
     }
 
-    res.status(200).json(product);
+    const totalTerjual = await prisma.detail_Transaksi.aggregate({
+      where: {
+        id_produk: id,
+        transaksi: {
+          status_transaksi: "SELESAI",
+        },
+      },
+      _sum: {
+        kuantitas: true,
+      },
+    });
+
+    res.status(200).json({
+      ...product,
+      total_terjual: totalTerjual._sum.kuantitas || 0,
+    });
   } catch (error) {
     console.error("Error Get Product By ID:", error);
     res.status(500).json({
@@ -250,11 +298,9 @@ const updateProduct = async (req, res) => {
         foto_produk: fotoUtama,
         foto_produk_list: daftarFoto,
 
-        konten_deskripsi:
-          konten_deskripsi || existingProduct.konten_deskripsi,
+        konten_deskripsi: konten_deskripsi || existingProduct.konten_deskripsi,
 
-        catatan_penjual:
-          catatan_penjual || existingProduct.catatan_penjual,
+        catatan_penjual: catatan_penjual || existingProduct.catatan_penjual,
       },
     });
 

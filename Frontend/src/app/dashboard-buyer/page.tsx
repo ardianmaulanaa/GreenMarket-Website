@@ -100,9 +100,18 @@ interface Produk {
   seller?: { username: string; email: string };
 }
 
+interface Kategori {
+  id_kategori: string;
+  nama_kategori: string;
+}
+
 type NotificationState = { type: "success" | "error"; message: string } | null;
 
-function FormNotification({ notification }: { notification: NotificationState }) {
+function FormNotification({
+  notification,
+}: {
+  notification: NotificationState;
+}) {
   if (!notification) return null;
 
   const isSuccess = notification.type === "success";
@@ -160,7 +169,9 @@ function FormNotification({ notification }: { notification: NotificationState })
             </svg>
           )}
         </span>
-        <p className={`whitespace-nowrap text-xs font-semibold ${isSuccess ? "text-[#b8f5c8]" : "text-red-100"}`}>
+        <p
+          className={`whitespace-nowrap text-xs font-semibold ${isSuccess ? "text-[#b8f5c8]" : "text-red-100"}`}
+        >
           {text}
         </p>
       </motion.div>
@@ -176,15 +187,20 @@ export default function DashboardBuyer() {
   const [userName, setUserName] = useState<string>("User");
   const [userRoleState, setUserRoleState] = useState<string>("");
   const [searchTerm, setSearchTerm] = useState("");
+  const [categories, setCategories] = useState<Kategori[]>([]);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [currentSlide, setCurrentSlide] = useState(0);
   const [prevSlide, setPrevSlide] = useState(0);
   const [isGoingForward, setIsGoingForward] = useState(true);
   const [showSellerPopup, setShowSellerPopup] = useState(false);
   const [notification, setNotification] = useState<NotificationState>(null);
 
-  const showNotification = useCallback((type: "success" | "error", message: string) => {
-    setNotification({ type, message });
-  }, []);
+  const showNotification = useCallback(
+    (type: "success" | "error", message: string) => {
+      setNotification({ type, message });
+    },
+    [],
+  );
 
   useEffect(() => {
     if (!notification) return;
@@ -233,7 +249,9 @@ export default function DashboardBuyer() {
 
   const handlePrevSlide = () => {
     setPrevSlide(currentSlide);
-    setCurrentSlide((prev) => (prev - 1 + carouselSlides.length) % carouselSlides.length);
+    setCurrentSlide(
+      (prev) => (prev - 1 + carouselSlides.length) % carouselSlides.length,
+    );
     setIsGoingForward(false);
   };
 
@@ -250,6 +268,26 @@ export default function DashboardBuyer() {
   };
 
   useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await fetch("http://localhost:5050/api/categories");
+
+        if (!response.ok) {
+          throw new Error("Gagal mengambil kategori");
+        }
+
+        const data = await response.json();
+        setCategories(Array.isArray(data) ? data : []);
+      } catch (error) {
+        console.error("Error fetch kategori:", error);
+        setCategories([]);
+      }
+    };
+
+    fetchCategories();
+  }, []);
+
+  useEffect(() => {
     const loadDashboard = async () => {
       const storedUserId = localStorage.getItem("userId");
       const storedRole = localStorage.getItem("userRole");
@@ -259,7 +297,7 @@ export default function DashboardBuyer() {
         router.push("/login");
         return;
       }
-      
+
       if (storedRole) setUserRoleState(storedRole);
 
       if (storedRole === "SELLER") {
@@ -279,7 +317,15 @@ export default function DashboardBuyer() {
       try {
         setLoading(true);
 
-        const response = await fetch("http://localhost:5050/api/products");
+        const query = new URLSearchParams();
+
+        if (selectedCategories.length > 0) {
+          query.append("kategori", selectedCategories.join(","));
+        }
+
+        const response = await fetch(
+          `http://localhost:5050/api/products?${query.toString()}`,
+        );
 
         if (!response.ok) {
           throw new Error("Gagal mengambil data produk");
@@ -301,15 +347,19 @@ export default function DashboardBuyer() {
     };
 
     loadDashboard();
-  }, [router]);
+  }, [router, selectedCategories]);
 
   const resetFilters = () => {
-    const inputs = document.querySelectorAll(
-      ".filter-check input",
-    ) as NodeListOf<HTMLInputElement>;
+    setSelectedCategories([]);
+  };
 
-    inputs.forEach((input) => {
-      input.checked = false;
+  const handleCategoryChange = (categoryId: string) => {
+    setSelectedCategories((prev) => {
+      if (prev.includes(categoryId)) {
+        return prev.filter((id) => id !== categoryId);
+      }
+
+      return [...prev, categoryId];
     });
   };
 
@@ -365,30 +415,49 @@ export default function DashboardBuyer() {
               100% { transform: scale(1); opacity: 1; }
             }
           `}</style>
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowSellerPopup(false)}></div>
-          
+          <div
+            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            onClick={() => setShowSellerPopup(false)}
+          ></div>
+
           <div className="relative z-10 flex flex-col items-center justify-center bg-[#0a110b] border border-[#2fa84f]/20 rounded-[24px] p-8 w-[420px] shadow-2xl popup-bounce">
-            <button 
+            <button
               onClick={() => setShowSellerPopup(false)}
               className="absolute top-5 right-5 text-gray-400 hover:text-white transition-colors"
             >
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <svg
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
                 <line x1="18" y1="6" x2="6" y2="18"></line>
                 <line x1="6" y1="6" x2="18" y2="18"></line>
               </svg>
             </button>
-            
 
-            <h2 className="text-white text-2xl font-bold mb-3 tracking-tight text-center">Mulai Jualan, Yuk!</h2>
+            <h2 className="text-white text-2xl font-bold mb-3 tracking-tight text-center">
+              Mulai Jualan, Yuk!
+            </h2>
             <p className="text-gray-300 text-sm font-medium tracking-wide text-center leading-relaxed mb-8">
               Daftar gratis untuk upload produk dan kelola toko kamu.
             </p>
-            
+
             <div className="flex flex-col gap-3 w-full">
-              <Link href="/register" className="w-full py-3.5 rounded-[16px] font-bold text-sm text-white bg-[#2fa84f] hover:bg-[#268c41] transition-all shadow-[0_4px_15px_rgba(47,168,79,0.3)] hover:-translate-y-0.5 text-center flex items-center justify-center">
+              <Link
+                href="/register"
+                className="w-full py-3.5 rounded-[16px] font-bold text-sm text-white bg-[#2fa84f] hover:bg-[#268c41] transition-all shadow-[0_4px_15px_rgba(47,168,79,0.3)] hover:-translate-y-0.5 text-center flex items-center justify-center"
+              >
                 Daftar Sekarang
               </Link>
-              <Link href="/login" className="w-full py-3.5 rounded-[16px] font-bold text-sm text-white bg-transparent border border-white/20 hover:bg-white/5 transition-all text-center flex items-center justify-center">
+              <Link
+                href="/login"
+                className="w-full py-3.5 rounded-[16px] font-bold text-sm text-white bg-transparent border border-white/20 hover:bg-white/5 transition-all text-center flex items-center justify-center"
+              >
                 Sudah Punya Akun? Login
               </Link>
             </div>
@@ -528,7 +597,10 @@ export default function DashboardBuyer() {
               const userRole = localStorage.getItem("userRole");
 
               if (userRole === "GUEST") {
-                showNotification("error", "Fitur ini tidak tersedia pada akun guest");
+                showNotification(
+                  "error",
+                  "Fitur ini tidak tersedia pada akun guest",
+                );
                 return;
               }
 
@@ -561,49 +633,50 @@ export default function DashboardBuyer() {
           {carouselSlides.map((slide, index) => {
             const isActive = index === currentSlide;
             const isPrev = index === prevSlide && prevSlide !== currentSlide;
-            
-            let translateX = '0%';
-            let opacity = '1';
-            
+
+            let translateX = "0%";
+            let opacity = "1";
+
             if (!isActive && isPrev) {
-              translateX = isGoingForward ? '-100%' : '100%';
-              opacity = '0';
+              translateX = isGoingForward ? "-100%" : "100%";
+              opacity = "0";
             } else if (!isActive) {
-              translateX = isGoingForward ? '100%' : '-100%';
-              opacity = '0';
+              translateX = isGoingForward ? "100%" : "-100%";
+              opacity = "0";
             }
-            
+
             return (
               <div
                 key={index}
                 style={{
                   transform: `translateX(${translateX})`,
                   opacity: opacity,
-                  transition: 'transform 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94), opacity 0.8s ease'
+                  transition:
+                    "transform 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94), opacity 0.8s ease",
                 }}
                 className="absolute inset-0"
               >
-              <img
-                src={slide.image}
-                alt={slide.title}
-                className="w-full h-full object-cover opacity-90"
-              />
-              <div className="absolute inset-0 bg-gradient-to-r from-[#1a2e1f]/95 via-[#1a2e1f]/60 to-transparent"></div>
+                <img
+                  src={slide.image}
+                  alt={slide.title}
+                  className="w-full h-full object-cover opacity-90"
+                />
+                <div className="absolute inset-0 bg-gradient-to-r from-[#1a2e1f]/95 via-[#1a2e1f]/60 to-transparent"></div>
 
-              <div className="absolute inset-0 flex flex-col justify-center px-8 md:px-14">
-                <span className="text-[#2fa84f] font-black tracking-widest text-[10px] md:text-xs uppercase mb-2 drop-shadow-md">
-                  {slide.badge}
-                </span>
-                <h1 className="text-3xl md:text-5xl font-black text-white mb-3 tracking-tight drop-shadow-xl max-w-2xl leading-tight">
-                  {slide.title}
-                </h1>
-                <p className="text-white/80 font-medium max-w-lg text-xs md:text-sm leading-relaxed drop-shadow-md">
-                  {slide.subtitle}
-                </p>
-              </div>
+                <div className="absolute inset-0 flex flex-col justify-center px-8 md:px-14">
+                  <span className="text-[#2fa84f] font-black tracking-widest text-[10px] md:text-xs uppercase mb-2 drop-shadow-md">
+                    {slide.badge}
+                  </span>
+                  <h1 className="text-3xl md:text-5xl font-black text-white mb-3 tracking-tight drop-shadow-xl max-w-2xl leading-tight">
+                    {slide.title}
+                  </h1>
+                  <p className="text-white/80 font-medium max-w-lg text-xs md:text-sm leading-relaxed drop-shadow-md">
+                    {slide.subtitle}
+                  </p>
                 </div>
-              );
-            })}
+              </div>
+            );
+          })}
 
           <button
             onClick={handlePrevSlide}
@@ -667,22 +740,23 @@ export default function DashboardBuyer() {
               </div>
 
               <div className="space-y-4 mb-8">
-                {[
-                  "Pakaian Organik",
-                  "Daur Ulang",
-                  "Ramah Lingkungan",
-                  "Terlaris",
-                ].map((item) => (
+                {categories.map((category) => (
                   <label
-                    key={item}
+                    key={category.id_kategori}
                     className="filter-check flex items-center gap-3 cursor-pointer group"
                   >
                     <input
                       type="checkbox"
+                      checked={selectedCategories.includes(
+                        category.id_kategori,
+                      )}
+                      onChange={() =>
+                        handleCategoryChange(category.id_kategori)
+                      }
                       className="accent-[#2fa84f] w-4 h-4 cursor-pointer bg-white/5 border-white/10 rounded"
                     />
                     <span className="text-sm font-medium text-gray-400 group-hover:text-white transition-colors">
-                      {item}
+                      {category.nama_kategori}
                     </span>
                   </label>
                 ))}

@@ -17,6 +17,7 @@ model User {
   keranjang Keranjang[]
   products  Produk[]
   transaksi Transaksi[]
+  toko Toko?
 }
 
 model Kategori_Produk {
@@ -134,6 +135,17 @@ model TrackingLog {
   status       String
   waktu        DateTime  @default(now())
   transaksi    Transaksi @relation(fields: [id_transaksi], references: [id_transaksi], onDelete: Cascade)
+}
+
+model Toko {
+  id_toko      String   @id @default(uuid())
+  id_user      Int      @unique
+  nama_toko    String
+  email_bisnis String?
+  alamat_toko  String?
+  created_at   DateTime @default(now())
+
+  user         User     @relation(fields: [id_user], references: [id], onDelete: Cascade)
 }
 
 enum Role {
