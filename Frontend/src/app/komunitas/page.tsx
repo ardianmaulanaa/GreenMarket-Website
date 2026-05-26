@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useToast } from "@/hooks/useToast";
 
 interface Post {
   id: number;
@@ -18,6 +19,7 @@ interface Post {
 }
 
 export default function ForumPage() {
+  const { showToast } = useToast();
   const router = useRouter();
   const [showPostForm, setShowPostForm] = useState(false);
   const [postContent, setPostContent] = useState("");
@@ -76,24 +78,28 @@ export default function ForumPage() {
 
   const handleSubmitPost = (e: React.FormEvent) => {
     e.preventDefault();
-    if (postContent.trim()) {
-      const newPost = {
-        id: Date.now(),
-        user: user.nama,
-        avatar: `https://ui-avatars.com/api/?name=${user.nama.replace(" ", "+")}&background=2fa84f&color=fff`,
-        time: "Baru saja",
-        group: null,
-        content: postContent,
-        image: postImagePreview,
-        likes: 0,
-        comments: 0,
-        isLiked: false,
-      };
-      setPosts([newPost, ...posts]);
-      setPostContent("");
-      setPostImagePreview(null);
-      setShowPostForm(false);
+    if (!postContent.trim()) {
+      showToast("Konten postingan tidak boleh kosong.", "warning");
+      return;
     }
+
+    const newPost = {
+      id: Date.now(),
+      user: user.nama || "User",
+      avatar: `https://ui-avatars.com/api/?name=${(user.nama || "User").replace(" ", "+")}&background=2fa84f&color=fff`,
+      time: "Baru saja",
+      group: null,
+      content: postContent,
+      image: postImagePreview,
+      likes: 0,
+      comments: 0,
+      isLiked: false,
+    };
+    setPosts([newPost, ...posts]);
+    setPostContent("");
+    setPostImagePreview(null);
+    setShowPostForm(false);
+    showToast("Postingan berhasil dikirim.", "success");
   };
 
   return (

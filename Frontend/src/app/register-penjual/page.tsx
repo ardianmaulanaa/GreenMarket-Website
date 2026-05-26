@@ -3,36 +3,10 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useToast } from "@/hooks/useToast";
+import { useUser } from "@/hooks/useUser";
 
-const animationStyles = `
-  @keyframes fadeInUp {
-    from { opacity: 0; transform: translateY(40px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-  @keyframes slideInLeft {
-    from { opacity: 0; transform: translateX(-40px); }
-    to { opacity: 1; transform: translateX(0); }
-  }
-  @keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
-  }
-  .animate-fade-in-up {
-    opacity: 0;
-    animation: fadeInUp 1s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
-  }
-  .animate-slide-in-left {
-    opacity: 0;
-    animation: slideInLeft 1s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
-  }
-  .animate-fade-in {
-    opacity: 0;
-    animation: fadeIn 1s ease-out forwards;
-  }
-  .delay-100 { animation-delay: 100ms; }
-  .delay-200 { animation-delay: 200ms; }
-  .delay-300 { animation-delay: 300ms; }
-`;
+// Animation styles removed - imported globally from globals.css
 
 export default function RegisterPenjual() {
   const [isPageLoading, setIsPageLoading] = useState(true);
@@ -43,6 +17,8 @@ export default function RegisterPenjual() {
   const [alamatToko, setAlamatToko] = useState("");
   const [loading, setLoading] = useState(false);
   const [user, setUser] = useState({ nama: "", role: "" });
+  const { showToast } = useToast();
+  const { userId, userRole, user: userProfile, refreshUser } = useUser();
 
   const router = useRouter();
 
@@ -55,55 +31,38 @@ export default function RegisterPenjual() {
       setTimeout(() => setShouldAnimate(true), 50);
     }, 800);
 
-    const storedUserId = localStorage.getItem("userId");
-    const storedRole = localStorage.getItem("userRole");
-    const savedUser = localStorage.getItem("user");
+    if (userId === null && userRole === null) {
+      return () => clearTimeout(timer);
+    }
 
-    if (!storedUserId) {
+    if (!userId) {
       router.push("/login");
       return () => clearTimeout(timer);
     }
 
-    if (storedRole === "SELLER") {
+    if (userRole === "SELLER") {
       router.push("/dashboard-seller");
       return () => clearTimeout(timer);
     }
 
-    if (savedUser) {
-      try {
-        const userData = JSON.parse(savedUser);
-        queueMicrotask(() => {
-          setUser({
-            nama: userData.username || userData.name || "User",
-            role: userData.role || storedRole || "BUYER",
-          });
-        });
-      } catch (error) {
-        console.error("Gagal membaca user:", error);
-        queueMicrotask(() => {
-          setUser({
-            nama: "User",
-            role: storedRole || "BUYER",
-          });
-        });
-      }
+    if (userProfile) {
+      setUser({
+        nama: userProfile.username || "User",
+        role: userRole || "BUYER",
+      });
     } else {
-      queueMicrotask(() => {
-        setUser({
-          nama: "User",
-          role: storedRole || "BUYER",
-        });
+      setUser({
+        nama: "User",
+        role: userRole || "BUYER",
       });
     }
 
     return () => clearTimeout(timer);
-  }, []);
+  }, [userId, userRole, userProfile]);
 
   const handleFinalSubmit = async () => {
-    const storedUserId = localStorage.getItem("userId");
-
-    if (!storedUserId) {
-      alert("Silakan login terlebih dahulu");
+    if (!userId) {
+      showToast("Silakan login terlebih dahulu", "warning");
       router.push("/login");
       return;
     }
@@ -112,7 +71,7 @@ export default function RegisterPenjual() {
 
     try {
       const response = await fetch(
-        `http://localhost:5050/api/users/upgrade/${storedUserId}`,
+        `http://localhost:5050/api/users/upgrade/${userId}`,
         {
           method: "PUT",
           headers: {
@@ -129,7 +88,7 @@ export default function RegisterPenjual() {
       const data = await response.json().catch(() => null);
 
       if (!response.ok) {
-        alert(data?.message || "Gagal daftar sebagai penjual.");
+        showToast(data?.message || "Gagal daftar sebagai penjual.", "error");
         return;
       }
 
@@ -144,18 +103,21 @@ export default function RegisterPenjual() {
 
       localStorage.setItem("user", JSON.stringify(updatedUser));
       localStorage.setItem("userRole", "SELLER");
+      refreshUser();
 
       setUser({
         nama: updatedUser.username || updatedUser.name || "User",
         role: "SELLER",
       });
 
-      alert("Selamat! Anda sekarang menjadi Penjual.");
+      showToast("Selamat! Anda sekarang menjadi Penjual.", "success");
 
-      router.replace("/dashboard-seller");
+      setTimeout(() => {
+        router.replace("/dashboard-seller");
+      }, 1000);
     } catch (error) {
       console.error("Gagal upgrade seller:", error);
-      alert("Terjadi kesalahan saat daftar sebagai penjual.");
+      showToast("Terjadi kesalahan saat daftar sebagai penjual.", "error");
     } finally {
       setLoading(false);
     }
@@ -217,7 +179,6 @@ export default function RegisterPenjual() {
 
   return (
     <main className="min-h-screen flex bg-[#0a110b] font-sans m-0 overflow-hidden">
-      <style>{animationStyles}</style>
       <div className="hidden lg:block relative w-1/2 min-h-screen bg-[#1a2e1f] overflow-hidden">
         <img
           src="https://images.unsplash.com/photo-1536882240095-0379873feb4e?q=80&w=1000&auto=format&fit=crop"
@@ -376,7 +337,15 @@ export default function RegisterPenjual() {
                   <button
                     onClick={() => {
                       if (!namaToko.trim()) {
-                        alert("Nama toko wajib diisi.");
+                        showToast("Nama toko wajib diisi.", "warning");
+                        return;
+                      }
+                      if (!emailBisnis.trim()) {
+                        showToast("Email wajib diisi.", "warning");
+                        return;
+                      }
+                      if (!alamatToko.trim()) {
+                        showToast("Alamat wajib diisi.", "warning");
                         return;
                       }
 

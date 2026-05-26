@@ -16,6 +16,8 @@ import FloatingBlobs from "@/components/landing/FloatingBlobs";
 import InfoCard from "@/components/landing/InfoCard";
 import ParticlesOverlay from "@/components/landing/ParticlesOverlay";
 
+import { useToast } from "@/hooks/useToast";
+
 const HERO_IMAGE =
   "https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?q=80&w=2013&auto=format&fit=crop";
 
@@ -162,6 +164,7 @@ function GradientHighlight({ children }: { children: string }) {
 }
 
 export default function LandingPage() {
+  const { showToast } = useToast();
   const [scrolled, setScrolled] = useState(false);
   const [mouse, setMouse] = useState({ x: 0, y: 0 });
   const [isGuestLoading, setIsGuestLoading] = useState(false);
@@ -201,7 +204,7 @@ export default function LandingPage() {
       const data = await response.json();
 
       if (!response.ok || !data.user) {
-        alert(data.message || "Gagal masuk sebagai guest");
+        showToast(data.message || "Gagal masuk sebagai guest.", "error");
         return;
       }
 
@@ -212,7 +215,7 @@ export default function LandingPage() {
       router.push("/dashboard-buyer");
     } catch (error) {
       console.error("Guest access error:", error);
-      alert("Gagal terhubung ke server");
+      showToast("Gagal terhubung ke server. Periksa koneksi internet Anda.", "error");
     } finally {
       setIsGuestLoading(false);
     }

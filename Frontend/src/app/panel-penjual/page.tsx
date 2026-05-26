@@ -3,47 +3,10 @@
 import React, { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useToast } from "@/hooks/useToast";
+import { useUser } from "@/hooks/useUser";
 
-// Animation styles
-const animationStyles = `
-  @keyframes fadeInUp {
-    from { opacity: 0; transform: translateY(40px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-  @keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
-  }
-  @keyframes slideInLeft {
-    from { opacity: 0; transform: translateX(-40px); }
-    to { opacity: 1; transform: translateX(0); }
-  }
-  @keyframes scaleIn {
-    from { opacity: 0; transform: scale(0.92); }
-    to { opacity: 1; transform: scale(1); }
-  }
-  .animate-fade-in-up {
-    opacity: 0;
-    animation: fadeInUp 1s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
-  }
-  .animate-fade-in {
-    opacity: 0;
-    animation: fadeIn 0.8s ease-out forwards;
-  }
-  .animate-slide-in-left {
-    opacity: 0;
-    animation: slideInLeft 0.9s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
-  }
-  .animate-scale-in {
-    opacity: 0;
-    animation: scaleIn 0.9s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
-  }
-  .delay-100 { animation-delay: 100ms; }
-  .delay-200 { animation-delay: 200ms; }
-  .delay-300 { animation-delay: 300ms; }
-  .delay-400 { animation-delay: 400ms; }
-  .delay-500 { animation-delay: 500ms; }
-`;
+// Animation styles removed - imported globally from globals.css
 
 interface Kategori {
   id_kategori: string;
@@ -175,7 +138,7 @@ export default function PanelPenjual() {
   const [shouldAnimate, setShouldAnimate] = useState(false);
   const [products, setProducts] = useState<Produk[]>([]);
   const [categories, setCategories] = useState<Kategori[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [isProductsLoading, setIsProductsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Produk | null>(null);
@@ -189,6 +152,8 @@ export default function PanelPenjual() {
     productId: string | null;
     productName: string | null;
   }>({ isOpen: false, productId: null, productName: null });
+  const { showToast } = useToast();
+  const { userId, user, loading } = useUser();
 
   const [imageFiles, setImageFiles] = useState<File[]>([]);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
@@ -208,13 +173,11 @@ export default function PanelPenjual() {
     catatan_penjual: "",
   });
 
-  const fetchInitialData = async () => {
+  const fetchInitialData = async (uid: string) => {
     try {
-      const storedUserId = localStorage.getItem("userId");
-
       const [catRes, prodRes] = await Promise.all([
         fetch("http://localhost:5050/api/categories"),
-        fetch(`http://localhost:5050/api/products?userId=${storedUserId}`),
+        fetch(`http://localhost:5050/api/products?userId=${uid}`),
       ]);
 
       if (!catRes.ok || !prodRes.ok)
@@ -245,39 +208,33 @@ export default function PanelPenjual() {
     } catch (error) {
       console.error("Gagal mengambil data awal:", error);
     } finally {
-      setLoading(false);
+      setIsProductsLoading(false);
     }
   };
 
   useEffect(() => {
-    const storedUserId = localStorage.getItem("userId");
-    const storedUser = localStorage.getItem("user");
+    if (loading) return;
 
-    if (!storedUserId) {
-      alert("Silakan login terlebih dahulu");
-      window.location.href = "/login";
+    if (!userId) {
+      showToast("Silakan login terlebih dahulu", "warning");
+      router.push("/login");
       return;
     }
 
-    if (storedUser) {
-      try {
-        const parsed = JSON.parse(storedUser);
-        if (parsed.username) {
-          queueMicrotask(() => setUserName(parsed.username));
-        }
-      } catch (e) {
-        console.error("Gagal membaca user dari localStorage:", e);
-      }
+    if (user && user.username) {
+      setUserName(user.username);
     }
 
-    queueMicrotask(async () => {
-      await fetchInitialData();
+    const init = async () => {
+      await fetchInitialData(userId);
       setIsPageLoading(false);
       setTimeout(() => {
         setShouldAnimate(true);
       }, 100);
-    });
-  }, []);
+    };
+
+    init();
+  }, [userId, loading, user]);
 
   useEffect(() => {
     if (!successModal) {
@@ -301,7 +258,7 @@ export default function PanelPenjual() {
     const toAdd = files.slice(0, remaining);
 
     if (files.length > remaining) {
-      alert(`Hanya bisa tambah ${remaining} foto lagi (maks 4 total).`);
+      showToast(`Hanya bisa tambah ${remaining} foto lagi (maks 4 total).`, "warning");
     }
 
     toAdd.forEach((file) => {
@@ -376,10 +333,28 @@ export default function PanelPenjual() {
     e.preventDefault();
     setIsSubmitting(true);
 
-    const storedUserId = localStorage.getItem("userId");
-    if (!storedUserId) {
-      alert("Sesi berakhir, silakan login ulang.");
-      window.location.href = "/login";
+    if (!userId) {
+      showToast("Sesi berakhir, silakan login ulang.", "warning");
+      router.push("/login");
+      setIsSubmitting(false);
+      return;
+    }
+
+    if (!formData.nama_produk || formData.nama_produk.trim() === "") {
+      showToast("Nama produk tidak boleh kosong.", "warning");
+      setIsSubmitting(false);
+      return;
+    }
+
+    if (formData.harga === "" || Number(formData.harga) <= 0) {
+      showToast("Harga produk harus lebih dari 0.", "warning");
+      setIsSubmitting(false);
+      return;
+    }
+
+    if (formData.stok === "" || Number(formData.stok) < 0 || !Number.isInteger(Number(formData.stok))) {
+      showToast("Stok produk tidak valid.", "warning");
+      setIsSubmitting(false);
       return;
     }
 
@@ -390,13 +365,13 @@ export default function PanelPenjual() {
       existingFotoList.length === 0 &&
       !editingProduct?.foto_produk
     ) {
-      alert("Harap upload minimal 1 foto produk.");
+      showToast("Harap upload minimal 1 foto produk.", "warning");
       setIsSubmitting(false);
       return;
     }
 
     if (nameError) {
-      alert("Data tidak valid, periksa kembali input Anda.");
+      showToast("Data tidak valid, periksa kembali input Anda.", "warning");
       setIsSubmitting(false);
       return;
     }
@@ -415,7 +390,7 @@ export default function PanelPenjual() {
     payload.append("deskripsi", formData.deskripsi);
     payload.append("konten_deskripsi", formData.konten_deskripsi);
     payload.append("catatan_penjual", formData.catatan_penjual || "");
-    payload.append("id_user", storedUserId);
+    payload.append("id_user", userId);
 
     imageFiles.forEach((file) => {
       payload.append("foto_produk_list", file);
@@ -449,14 +424,14 @@ export default function PanelPenjual() {
             : "Produk baru sudah masuk ke inventaris toko kamu.",
         });
         setShowModal(false);
-        fetchInitialData();
+        if (userId) fetchInitialData(userId);
       } else {
         const err = await response.json();
-        alert("Gagal: " + (err.message || "Pastikan data valid"));
+        showToast("Gagal: " + (err.message || "Pastikan data valid"), "error");
       }
     } catch (error) {
       console.error("Error:", error);
-      alert("Terjadi kesalahan jaringan.");
+      showToast("Terjadi kesalahan jaringan.", "error");
     } finally {
       setIsSubmitting(false);
     }
@@ -468,23 +443,23 @@ export default function PanelPenjual() {
 
   const confirmDelete = async () => {
     if (!deleteModal.productId) return;
-    const storedUserId = localStorage.getItem("userId");
 
     try {
       const response = await fetch(
-        `http://localhost:5050/api/products/${deleteModal.productId}?userId=${storedUserId}`,
+        `http://localhost:5050/api/products/${deleteModal.productId}?userId=${userId}`,
         { method: "DELETE" },
       );
 
       if (response.ok) {
-        fetchInitialData();
+        if (userId) fetchInitialData(userId);
         setDeleteModal({ isOpen: false, productId: null, productName: null });
       } else {
         const err = await response.json();
-        alert(err.message || "Gagal menghapus produk");
+        showToast(err.message || "Gagal menghapus produk", "error");
       }
     } catch (error) {
       console.error("Gagal menghapus:", error);
+      showToast("Terjadi kesalahan jaringan saat menghapus produk.", "error");
     }
   };
 
@@ -501,7 +476,6 @@ export default function PanelPenjual() {
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-[#f1f8e9] via-[#2fa84f]/15 to-[#0a110b] font-sans text-[#1a2e1f] relative overflow-hidden">
-      <style>{animationStyles}</style>
       <div className="absolute top-[-10%] right-[-5%] w-[600px] h-[600px] bg-[#2fa84f] opacity-10 blur-[150px] rounded-full pointer-events-none"></div>
 
       <nav
@@ -628,7 +602,7 @@ export default function PanelPenjual() {
               </tr>
             </thead>
             <tbody className="divide-y divide-white/10 text-white">
-              {loading ? (
+              {isProductsLoading ? (
                 <tr>
                   <td
                     colSpan={4}
@@ -1088,12 +1062,6 @@ export default function PanelPenjual() {
           </div>
         </div>
       )}
-      <style>{`
-        @keyframes scaleIn {
-          from { opacity: 0; transform: scale(0.95) translateY(10px); }
-          to { opacity: 1; transform: scale(1) translateY(0); }
-        }
-      `}</style>
     </div>
   );
 }

@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import Footer from "@/components/Footer";
+import { useToast } from "@/hooks/useToast";
 
 interface Produk {
   id_produk: string;
@@ -32,6 +33,7 @@ interface Produk {
 }
 
 export default function TokoPage() {
+  const { showToast } = useToast();
   const params = useParams();
   const router = useRouter();
   const sellerId = params?.id;
@@ -77,6 +79,7 @@ export default function TokoPage() {
         setProducts(Array.isArray(data) ? data : []);
       } catch (error) {
         console.error("Error mengambil produk toko:", error);
+        showToast("Gagal memuat produk toko. Periksa koneksi internet Anda.", "error");
         setProducts([]);
       } finally {
         setLoading(false);
@@ -219,7 +222,7 @@ export default function TokoPage() {
               const userRole = localStorage.getItem("userRole");
 
               if (userRole === "GUEST") {
-                alert("Fitur ini tidak tersedia pada akun guest.");
+                showToast("Fitur ini tidak tersedia pada akun guest.", "warning");
                 return;
               }
 

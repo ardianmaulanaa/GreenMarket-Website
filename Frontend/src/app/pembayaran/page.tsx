@@ -4,6 +4,8 @@ import React, { Suspense, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import Script from "next/script";
+import { useToast } from "@/hooks/useToast";
+import { useUser } from "@/hooks/useUser";
 
 interface Produk {
   id_produk: string;
@@ -78,12 +80,14 @@ function PembayaranContent() {
   const [selectedShipping, setSelectedShipping] = useState("");
   const [showShippingOptions, setShowShippingOptions] = useState(false);
   const [tempSelectedShipping, setTempSelectedShipping] = useState("");
-  const [loading, setLoading] = useState(true);
-  const [user, setUser] = useState({ nama: "User", role: "BUYER" });
+  const [isPaymentLoading, setIsPaymentLoading] = useState(true);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
   const [isPaying, setIsPaying] = useState(false);
+
+  const { showToast } = useToast();
+  const { userId, userRole, user, loading } = useUser();
 
   const fetchMetodePembayaran = async () => {
     try {
@@ -93,7 +97,7 @@ function PembayaranContent() {
       const data = await response.json();
 
       if (!response.ok) {
-        alert(data.message || "Gagal mengambil metode pembayaran");
+        showToast(data.message || "Gagal mengambil metode pembayaran", "error");
         return;
       }
 
@@ -111,22 +115,20 @@ function PembayaranContent() {
     }
   };
 
-  const fetchAddresses = async () => {
-    const userId = localStorage.getItem("userId");
-
-    if (!userId) {
+  const fetchAddresses = async (uid: string) => {
+    if (!uid) {
       router.push("/login");
       return;
     }
 
     try {
       const response = await fetch(
-        `http://localhost:5050/api/alamat/${userId}`,
+        `http://localhost:5050/api/alamat/${uid}`,
       );
       const data = await response.json();
 
       if (!response.ok) {
-        alert(data.message || "Gagal mengambil alamat");
+        showToast(data.message || "Gagal mengambil alamat", "error");
         return;
       }
 
@@ -146,31 +148,31 @@ function PembayaranContent() {
       const parsedItems = savedItems ? JSON.parse(savedItems) : [];
 
       if (!parsedItems.length) {
-        alert("Data checkout keranjang tidak ditemukan");
+        showToast("Data checkout keranjang tidak ditemukan", "error");
         router.push("/keranjang");
         return;
       }
 
       setCheckoutItems(parsedItems);
-      setLoading(false);
+      setIsPaymentLoading(false);
       return;
     }
 
     if (!produkId) {
-      alert("Produk tidak ditemukan");
+      showToast("Produk tidak ditemukan", "error");
       router.push("/dashboard-buyer");
       return;
     }
 
     try {
-      setLoading(true);
+      setIsPaymentLoading(true);
       const response = await fetch(
         `http://localhost:5050/api/products/${produkId}`,
       );
       const data = await response.json();
 
       if (!response.ok) {
-        alert(data.message || "Gagal mengambil data produk");
+        showToast(data.message || "Gagal mengambil data produk", "error");
         router.push("/dashboard-buyer");
         return;
       }
@@ -178,10 +180,10 @@ function PembayaranContent() {
       setProduct(data);
     } catch (error) {
       console.error("Gagal mengambil produk:", error);
-      alert("Terjadi kesalahan saat mengambil produk");
+      showToast("Terjadi kesalahan saat mengambil produk", "error");
       router.push("/dashboard-buyer");
     } finally {
-      setLoading(false);
+      setIsPaymentLoading(false);
     }
   };
 
@@ -191,7 +193,7 @@ function PembayaranContent() {
       const data = await response.json();
 
       if (!response.ok) {
-        alert(data.message || "Gagal mengambil jasa kirim");
+        showToast(data.message || "Gagal mengambil jasa kirim", "error");
         return;
       }
 
@@ -210,28 +212,19 @@ function PembayaranContent() {
   };
 
   useEffect(() => {
-    const savedUser = localStorage.getItem("user");
-    if (savedUser) {
-      try {
-        const userData = JSON.parse(savedUser);
-        queueMicrotask(() => {
-          setUser({
-            nama: userData.username || userData.name || "User",
-            role: userData.role || "BUYER",
-          });
-        });
-      } catch (error) {
-        console.error("Gagal membaca user:", error);
-      }
+    if (loading) return;
+
+    if (!userId) {
+      showToast("Silakan login terlebih dahulu", "warning");
+      router.push("/login");
+      return;
     }
 
-    queueMicrotask(() => {
-      void fetchJasaKirim();
-      void fetchProduct();
-      void fetchMetodePembayaran();
-      void fetchAddresses();
-    });
-  }, [produkId, router]);
+    void fetchJasaKirim();
+    void fetchProduct();
+    void fetchMetodePembayaran();
+    void fetchAddresses(userId);
+  }, [userId, loading, produkId, router]);
 
   const selectedShippingData = useMemo(() => {
     return jasaKirim.find((item) => item.id_jasa === selectedShipping);
@@ -265,39 +258,43 @@ function PembayaranContent() {
   };
 
   const handleBayar = async () => {
-    const userId = localStorage.getItem("userId");
-
     if (isPaying) return;
     setIsPaying(true);
 
     if (!userId) {
-      alert("Silakan login terlebih dahulu");
+      showToast("Silakan login terlebih dahulu", "warning");
       router.push("/login");
+      setIsPaying(false);
       return;
     }
 
     if (!isCartCheckout && !product) {
-      alert("Produk tidak ditemukan");
+      showToast("Produk tidak ditemukan", "error");
+      setIsPaying(false);
       return;
     }
 
     if (isCartCheckout && checkoutItems.length === 0) {
-      alert("Produk checkout keranjang tidak ditemukan");
+      showToast("Produk checkout keranjang tidak ditemukan", "error");
+      setIsPaying(false);
       return;
     }
 
     if (!selectedAddress) {
-      alert("Pilih alamat terlebih dahulu");
+      showToast("Pilih alamat terlebih dahulu", "warning");
+      setIsPaying(false);
       return;
     }
 
     if (!selectedPayment) {
-      alert("Pilih metode pembayaran terlebih dahulu");
+      showToast("Pilih metode pembayaran terlebih dahulu", "warning");
+      setIsPaying(false);
       return;
     }
 
     if (!selectedShipping) {
-      alert("Pilih jasa kirim terlebih dahulu");
+      showToast("Pilih jasa kirim terlebih dahulu", "warning");
+      setIsPaying(false);
       return;
     }
 
@@ -407,6 +404,8 @@ function PembayaranContent() {
     } catch (error) {
       console.error("Gagal membuat transaksi:", error);
       setErrorMessage("Terjadi kesalahan saat membuat transaksi");
+    } finally {
+      setIsPaying(false);
     }
   };
 
@@ -415,7 +414,7 @@ function PembayaranContent() {
     router.push("/login");
   };
 
-  if (loading) {
+  if (isPaymentLoading) {
     return (
       <div className="min-h-screen bg-[#f3f8ee] flex items-center justify-center">
         <div className="text-center">
@@ -495,7 +494,7 @@ function PembayaranContent() {
             </Link>
 
             <div className="hidden lg:flex items-center gap-4">
-              {user.role === "SELLER" && (
+              {userRole === "SELLER" && (
                 <Link
                   href="/panel-penjual"
                   className="bg-[#2fa84f] text-white px-5 py-2.5 rounded-xl text-xs font-bold no-underline hover:bg-[#268c41] transition-all shadow-[0_4px_12px_rgba(47,168,79,0.3)] flex items-center gap-2"
@@ -551,16 +550,16 @@ function PembayaranContent() {
             >
               <div className="text-right hidden sm:block">
                 <p className="text-xs font-bold text-white m-0 group-hover:text-[#2fa84f] transition-colors">
-                  {user.nama || "User"}
+                  {user?.username || "User"}
                 </p>
                 <p className="text-[10px] text-[#2fa84f] m-0 font-black uppercase">
-                  {user.role === "SELLER" ? "Seller Hub" : "Buyer"}
+                  {userRole === "SELLER" ? "Seller Hub" : "Buyer"}
                 </p>
               </div>
 
               <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-[#2fa84f] to-[#1a7a35] p-[2px]">
                 <div className="w-full h-full rounded-full bg-[#0a110b] flex items-center justify-center text-white font-bold uppercase">
-                  {user.nama ? user.nama.charAt(0) : "U"}
+                  {user?.username ? user.username.charAt(0) : "U"}
                 </div>
               </div>
             </Link>

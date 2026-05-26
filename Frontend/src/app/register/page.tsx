@@ -6,6 +6,7 @@ import { AnimatePresence, motion, type Variants } from "framer-motion";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState, type ChangeEvent, type FormEvent } from "react";
+import { useToast } from "@/hooks/useToast";
 
 type NotificationState = { type: "success" | "error"; message: string } | null;
 type FieldErrors = Partial<Record<"username" | "email" | "password" | "confirmPassword", string>>;
@@ -186,6 +187,7 @@ function LoadingScreen() {
 }
 
 export default function RegisterPage() {
+  const { showToast } = useToast();
   const [form, setForm] = useState({
     username: "",
     email: "",
@@ -200,8 +202,8 @@ export default function RegisterPage() {
   const router = useRouter();
 
   const showNotification = useCallback((type: "success" | "error", message: string) => {
-    setNotification({ type, message });
-  }, []);
+    showToast(message, type);
+  }, [showToast]);
 
   useEffect(() => {
     const timer = setTimeout(() => setIsPageLoading(false), 900);
@@ -359,9 +361,7 @@ export default function RegisterPage() {
           aria-hidden
         />
 
-        <AnimatePresence mode="wait">
-          {notification && <FormNotification notification={notification} />}
-        </AnimatePresence>
+
 
         <Link
           href="/"

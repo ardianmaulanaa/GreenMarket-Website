@@ -5,6 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import Footer from "@/components/Footer";
+import { useToast } from "@/hooks/useToast";
 
 interface Produk {
   id_produk: string;
@@ -34,6 +35,7 @@ interface Produk {
 }
 
 export default function DetailProdukPage() {
+  const { showToast } = useToast();
   const router = useRouter();
   const params = useParams();
   const productId = params?.id;
@@ -80,6 +82,7 @@ export default function DetailProdukPage() {
         setProduct(data);
       } catch (error) {
         console.error("Error Fetching Product:", error);
+        showToast("Gagal memuat detail produk. Periksa koneksi internet Anda.", "error");
       } finally {
         setIsPageLoading(false);
       }
@@ -107,13 +110,13 @@ export default function DetailProdukPage() {
     const userId = localStorage.getItem("userId");
 
     if (!userId) {
-      alert("Silakan login terlebih dahulu");
+      showToast("Silakan login terlebih dahulu", "warning");
       router.push("/login");
       return;
     }
 
     if (!product?.id_produk) {
-      alert("Produk tidak ditemukan");
+      showToast("Produk tidak ditemukan", "error");
       return;
     }
 
@@ -134,7 +137,7 @@ export default function DetailProdukPage() {
       const data = await response.json();
 
       if (!response.ok) {
-        alert(data.message || "Gagal memasukkan produk ke keranjang");
+        showToast(data.message || "Gagal memasukkan produk ke keranjang.", "error");
         return;
       }
 
@@ -142,7 +145,7 @@ export default function DetailProdukPage() {
       setTimeout(() => setShowPopup(false), 3000);
     } catch (error) {
       console.error("Gagal tambah keranjang:", error);
-      alert("Terjadi kesalahan saat memasukkan keranjang");
+      showToast("Terjadi kesalahan. Periksa koneksi internet Anda.", "error");
     }
   };
 
@@ -150,7 +153,7 @@ export default function DetailProdukPage() {
     if (isGuestUser()) return;
 
     if (!product?.id_produk) {
-      alert("Produk tidak ditemukan");
+      showToast("Produk tidak ditemukan", "error");
       return;
     }
 
@@ -437,7 +440,7 @@ export default function DetailProdukPage() {
               const userRole = localStorage.getItem("userRole");
 
               if (userRole === "GUEST") {
-                alert("Fitur ini tidak tersedia pada akun guest.");
+                showToast("Fitur ini tidak tersedia pada akun guest.", "warning");
                 return;
               }
 

@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { useToast } from "@/hooks/useToast";
 
 interface AdminUser {
   id: number | string;
@@ -13,6 +14,7 @@ interface AdminUser {
 }
 
 export default function AdminPanel() {
+  const { showToast } = useToast();
   const router = useRouter();
   
   const [isPageLoading, setIsPageLoading] = useState(true);
@@ -38,7 +40,7 @@ export default function AdminPanel() {
 
     // Pengecekan Keamanan Role Admin
     if (role !== "ADMIN") {
-      alert("Akses ditolak! Halaman ini khusus Administrator.");
+      showToast("Akses ditolak! Halaman ini khusus Administrator.", "error");
       if (role === "SELLER" || role === "BUYER") {
         router.push("/beranda-dashboard");
       } else {

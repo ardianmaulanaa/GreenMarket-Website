@@ -1,10 +1,11 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import ProfileSidebar from "@/components/profile/ProfileSidebar";
 import Footer from "@/components/Footer";
+import { useToast } from "@/hooks/useToast";
 
 // Animation styles for smooth entrance effects
 const animationStyles = `
@@ -133,7 +134,41 @@ type OrderGroup = {
   status_pengiriman: string;
 };
 
-export default function PesananPage() {
+function formatStatus(status: string | undefined | null): string {
+  if (!status) return "-";
+  
+  let upper = status.toUpperCase().trim();
+  if (upper.startsWith("DIKIRIM_SELLER_")) {
+    return "Sedang Dikirim";
+  }
+  if (upper.startsWith("SELESAI_SELLER_")) {
+    return "Selesai";
+  }
+  
+  switch (upper) {
+    case "BELUM_BAYAR":
+      return "Belum Bayar";
+    case "MENUNGGU_PEMBAYARAN":
+      return "Menunggu Pembayaran";
+    case "SEDANG_DIKIRIM":
+    case "DIKIRIM":
+      return "Sedang Dikirim";
+    case "DIKEMAS":
+      return "Dikemas";
+    case "SELESAI":
+      return "Selesai";
+    case "BATAL":
+      return "Batal";
+    default:
+      return status
+        .replace(/_/g, " ")
+        .toLowerCase()
+        .replace(/\b\w/g, (char) => char.toUpperCase());
+  }
+}
+
+function PesananContent() {
+  const { showToast } = useToast();
   const router = useRouter();
   const searchParams = useSearchParams();
   const mode = searchParams.get("mode");
@@ -170,14 +205,14 @@ export default function PesananPage() {
       const data = await response.json();
 
       if (!response.ok) {
-        alert(data.message || "Gagal mengambil pesanan");
+        showToast(data.message || "Gagal mengambil pesanan.", "error");
         return;
       }
 
       setTransactions(data);
     } catch (error) {
       console.error("Gagal mengambil pesanan:", error);
-      alert("Terjadi kesalahan saat mengambil pesanan");
+      showToast("Gagal mengambil pesanan. Periksa koneksi internet Anda.", "error");
     }
   };
 
@@ -240,15 +275,15 @@ export default function PesananPage() {
       const data = await response.json();
 
       if (!response.ok) {
-        alert(data.message || "Gagal konfirmasi pengiriman");
+        showToast(data.message || "Gagal konfirmasi pengiriman.", "error");
         return;
       }
 
-      alert("Pesanan berhasil dikonfirmasi dikirim");
+      showToast("Pesanan berhasil dikonfirmasi dikirim.", "success");
       await fetchTransactions();
     } catch (error) {
       console.error("Gagal konfirmasi kirim:", error);
-      alert("Terjadi kesalahan saat konfirmasi kirim");
+      showToast("Terjadi kesalahan. Periksa koneksi internet Anda.", "error");
     }
   };
 
@@ -623,7 +658,7 @@ export default function PesananPage() {
                       </div>
 
                       <span className="text-[10px] font-black text-[#2fa84f] bg-[#2fa84f]/10 px-4 py-1.5 rounded-xl uppercase tracking-widest border border-[#2fa84f]/20 shadow-inner">
-                        {group.status_pengiriman}
+                        {formatStatus(group.status_pengiriman)}
                       </span>
                     </div>
 
@@ -659,8 +694,7 @@ export default function PesananPage() {
 
                             <div className="flex flex-wrap items-center gap-3">
                               <span className="text-[10px] font-black text-[#2fa84f] border border-[#2fa84f]/30 bg-[#2fa84f]/10 px-2.5 py-1.5 rounded-lg uppercase tracking-wider">
-                                {group.pembayaran?.status_pembayaran ||
-                                  "BELUM BAYAR"}
+                                {formatStatus(group.pembayaran?.status_pembayaran || "BELUM_BAYAR")}
                               </span>
 
                               <p className="text-[12px] text-gray-400 font-medium flex items-center gap-1.5">
@@ -779,7 +813,7 @@ export default function PesananPage() {
                   Status Pembayaran
                 </p>
                 <p className="text-[#2fa84f] font-black">
-                  {selectedTracking.pembayaran?.status_pembayaran || "-"}
+                  {formatStatus(selectedTracking.pembayaran?.status_pembayaran || "BELUM_BAYAR")}
                 </p>
               </div>
 
@@ -851,7 +885,7 @@ export default function PesananPage() {
 
                         <div>
                           <p className="text-white font-bold text-sm">
-                            {log.status}
+                            {formatStatus(log.status)}
                           </p>
                           <p className="text-gray-500 text-xs mt-1">
                             {new Date(log.waktu).toLocaleString("id-ID")}
@@ -874,5 +908,22 @@ export default function PesananPage() {
       {/* ── FOOTER ── */}
       <Footer />
     </div>
+  );
+}
+
+export default function PesananPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-[#0a110b] flex flex-col items-center justify-center font-sans">
+          <div className="w-12 h-12 border-4 border-[#2fa84f]/20 border-t-[#2fa84f] rounded-full animate-spin mb-4"></div>
+          <p className="text-[#2fa84f] font-bold text-[11px] tracking-[3px] uppercase animate-pulse">
+            Memuat Pesanan...
+          </p>
+        </div>
+      }
+    >
+      <PesananContent />
+    </Suspense>
   );
 }

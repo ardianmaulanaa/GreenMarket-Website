@@ -9,6 +9,8 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState, type SyntheticEvent } from "react";
 import ProfileSidebar from "@/components/profile/ProfileSidebar";
 import Footer from "@/components/Footer";
+import { useToast } from "@/hooks/useToast";
+import { useUser } from "@/hooks/useUser";
 
 const fadeUp: Variants = {
   hidden: { opacity: 0, y: 24 },
@@ -37,6 +39,8 @@ export default function ProfilePage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const router = useRouter();
+  const { showToast } = useToast();
+  const { userId, loading, refreshUser } = useUser();
 
   const [form, setForm] = useState({
     nama: "",
@@ -66,20 +70,18 @@ export default function ProfilePage() {
     localStorage.setItem("profileAvatar", dataUrl);
   };
 
-  const fetchProfile = async () => {
-    const userId = localStorage.getItem("userId");
-
-    if (!userId) {
+  const fetchProfile = async (uid: string) => {
+    if (!uid) {
       router.push("/login");
       return;
     }
 
     try {
-      const response = await fetch(`http://localhost:5050/api/users/${userId}`);
+      const response = await fetch(`http://localhost:5050/api/users/${uid}`);
       const data = await response.json();
 
       if (!response.ok) {
-        alert(data.message || "Gagal mengambil data profile");
+        showToast(data.message || "Gagal mengambil data profile", "error");
         return;
       }
 
@@ -100,38 +102,44 @@ export default function ProfilePage() {
 
       localStorage.setItem("user", JSON.stringify(data));
       localStorage.setItem("userRole", latestRole);
+      refreshUser();
     } catch (error) {
       console.error("Gagal mengambil profile:", error);
-      alert("Terjadi kesalahan saat mengambil profile");
+      showToast("Terjadi kesalahan saat mengambil profile", "error");
     }
   };
 
   useEffect(() => {
+    if (loading) return;
+
+    if (!userId) {
+      router.push("/login");
+      return;
+    }
+
     const savedAvatar = localStorage.getItem("profileAvatar");
     if (savedAvatar) setAvatarPreview(savedAvatar);
 
     const loadProfile = async () => {
       setIsPageLoading(true);
-      await fetchProfile();
+      await fetchProfile(userId);
       setTimeout(() => setIsPageLoading(false), 500);
     };
 
     loadProfile();
-  }, []);
+  }, [userId, loading]);
 
   const handleUpdateProfile = async (e: SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    const userId = localStorage.getItem("userId");
-
     if (!userId) {
-      alert("Silakan login terlebih dahulu");
+      showToast("Silakan login terlebih dahulu", "warning");
       router.push("/login");
       return;
     }
 
     if (!form.nama || !form.email) {
-      alert("Nama dan email tidak boleh kosong");
+      showToast("Nama dan email tidak boleh kosong", "warning");
       return;
     }
 
@@ -154,14 +162,14 @@ export default function ProfilePage() {
       const data = await response.json();
 
       if (!response.ok) {
-        alert(data.message || "Gagal update profile");
+        showToast(data.message || "Gagal update profile", "error");
         return;
       }
 
       const updatedUser = data.user;
       const latestRole = normalizeRole(updatedUser.role || "BUYER");
 
-      alert(data.message || "Profile berhasil diupdate");
+      showToast(data.message || "Profile berhasil diupdate", "success");
 
       setProfile({
         nama: updatedUser.username || "User",
@@ -178,9 +186,10 @@ export default function ProfilePage() {
 
       localStorage.setItem("user", JSON.stringify(updatedUser));
       localStorage.setItem("userRole", latestRole);
+      refreshUser();
     } catch (error) {
       console.error("Gagal update profile:", error);
-      alert("Terjadi kesalahan saat update profile");
+      showToast("Terjadi kesalahan saat update profile", "error");
     } finally {
       setIsSubmitting(false);
     }
@@ -434,19 +443,6 @@ export default function ProfilePage() {
                   custom={4}
                   className="grid grid-cols-1 gap-5 md:grid-cols-2 md:gap-6"
                 >
-                  <FloatingInput
-                    id="password"
-                    name="password"
-                    label="Password Baru"
-                    value={form.password}
-                    onChange={(e) =>
-                      setForm({ ...form, password: e.target.value })
-                    }
-                    showToggle
-                    placeholder="Kosongkan jika tidak diubah"
-                    index={2}
-                  />
-
                   <motion.div variants={fadeUp} custom={5}>
                     <label className="mb-2 ml-1 block text-[10px] font-bold uppercase tracking-wider text-white/40">
                       Status Keanggotaan

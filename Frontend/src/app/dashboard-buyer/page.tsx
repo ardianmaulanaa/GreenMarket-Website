@@ -4,6 +4,7 @@ import React, { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Footer from "@/components/Footer";
+import { useToast } from "@/hooks/useToast";
 import { AnimatePresence, motion } from "framer-motion";
 
 // Animation styles for smooth entrance effects
@@ -180,6 +181,7 @@ function FormNotification({
 }
 
 export default function DashboardBuyer() {
+  const { showToast } = useToast();
   const [isPageLoading, setIsPageLoading] = useState(true);
   const [shouldAnimate, setShouldAnimate] = useState(false);
   const [dbProducts, setDbProducts] = useState<Produk[]>([]);
@@ -197,9 +199,9 @@ export default function DashboardBuyer() {
 
   const showNotification = useCallback(
     (type: "success" | "error", message: string) => {
-      setNotification({ type, message });
+      showToast(message, type);
     },
-    [],
+    [showToast],
   );
 
   useEffect(() => {
@@ -276,10 +278,16 @@ export default function DashboardBuyer() {
           throw new Error("Gagal mengambil kategori");
         }
 
+        const contentType = response.headers.get("content-type");
+        if (!contentType || !contentType.includes("application/json")) {
+          throw new Error("Respon kategori bukan format JSON");
+        }
+
         const data = await response.json();
         setCategories(Array.isArray(data) ? data : []);
       } catch (error) {
         console.error("Error fetch kategori:", error);
+        showToast("Gagal memuat kategori. Periksa koneksi internet Anda.", "error");
         setCategories([]);
       }
     };
@@ -331,10 +339,16 @@ export default function DashboardBuyer() {
           throw new Error("Gagal mengambil data produk");
         }
 
+        const contentType = response.headers.get("content-type");
+        if (!contentType || !contentType.includes("application/json")) {
+          throw new Error("Respon produk bukan format JSON");
+        }
+
         const data = await response.json();
         setDbProducts(Array.isArray(data) ? data : []);
       } catch (error) {
         console.error("Error Fetching:", error);
+        showToast("Gagal memuat produk. Periksa koneksi internet Anda.", "error");
         setDbProducts([]);
       } finally {
         setLoading(false);
@@ -400,9 +414,7 @@ export default function DashboardBuyer() {
       <style>{animationStyles}</style>
       <div className="absolute top-[-10%] right-[-5%] w-[600px] h-[600px] bg-[#2fa84f] opacity-20 blur-[150px] rounded-full pointer-events-none"></div>
 
-      <AnimatePresence mode="wait">
-        {notification && <FormNotification notification={notification} />}
-      </AnimatePresence>
+
 
       {showSellerPopup && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center pointer-events-auto">

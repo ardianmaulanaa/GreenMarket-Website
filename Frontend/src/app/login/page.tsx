@@ -6,6 +6,7 @@ import { AnimatePresence, motion, type Variants } from "framer-motion";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState, type ChangeEvent, type FormEvent } from "react";
+import { useToast } from "@/hooks/useToast";
 
 interface LoginResponse {
   message?: string;
@@ -201,6 +202,7 @@ function LoadingScreen() {
 }
 
 export default function LoginPage() {
+  const { showToast } = useToast();
   const [form, setForm] = useState({
     email: "",
     password: "",
@@ -215,8 +217,8 @@ export default function LoginPage() {
   const router = useRouter();
 
   const showNotification = useCallback((type: "success" | "error", message: string) => {
-    setNotification({ type, message });
-  }, []);
+    showToast(message, type);
+  }, [showToast]);
 
   useEffect(() => {
     const timer = setTimeout(() => setIsPageLoading(false), 800);
@@ -428,9 +430,7 @@ export default function LoginPage() {
           aria-hidden
         />
 
-        <AnimatePresence mode="wait">
-          {notification && <FormNotification notification={notification} />}
-        </AnimatePresence>
+
 
         <Link
           href="/"

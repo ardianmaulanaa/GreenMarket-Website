@@ -4,71 +4,10 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Footer from "@/components/Footer";
+import { useToast } from "@/hooks/useToast";
+import { useUser } from "@/hooks/useUser";
 
-// Animation styles for smooth entrance effects
-const animationStyles = `
-  @keyframes fadeInUp {
-    from {
-      opacity: 0;
-      transform: translateY(40px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-
-  @keyframes fadeIn {
-    from {
-      opacity: 0;
-    }
-    to {
-      opacity: 1;
-    }
-  }
-
-  @keyframes slideInLeft {
-    from {
-      opacity: 0;
-      transform: translateX(-40px);
-    }
-    to {
-      opacity: 1;
-      transform: translateX(0);
-    }
-  }
-
-  @keyframes slideInUp {
-    from {
-      opacity: 0;
-      transform: translateY(60px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-
-  .animate-fade-in-up {
-    opacity: 0;
-    animation: fadeInUp 0.45s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
-  }
-
-  .animate-fade-in {
-    opacity: 0;
-    animation: fadeIn 0.35s ease-out forwards;
-  }
-
-  .animate-slide-in-left {
-    opacity: 0;
-    animation: slideInLeft 0.45s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
-  }
-
-  .animate-slide-in-up {
-    opacity: 0;
-    animation: slideInUp 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
-  }
-`;
+// Animation styles removed - imported globally from globals.css
 
 interface UserState {
   nama: string;
@@ -106,6 +45,8 @@ export default function KeranjangPage() {
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [quantities, setQuantities] = useState<Record<string, number>>({});
   const [isCheckoutDocked, setIsCheckoutDocked] = useState(false);
+  const { showToast } = useToast();
+  const { userId, loading } = useUser();
   const checkoutDockRef = useRef<HTMLDivElement | null>(null);
 
   const dashboardHref =
@@ -119,39 +60,49 @@ export default function KeranjangPage() {
     "https://placehold.co/160x160/e9f7ec/2fa84f?text=GreenMarket";
 
   useEffect(() => {
+    if (loading) return;
+
+    if (!userId) {
+      router.push("/login");
+      return;
+    }
+
     let isMounted = true;
 
-    const initializePage = async () => {
-      const userId = localStorage.getItem("userId");
-
-      if (!userId) {
-        router.push("/login");
-        return;
-      }
-
+    const initializePage = async (uid: string) => {
       try {
-        const [profileResponse, keranjangResponse] = await Promise.all([
-          fetch(`http://localhost:5050/api/users/${userId}`),
-          fetch(`http://localhost:5050/api/keranjang/${userId}`),
+        const [profileResult, keranjangResult] = await Promise.allSettled([
+          fetch(`http://localhost:5050/api/users/${uid}`),
+          fetch(`http://localhost:5050/api/keranjang/${uid}`),
         ]);
 
-        const profileData = await profileResponse.json();
-        const keranjangData = await keranjangResponse.json();
-
-        if (!profileResponse.ok) {
-          console.error(profileData.message || "Gagal mengambil profile");
+        let profileOk = false;
+        let profileData: any = null;
+        if (profileResult.status === "fulfilled") {
+          const profileResponse = profileResult.value;
+          profileData = await profileResponse.json().catch(() => null);
+          profileOk = profileResponse.ok;
+          if (!profileOk) {
+            console.error(profileData?.message || "Gagal mengambil profile");
+          }
         }
 
-        if (!keranjangResponse.ok) {
-          alert(keranjangData.message || "Gagal mengambil keranjang");
-          return;
+        let keranjangOk = false;
+        let keranjangData: any = null;
+        if (keranjangResult.status === "fulfilled") {
+          const keranjangResponse = keranjangResult.value;
+          keranjangData = await keranjangResponse.json().catch(() => null);
+          keranjangOk = keranjangResponse.ok;
+          if (!keranjangOk) {
+            showToast(keranjangData?.message || "Gagal mengambil keranjang", "error");
+          }
+        } else {
+          showToast("Gagal terhubung ke layanan keranjang", "error");
         }
 
-        if (!isMounted) {
-          return;
-        }
+        if (!isMounted) return;
 
-        if (profileResponse.ok) {
+        if (profileOk && profileData) {
           setUser({
             nama: profileData.username || "User",
             role: profileData.role || "BUYER",
@@ -161,26 +112,27 @@ export default function KeranjangPage() {
           localStorage.setItem("userRole", profileData.role);
         }
 
-        setKeranjangItems(keranjangData);
-        setQuantities((currentQuantities) => {
-          const nextQuantities = { ...currentQuantities };
+        if (keranjangOk && keranjangData) {
+          setKeranjangItems(keranjangData);
+          setQuantities((currentQuantities) => {
+            const nextQuantities = { ...currentQuantities };
 
-          keranjangData.forEach((item: KeranjangItem) => {
-            if (!nextQuantities[item.id_keranjang]) {
-              nextQuantities[item.id_keranjang] = 1;
-            }
+            keranjangData.forEach((item: KeranjangItem) => {
+              if (!nextQuantities[item.id_keranjang]) {
+                nextQuantities[item.id_keranjang] = 1;
+              }
+            });
+
+            return nextQuantities;
           });
-
-          return nextQuantities;
-        });
+        }
       } catch (error) {
-        console.error("Gagal memuat keranjang:", error);
+        console.error("Gagal memuat data keranjang:", error);
       }
     };
 
-    initializePage();
+    initializePage(userId);
 
-    // Trigger animations after a short delay
     setTimeout(() => {
       setShouldAnimate(true);
     }, 100);
@@ -188,7 +140,7 @@ export default function KeranjangPage() {
     return () => {
       isMounted = false;
     };
-  }, [router]);
+  }, [userId, loading, router]);
 
   useEffect(() => {
     const updateCheckoutDock = () => {
@@ -261,7 +213,7 @@ export default function KeranjangPage() {
   const updateQuantity = (item: KeranjangItem, type: "min" | "plus") => {
     setQuantities((currentQuantities) => {
       const currentQuantity = currentQuantities[item.id_keranjang] || 1;
-      const stock = item.produk.stok || 99;
+      const stock = item.produk.stok ?? 99;
       const nextQuantity =
         type === "plus"
           ? Math.min(currentQuantity + 1, stock)
@@ -275,10 +227,8 @@ export default function KeranjangPage() {
   };
 
   const removeItem = async (idProduk: string) => {
-    const userId = localStorage.getItem("userId");
-
     if (!userId) {
-      alert("Silakan login terlebih dahulu");
+      showToast("Silakan login terlebih dahulu", "warning");
       return;
     }
 
@@ -293,7 +243,7 @@ export default function KeranjangPage() {
       const data = await response.json();
 
       if (!response.ok) {
-        alert(data.message || "Gagal menghapus keranjang");
+        showToast(data.message || "Gagal menghapus keranjang", "error");
         return;
       }
 
@@ -311,13 +261,13 @@ export default function KeranjangPage() {
       );
     } catch (error) {
       console.error("Gagal menghapus keranjang:", error);
-      alert("Terjadi kesalahan saat menghapus keranjang");
+      showToast("Terjadi kesalahan saat menghapus keranjang", "error");
     }
   };
 
   const deleteSelectedItems = () => {
     if (selectedItems.length === 0) {
-      alert("Pilih produk yang ingin dihapus");
+      showToast("Pilih produk yang ingin dihapus", "warning");
       return;
     }
 
@@ -334,7 +284,7 @@ export default function KeranjangPage() {
     );
 
     if (selectedProducts.length === 0) {
-      alert("Pilih produk yang ingin di-checkout");
+      showToast("Pilih produk yang ingin di-checkout", "warning");
       return;
     }
 
@@ -361,7 +311,6 @@ export default function KeranjangPage() {
 
   return (
     <div className="relative flex min-h-screen flex-col overflow-x-hidden bg-gradient-to-br from-[#eefbe8] via-[#c7e5c5] to-[#253229] font-sans text-white">
-      <style>{animationStyles}</style>
       <div className="absolute top-0 left-0 right-0 h-[360px] bg-[radial-gradient(circle_at_20%_20%,rgba(47,168,79,0.28),transparent_35%),radial-gradient(circle_at_80%_0%,rgba(238,251,232,0.7),transparent_36%)] pointer-events-none"></div>
       <div className="absolute right-[-160px] bottom-[80px] w-[520px] h-[520px] rounded-full bg-[#1f2a22]/45 blur-[120px] pointer-events-none"></div>
 
@@ -419,7 +368,7 @@ export default function KeranjangPage() {
                 const userRole = localStorage.getItem("userRole");
 
                 if (userRole === "GUEST") {
-                  alert("Fitur ini tidak tersedia pada akun guest.");
+                  showToast("Fitur ini tidak tersedia pada akun guest.", "warning");
                   return;
                 }
 

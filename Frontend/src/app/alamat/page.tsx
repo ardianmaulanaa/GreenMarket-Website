@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import ProfileSidebar from "@/components/profile/ProfileSidebar";
 import Footer from "@/components/Footer";
+import { useToast } from "@/hooks/useToast";
 import { AnimatePresence, motion } from "framer-motion";
 
 // Animation styles for smooth entrance effects
@@ -133,6 +134,7 @@ function FormNotification({ notification }: { notification: NotificationState })
 }
 
 export default function AlamatPage() {
+  const { showToast } = useToast();
   const router = useRouter();
 
   const [isPageLoading, setIsPageLoading] = useState(true);
@@ -147,14 +149,8 @@ export default function AlamatPage() {
   const [deleteModalId, setDeleteModalId] = useState<string | null>(null);
 
   const showNotification = useCallback((type: "success" | "error", message: string) => {
-    setNotification({ type, message });
-  }, []);
-
-  useEffect(() => {
-    if (!notification) return;
-    const timer = setTimeout(() => setNotification(null), 4000);
-    return () => clearTimeout(timer);
-  }, [notification]);
+    showToast(message, type);
+  }, [showToast]);
 
   interface Address {
     id_alamat: string;
@@ -259,6 +255,14 @@ export default function AlamatPage() {
       router.push("/login");
       return;
     }
+    if (!formData.nama_penerima.trim()) {
+      showNotification("error", "Nama wajib diisi");
+      return;
+    }
+    if (!formData.nomor_hp.trim()) {
+      showNotification("error", "Nomor HP wajib diisi");
+      return;
+    }
     if (formData.nomor_hp.length < 9) {
       setPhoneError("Nomor tidak valid (minimal 9 angka)");
       showNotification("error", "Data tidak valid");
@@ -267,6 +271,10 @@ export default function AlamatPage() {
     if (formData.nama_penerima && !/^[a-zA-Z\s'.]+$/.test(formData.nama_penerima)) {
       setNameError("Nama hanya boleh huruf");
       showNotification("error", "Data tidak valid");
+      return;
+    }
+    if (!formData.alamat_lengkap.trim()) {
+      showNotification("error", "Alamat wajib diisi");
       return;
     }
 
@@ -382,9 +390,7 @@ export default function AlamatPage() {
       <style>{animationStyles}</style>
       <div className="absolute top-[-10%] right-[-5%] w-[600px] h-[600px] bg-[#2fa84f] opacity-20 blur-[150px] rounded-full pointer-events-none"></div>
 
-      <AnimatePresence mode="wait">
-        {notification && <FormNotification notification={notification} />}
-      </AnimatePresence>
+
 
       {/* NAVBAR */}
       <nav

@@ -559,9 +559,147 @@ const konfirmasiKirim = async (req, res) => {
   }
 };
 
+const handleNotification = async (req, res) => {
+  try {
+    const crypto = require("crypto");
+    const notification = req.body;
+    const {
+      order_id,
+      transaction_status,
+      status_code,
+      gross_amount,
+      signature_key,
+    } = notification;
+
+    if (!order_id || !transaction_status) {
+      return res.status(400).json({ message: "Payload tidak valid" });
+    }
+
+    // 1. Verifikasi Signature Key Midtrans untuk Keamanan
+    const serverKey = process.env.MIDTRANS_SERVER_KEY;
+    const hashed = crypto
+      .createHash("sha512")
+      .update(`${order_id}${status_code}${gross_amount}${serverKey}`)
+      .digest("hex");
+
+    if (hashed !== signature_key) {
+      // remove debug log after testing
+      console.log({
+        order_id,
+        status_code,
+        gross_amount,
+        hashed,
+        signature_key
+      });
+      return res.status(403).json({ message: "Signature tidak valid" });
+    }
+
+    // 2. Cari Transaksi berdasarkan id_transaksi
+    const transaksi = await prisma.transaksi.findUnique({
+      where: { id_transaksi: order_id },
+      include: {
+        detail_transaksi: true,
+        pembayaran: true,
+      },
+    });
+
+    if (!transaksi) {
+      return res.status(404).json({ message: "Transaksi tidak ditemukan" });
+    }
+
+    const currentPaymentStatus = transaksi.pembayaran?.status_pembayaran;
+
+    // Mencegah duplikasi pemrosesan log tracking, stok ganda, dan overwrite status final
+    if (
+      currentPaymentStatus === "LUNAS" ||
+      currentPaymentStatus === "KEDALUWARSA" ||
+      currentPaymentStatus === "DIBATALKAN"
+    ) {
+      return res.json({ message: "Notifikasi diabaikan karena status pembayaran sudah final" });
+    }
+
+    let statusTransaksiUpdate = null;
+    let statusPembayaranUpdate = null;
+    let trackingLogMessage = null;
+    let shouldReduceStock = false;
+
+    // 3. Petakan transaction_status Midtrans ke Database
+    if (transaction_status === "settlement" || transaction_status === "capture") {
+      statusTransaksiUpdate = "DIKEMAS";
+      statusPembayaranUpdate = "LUNAS";
+      trackingLogMessage = "Pembayaran berhasil diterima";
+      // Hanya kurangi stok jika status pembayaran sebelumnya belum lunas (mencegah double decrement)
+      if (transaksi.pembayaran?.status_pembayaran !== "LUNAS") {
+        shouldReduceStock = true;
+      }
+    } else if (transaction_status === "expire") {
+      statusTransaksiUpdate = "BATAL";
+      statusPembayaranUpdate = "KEDALUWARSA";
+      trackingLogMessage = "Pembayaran kedaluwarsa";
+    } else if (transaction_status === "cancel" || transaction_status === "deny") {
+      statusTransaksiUpdate = "BATAL";
+      statusPembayaranUpdate = "DIBATALKAN";
+      trackingLogMessage = "Pembayaran dibatalkan";
+    } else if (transaction_status === "pending") {
+      statusTransaksiUpdate = "BELUM_BAYAR";
+      statusPembayaranUpdate = "MENUNGGU_PEMBAYARAN";
+      if (currentPaymentStatus !== "MENUNGGU_PEMBAYARAN") {
+        trackingLogMessage = "Menunggu pembayaran";
+      }
+    }
+
+    if (statusTransaksiUpdate && statusPembayaranUpdate) {
+      await prisma.$transaction(async (tx) => {
+        // Update Transaksi
+        await tx.transaksi.update({
+          where: { id_transaksi: order_id },
+          data: {
+            status_transaksi: statusTransaksiUpdate,
+            pembayaran: {
+              update: {
+                status_pembayaran: statusPembayaranUpdate,
+              },
+            },
+            tracking_logs: trackingLogMessage
+              ? {
+                  create: {
+                    status: trackingLogMessage,
+                  },
+                }
+              : undefined,
+          },
+        });
+
+        // Kurangi stok jika pembayaran sukses/settlement
+        if (shouldReduceStock) {
+          for (const item of transaksi.detail_transaksi) {
+            await tx.produk.update({
+              where: { id_produk: item.id_produk },
+              data: {
+                stok: {
+                  decrement: item.kuantitas,
+                },
+              },
+            });
+          }
+        }
+      });
+    }
+
+    res.json({ message: "Notifikasi berhasil diproses" });
+  } catch (error) {
+    console.error("Error Handle Midtrans Notification:", error);
+    res.status(500).json({
+      message: "Gagal memproses notifikasi",
+      detail: error.message,
+    });
+  }
+};
+
 module.exports = {
   createTransaksi,
   getTransaksiByUser,
   getTransaksiBySeller,
   konfirmasiKirim,
+  handleNotification,
 };
