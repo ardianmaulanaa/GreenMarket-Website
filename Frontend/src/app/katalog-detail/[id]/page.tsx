@@ -57,6 +57,7 @@ export default function DetailProdukPage() {
     }, 800);
 
     const savedUser = localStorage.getItem("user");
+
     if (savedUser) {
       const userData = JSON.parse(savedUser);
       queueMicrotask(() => {
@@ -121,6 +122,12 @@ export default function DetailProdukPage() {
       return;
     }
 
+    if (currentUserId === product.id_user_seller) {
+      showToast("Produk sendiri bisa dikelola lewat panel inventaris.", "warning");
+      router.push(`/panel-penjual?edit=${product.id_produk}`);
+      return;
+    }
+
     try {
       const response = await fetch(
         `http://localhost:5050/api/keranjang/${userId}`,
@@ -158,7 +165,19 @@ export default function DetailProdukPage() {
       return;
     }
 
+    if (currentUserId === product.id_user_seller) {
+      showToast("Produk sendiri tidak bisa dibeli. Buka panel inventaris untuk mengedit.", "warning");
+      router.push(`/panel-penjual?edit=${product.id_produk}`);
+      return;
+    }
+
     router.push(`/pembayaran?produk=${product.id_produk}&qty=${quantity}`);
+  };
+
+  const handleEditProduct = () => {
+    if (!product?.id_produk) return;
+
+    router.push(`/panel-penjual?edit=${product.id_produk}`);
   };
 
   const handleQuantity = (type: "min" | "plus") => {
@@ -198,6 +217,13 @@ export default function DetailProdukPage() {
       : product.foto_produk
         ? [product.foto_produk]
         : ["https://via.placeholder.com/1000"];
+
+  const currentUserId =
+    typeof window === "undefined"
+      ? null
+      : Number(localStorage.getItem("userId")) || null;
+
+  const isOwnProduct = currentUserId === product.id_user_seller;
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-[#f1f8e9] via-[#2fa84f]/15 to-[#0a110b] font-sans text-[#1a2e1f] relative overflow-hidden">
@@ -600,79 +626,93 @@ export default function DetailProdukPage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-[120px_1fr] gap-4 items-center mb-10">
-                <span className="text-gray-500 uppercase tracking-widest text-[11px] font-bold">
-                  Kuantitas
-                </span>
-                <div className="flex items-center gap-5">
-                  <div className="flex items-center border border-white/20 rounded-xl overflow-hidden bg-white/5">
-                    <button
-                      onClick={() => handleQuantity("min")}
-                      className="w-10 h-10 flex items-center justify-center text-white hover:bg-white/10 transition-colors border-r border-white/10"
-                    >
-                      <svg
-                        width="16"
-                        height="16"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2.5"
-                      >
-                        <line x1="5" y1="12" x2="19" y2="12" />
-                      </svg>
-                    </button>
-                    <div className="w-14 h-10 flex items-center justify-center text-white font-bold text-sm bg-[#1a1f1b]">
-                      {quantity}
+              {isOwnProduct ? (
+                <div className="flex justify-end mt-10">
+                  <button
+                    type="button"
+                    onClick={handleEditProduct}
+                    className="flex-1 rounded-2xl bg-[#2fa84f] py-4 text-sm font-[800] text-white shadow-[0_10px_25px_rgba(47,168,79,0.3)] transition-all hover:-translate-y-1 hover:bg-[#268c41] sm:flex-none sm:w-[220px]"
+                  >
+                    Edit Produk
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <div className="grid grid-cols-[120px_1fr] gap-4 items-center mb-10">
+                    <span className="text-gray-500 uppercase tracking-widest text-[11px] font-bold">
+                      Kuantitas
+                    </span>
+                    <div className="flex items-center gap-5">
+                      <div className="flex items-center border border-white/20 rounded-xl overflow-hidden bg-white/5">
+                        <button
+                          onClick={() => handleQuantity("min")}
+                          className="w-10 h-10 flex items-center justify-center text-white hover:bg-white/10 transition-colors border-r border-white/10"
+                        >
+                          <svg
+                            width="16"
+                            height="16"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2.5"
+                          >
+                            <line x1="5" y1="12" x2="19" y2="12" />
+                          </svg>
+                        </button>
+                        <div className="w-14 h-10 flex items-center justify-center text-white font-bold text-sm bg-[#1a1f1b]">
+                          {quantity}
+                        </div>
+                        <button
+                          onClick={() => handleQuantity("plus")}
+                          className="w-10 h-10 flex items-center justify-center text-white hover:bg-white/10 transition-colors border-l border-white/10"
+                        >
+                          <svg
+                            width="16"
+                            height="16"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2.5"
+                          >
+                            <line x1="12" y1="5" x2="12" y2="19" />
+                            <line x1="5" y1="12" x2="19" y2="12" />
+                          </svg>
+                        </button>
+                      </div>
+                      <span className="text-sm font-bold text-gray-400">
+                        Maks. {product.stok} item
+                      </span>
                     </div>
+                  </div>
+
+                  <div className="flex gap-4 justify-end mt-10">
                     <button
-                      onClick={() => handleQuantity("plus")}
-                      className="w-10 h-10 flex items-center justify-center text-white hover:bg-white/10 transition-colors border-l border-white/10"
+                      onClick={handleAddKeranjang}
+                      className="flex-1 lg:flex-none lg:w-[230px] py-4 rounded-2xl font-[800] text-sm text-[#2fa84f] bg-[#2fa84f]/10 border border-[#2fa84f]/30 hover:bg-[#2fa84f]/20 transition-all flex items-center justify-center gap-2"
                     >
                       <svg
-                        width="16"
-                        height="16"
+                        width="18"
+                        height="18"
                         viewBox="0 0 24 24"
                         fill="none"
                         stroke="currentColor"
                         strokeWidth="2.5"
                       >
-                        <line x1="12" y1="5" x2="12" y2="19" />
-                        <line x1="5" y1="12" x2="19" y2="12" />
+                        <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" />
+                        <line x1="3" y1="6" x2="21" y2="6" />
+                        <path d="M16 10a4 4 0 01-8 0" />
                       </svg>
+                      Masukkan Keranjang
+                    </button>
+                    <button
+                      onClick={handleBeliSekarang}
+                      className="flex-1 lg:flex-none lg:w-[220px] py-4 rounded-2xl font-[800] text-sm text-white bg-[#2fa84f] hover:bg-[#268c41] transition-all shadow-[0_10px_25px_rgba(47,168,79,0.3)] hover:-translate-y-1"
+                    >
+                      Beli Sekarang
                     </button>
                   </div>
-                  <span className="text-sm font-bold text-gray-400">
-                    Maks. {product.stok} item
-                  </span>
-                </div>
-              </div>
-
-              <div className="flex gap-4 justify-end mt-10">
-                <button
-                  onClick={handleAddKeranjang}
-                  className="flex-1 lg:flex-none lg:w-[230px] py-4 rounded-2xl font-[800] text-sm text-[#2fa84f] bg-[#2fa84f]/10 border border-[#2fa84f]/30 hover:bg-[#2fa84f]/20 transition-all flex items-center justify-center gap-2"
-                >
-                  <svg
-                    width="18"
-                    height="18"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2.5"
-                  >
-                    <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" />
-                    <line x1="3" y1="6" x2="21" y2="6" />
-                    <path d="M16 10a4 4 0 01-8 0" />
-                  </svg>
-                  Masukkan Keranjang
-                </button>
-                <button
-                  onClick={handleBeliSekarang}
-                  className="flex-1 lg:flex-none lg:w-[220px] py-4 rounded-2xl font-[800] text-sm text-white bg-[#2fa84f] hover:bg-[#268c41] transition-all shadow-[0_10px_25px_rgba(47,168,79,0.3)] hover:-translate-y-1"
-                >
-                  Beli Sekarang
-                </button>
-              </div>
+                </>
+              )}
             </div>
           </div>
         </div>

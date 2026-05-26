@@ -163,6 +163,7 @@ export default function PanelPenjual() {
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const slotInputRefs = useRef<(HTMLInputElement | null)[]>([]);
+  const processedEditProductId = useRef<string | null>(null);
 
   const [formData, setFormData] = useState<Produk>({
     nama_produk: "",
@@ -336,6 +337,41 @@ export default function PanelPenjual() {
     setNameError("");
     setShowModal(true);
   };
+
+  useEffect(() => {
+    if (isProductsLoading) return;
+
+    const editProductId = new URLSearchParams(window.location.search).get(
+      "edit",
+    );
+
+    if (!editProductId || processedEditProductId.current === editProductId) {
+      return;
+    }
+
+    processedEditProductId.current = editProductId;
+
+    const targetProduct = products.find(
+      (product) => product.id_produk === editProductId,
+    );
+
+    if (targetProduct) {
+      const timer = window.setTimeout(() => {
+        handleOpenModal(targetProduct);
+      }, 0);
+
+      return () => window.clearTimeout(timer);
+    }
+
+    const timer = window.setTimeout(() => {
+      showToast("Produk tidak ditemukan di inventaris Anda.", "warning");
+    }, 0);
+
+    return () => {
+      window.clearTimeout(timer);
+      return;
+    };
+  }, [isProductsLoading, products]);
 
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
