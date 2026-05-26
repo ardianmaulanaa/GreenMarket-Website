@@ -350,7 +350,7 @@ const createTransaksi = async (req, res) => {
         },
         expiry: {
           unit: "minute",
-          duration: 1,
+          duration: 5,
         },
         customer_details: {
           first_name: transaksi.user.username,
