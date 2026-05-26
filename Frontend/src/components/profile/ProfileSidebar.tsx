@@ -15,6 +15,7 @@ type ProfileSidebarProps = {
   role?: string;
   activeMenu: ActiveMenu;
   shouldAnimate?: boolean;
+  unpaidOrderCount?: number;
 };
 
 export default function ProfileSidebar({
@@ -22,6 +23,7 @@ export default function ProfileSidebar({
   role = "BUYER",
   activeMenu,
   shouldAnimate = true,
+  unpaidOrderCount = 0,
 }: ProfileSidebarProps) {
   const router = useRouter();
 
@@ -45,6 +47,16 @@ export default function ProfileSidebar({
         ? "bg-[#2fa84f] text-white shadow-[0_4px_15px_rgba(47,168,79,0.2)]"
         : "text-gray-400 hover:bg-white/5 hover:text-white"
     }`;
+
+  const renderNotificationBadge = (count: number) => {
+    if (count <= 0) return null;
+
+    return (
+      <span className="ml-auto min-w-5 h-5 px-1.5 rounded-full bg-red-500 text-white text-[10px] font-black leading-5 text-center shadow-[0_0_12px_rgba(239,68,68,0.45)]">
+        {count > 99 ? "99+" : count}
+      </span>
+    );
+  };
 
   return (
     <aside className="w-full lg:w-[280px] shrink-0">
@@ -117,6 +129,7 @@ export default function ProfileSidebar({
               <path d="M16 10a4 4 0 0 1-8 0" />
             </svg>
             <span className="text-sm">Pesanan Saya</span>
+            {renderNotificationBadge(unpaidOrderCount)}
           </Link>
 
           {isSeller && (

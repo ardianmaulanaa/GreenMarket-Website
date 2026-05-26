@@ -138,7 +138,7 @@ type OrderGroup = {
 function formatStatus(status: string | undefined | null): string {
   if (!status) return "-";
 
-  let upper = status.toUpperCase().trim();
+  const upper = status.toUpperCase().trim();
   if (upper.startsWith("DIKIRIM_SELLER_")) {
     return "Sedang Dikirim";
   }
@@ -168,6 +168,16 @@ function formatStatus(status: string | undefined | null): string {
   }
 }
 
+function isUnpaidTransaction(trx: Transaksi): boolean {
+  const transactionStatus = trx.status_transaksi?.toUpperCase();
+  const paymentStatus = trx.pembayaran?.status_pembayaran?.toUpperCase();
+
+  return (
+    transactionStatus === "BELUM_BAYAR" ||
+    paymentStatus === "MENUNGGU_PEMBAYARAN"
+  );
+}
+
 function PesananContent() {
   const { showToast } = useToast();
   const router = useRouter();
@@ -177,7 +187,8 @@ function PesananContent() {
   const [isPageLoading, setIsPageLoading] = useState(true);
   const [shouldAnimate, setShouldAnimate] = useState(false);
   const [activeTab, setActiveTab] = useState("semua");
-  const [orderMode, setOrderMode] = useState<"buyer" | "seller">("buyer");
+  const orderMode: "buyer" | "seller" =
+    mode === "seller" ? "seller" : "buyer";
   const [user, setUser] = useState({ nama: "", role: "" });
   const [buyerTransactions, setBuyerTransactions] = useState<Transaksi[]>([]);
   const [sellerTransactions, setSellerTransactions] = useState<Transaksi[]>([]);
@@ -190,6 +201,10 @@ function PesananContent() {
   const [searchTerm, setSearchTerm] = useState("");
   const activeTransactions =
     orderMode === "seller" ? sellerTransactions : buyerTransactions;
+
+  const unpaidTransactionCount = activeTransactions.filter(
+    isUnpaidTransaction,
+  ).length;
 
   const fetchTransactions = async (
     modeTarget: "buyer" | "seller" = orderMode,
@@ -243,8 +258,6 @@ function PesananContent() {
   useEffect(() => {
     const modeTarget: "buyer" | "seller" =
       mode === "seller" ? "seller" : "buyer";
-
-    setOrderMode(modeTarget);
 
     const timer = setTimeout(() => {
       setIsPageLoading(false);
@@ -486,6 +499,7 @@ function PesananContent() {
           username={user.nama || "User"}
           role={user.role || "BUYER"}
           activeMenu={orderMode === "seller" ? "pesanan-masuk" : "pesanan"}
+          unpaidOrderCount={unpaidTransactionCount}
         />
 
         {/* ── DAFTAR PESANAN UTAMA ── */}
@@ -513,9 +527,18 @@ function PesananContent() {
                   className={`px-5 py-4 text-[13px] font-[800] transition-all relative whitespace-nowrap uppercase tracking-wider ${activeTab === tab.id
                       ? "text-[#2fa84f]"
                       : "text-gray-400 hover:text-white"
-                    }`}
+                  }`}
                 >
-                  {tab.name}
+                  <span className="inline-flex items-center gap-2">
+                    {tab.name}
+                    {tab.id === "belum_bayar" && unpaidTransactionCount > 0 && (
+                      <span className="min-w-5 h-5 px-1.5 rounded-full bg-red-500 text-white text-[10px] font-black leading-5 text-center shadow-[0_0_12px_rgba(239,68,68,0.45)]">
+                        {unpaidTransactionCount > 99
+                          ? "99+"
+                          : unpaidTransactionCount}
+                      </span>
+                    )}
+                  </span>
                   {activeTab === tab.id && (
                     <div className="absolute bottom-0 left-0 right-0 h-[3px] bg-[#2fa84f] rounded-t-full shadow-[0_-2px_10px_rgba(47,168,79,0.5)]" />
                   )}
