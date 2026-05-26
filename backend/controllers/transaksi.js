@@ -348,6 +348,10 @@ const createTransaksi = async (req, res) => {
           order_id: transaksi.id_transaksi,
           gross_amount: totalHarga,
         },
+        expiry: {
+          unit: "minute",
+          duration: 1,
+        },
         customer_details: {
           first_name: transaksi.user.username,
           email: transaksi.user.email,
