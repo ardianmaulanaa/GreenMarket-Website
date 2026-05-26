@@ -33,6 +33,11 @@ interface SelectOption {
   value: string;
 }
 
+const MAX_PRODUCT_PHOTOS = 4;
+const MAX_PRODUCT_IMAGE_SIZE_MB = 5;
+const MAX_PRODUCT_IMAGE_SIZE_BYTES =
+  MAX_PRODUCT_IMAGE_SIZE_MB * 1024 * 1024;
+
 function ProductSelect({
   value,
   options,
@@ -252,11 +257,26 @@ export default function PanelPenjual() {
   };
 
   const addFiles = (files: File[]) => {
-    const remaining = 4 - imagePreviews.length;
-    const toAdd = files.slice(0, remaining);
+    const validFiles = files.filter((file) => {
+      if (file.size <= MAX_PRODUCT_IMAGE_SIZE_BYTES) {
+        return true;
+      }
 
-    if (files.length > remaining) {
-      showToast(`Hanya bisa tambah ${remaining} foto lagi (maks 4 total).`, "warning");
+      showToast(
+        `Foto "${file.name}" melebihi batas ${MAX_PRODUCT_IMAGE_SIZE_MB} MB. Pilih gambar yang lebih kecil.`,
+        "warning",
+      );
+      return false;
+    });
+
+    const remaining = MAX_PRODUCT_PHOTOS - imagePreviews.length;
+    const toAdd = validFiles.slice(0, remaining);
+
+    if (validFiles.length > remaining) {
+      showToast(
+        `Hanya bisa tambah ${remaining} foto lagi (maks ${MAX_PRODUCT_PHOTOS} total).`,
+        "warning",
+      );
     }
 
     toAdd.forEach((file) => {
@@ -730,7 +750,8 @@ export default function PanelPenjual() {
                 <label className="text-[10px] text-gray-400 uppercase font-bold block mb-1">
                   Foto Produk{" "}
                   <span className="text-gray-500 normal-case">
-                    (PNG/JPG, maks 4 foto)
+                    (PNG/JPG, maks {MAX_PRODUCT_PHOTOS} foto,{" "}
+                    {MAX_PRODUCT_IMAGE_SIZE_MB} MB/foto)
                   </span>
                 </label>
 
@@ -753,7 +774,8 @@ export default function PanelPenjual() {
                       Klik untuk pilih foto
                     </span>
                     <span className="text-[11px] text-gray-600 mt-1">
-                      Pilih hingga 4 foto PNG/JPG sekaligus
+                      Pilih hingga {MAX_PRODUCT_PHOTOS} foto PNG/JPG, maks{" "}
+                      {MAX_PRODUCT_IMAGE_SIZE_MB} MB per foto
                     </span>
                     <input
                       ref={fileInputRef}
@@ -793,7 +815,9 @@ export default function PanelPenjual() {
                       </div>
                     ))}
 
-                    {Array.from({ length: 4 - imagePreviews.length }).map(
+                    {Array.from({
+                      length: MAX_PRODUCT_PHOTOS - imagePreviews.length,
+                    }).map(
                       (_, i) => (
                         <label
                           key={`slot-${i}`}
@@ -823,19 +847,21 @@ export default function PanelPenjual() {
 
                 <div className="flex items-center justify-between mt-2">
                   <span className="text-[11px] text-gray-500">
-                    {imagePreviews.length} dari 4 foto dipilih
+                    {imagePreviews.length} dari {MAX_PRODUCT_PHOTOS} foto{" "}
+                    dipilih
                     {imagePreviews.length > 0 &&
                       " · Foto pertama jadi gambar utama produk"}
                   </span>
-                  {imagePreviews.length > 0 && imagePreviews.length < 4 && (
-                    <button
-                      type="button"
-                      onClick={() => fileInputRef.current?.click()}
-                      className="text-[11px] text-[#2fa84f] underline bg-transparent border-none cursor-pointer p-0"
-                    >
-                      + Tambah foto
-                    </button>
-                  )}
+                  {imagePreviews.length > 0 &&
+                    imagePreviews.length < MAX_PRODUCT_PHOTOS && (
+                      <button
+                        type="button"
+                        onClick={() => fileInputRef.current?.click()}
+                        className="text-[11px] text-[#2fa84f] underline bg-transparent border-none cursor-pointer p-0"
+                      >
+                        + Tambah foto
+                      </button>
+                    )}
                 </div>
 
                 <input
