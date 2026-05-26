@@ -4,12 +4,9 @@ import React, { Suspense, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import Script from "next/script";
-<<<<<<< HEAD
 import { useToast } from "@/hooks/useToast";
 import { useUser } from "@/hooks/useUser";
-=======
 import Nav from "@/components/navbar";
->>>>>>> 474bab120b63cc9515cab42e54543657385d0bd2
 
 interface Produk {
   id_produk: string;
@@ -236,9 +233,9 @@ function PembayaranContent() {
 
   const subtotal = isCartCheckout
     ? checkoutItems.reduce(
-        (total, item) => total + item.harga * item.kuantitas,
-        0,
-      )
+      (total, item) => total + item.harga * item.kuantitas,
+      0,
+    )
     : (product?.harga || 0) * quantity;
   const ongkir = selectedShippingData?.harga_pengiriman || 0;
   const total = subtotal + ongkir;
@@ -305,23 +302,23 @@ function PembayaranContent() {
     try {
       const requestBody = isCartCheckout
         ? {
-            id_user: Number(userId),
-            id_alamat: selectedAddress,
-            id_jasa_kirim: selectedShipping,
-            id_metode_pembayaran: selectedPayment,
-            items: checkoutItems.map((item) => ({
-              id_produk: item.id_produk,
-              kuantitas: item.kuantitas,
-            })),
-          }
+          id_user: Number(userId),
+          id_alamat: selectedAddress,
+          id_jasa_kirim: selectedShipping,
+          id_metode_pembayaran: selectedPayment,
+          items: checkoutItems.map((item) => ({
+            id_produk: item.id_produk,
+            kuantitas: item.kuantitas,
+          })),
+        }
         : {
-            id_user: Number(userId),
-            id_produk: product!.id_produk,
-            id_alamat: selectedAddress,
-            id_jasa_kirim: selectedShipping,
-            id_metode_pembayaran: selectedPayment,
-            kuantitas: quantity,
-          };
+          id_user: Number(userId),
+          id_produk: product!.id_produk,
+          id_alamat: selectedAddress,
+          id_jasa_kirim: selectedShipping,
+          id_metode_pembayaran: selectedPayment,
+          kuantitas: quantity,
+        };
 
       const response = await fetch("http://localhost:5050/api/transaksi", {
         method: "POST",
@@ -340,35 +337,35 @@ function PembayaranContent() {
 
       const paymentData = isCartCheckout
         ? {
-            id_transaksi: data.transaksi.id_transaksi,
-            id_user: Number(userId),
-            items: checkoutItems,
-            id_alamat: selectedAddress,
-            id_jasa_kirim: selectedShipping,
-            id_metode_pembayaran: selectedPayment,
-            jasa_kirim: selectedShippingData?.nama_jasa || "",
-            ongkir,
-            subtotal,
-            total_harga: total,
-            status_transaksi: data.transaksi.status_transaksi,
-            status_pembayaran: data.transaksi.pembayaran?.status_pembayaran,
-          }
+          id_transaksi: data.transaksi.id_transaksi,
+          id_user: Number(userId),
+          items: checkoutItems,
+          id_alamat: selectedAddress,
+          id_jasa_kirim: selectedShipping,
+          id_metode_pembayaran: selectedPayment,
+          jasa_kirim: selectedShippingData?.nama_jasa || "",
+          ongkir,
+          subtotal,
+          total_harga: total,
+          status_transaksi: data.transaksi.status_transaksi,
+          status_pembayaran: data.transaksi.pembayaran?.status_pembayaran,
+        }
         : {
-            id_transaksi: data.transaksi.id_transaksi,
-            id_user: Number(userId),
-            id_produk: product!.id_produk,
-            nama_produk: product!.nama_produk,
-            quantity,
-            id_alamat: selectedAddress,
-            id_jasa_kirim: selectedShipping,
-            id_metode_pembayaran: selectedPayment,
-            jasa_kirim: selectedShippingData?.nama_jasa || "",
-            ongkir,
-            subtotal,
-            total_harga: total,
-            status_transaksi: data.transaksi.status_transaksi,
-            status_pembayaran: data.transaksi.pembayaran?.status_pembayaran,
-          };
+          id_transaksi: data.transaksi.id_transaksi,
+          id_user: Number(userId),
+          id_produk: product!.id_produk,
+          nama_produk: product!.nama_produk,
+          quantity,
+          id_alamat: selectedAddress,
+          id_jasa_kirim: selectedShipping,
+          id_metode_pembayaran: selectedPayment,
+          jasa_kirim: selectedShippingData?.nama_jasa || "",
+          ongkir,
+          subtotal,
+          total_harga: total,
+          status_transaksi: data.transaksi.status_transaksi,
+          status_pembayaran: data.transaksi.pembayaran?.status_pembayaran,
+        };
 
       localStorage.setItem("paymentData", JSON.stringify(paymentData));
 
@@ -459,7 +456,6 @@ function PembayaranContent() {
       />
       <div className="min-h-screen bg-[#edf3e7] relative overflow-hidden font-sans">
         {/* NAVBAR */}
-<<<<<<< HEAD
         <nav className="fixed top-0 left-0 right-0 z-[100] bg-[#1a1f1b]/90 backdrop-blur-xl border-b border-white/10 shadow-lg h-[72px] px-8 flex items-center justify-between">
           <div className="flex items-center gap-8">
             <button
@@ -570,9 +566,7 @@ function PembayaranContent() {
             </Link>
           </div>
         </nav>
-=======
         <Nav variant="pembayaran" user={user} handleLogout={handleLogout} />
->>>>>>> 474bab120b63cc9515cab42e54543657385d0bd2
 
         {/* CONTENT */}
         <main className="max-w-[1280px] mx-auto pt-[110px] px-6 pb-16 relative z-10">
@@ -736,11 +730,10 @@ function PembayaranContent() {
                     {addresses.map((address) => (
                       <label
                         key={address.id_alamat}
-                        className={`block border rounded-[18px] p-4 cursor-pointer transition-all ${
-                          selectedAddress === address.id_alamat
+                        className={`block border rounded-[18px] p-4 cursor-pointer transition-all ${selectedAddress === address.id_alamat
                             ? "border-[#2fa84f] bg-[#eef9f0]"
                             : "border-gray-300 bg-white"
-                        }`}
+                          }`}
                       >
                         <div className="flex items-start justify-between gap-4">
                           <div>
@@ -858,18 +851,16 @@ function PembayaranContent() {
                             onClick={() => {
                               setTempSelectedShipping(item.id_jasa);
                             }}
-                            className={`w-full flex items-center gap-4 px-5 py-4 border-b border-gray-100 text-left transition-all ${
-                              isSelected
+                            className={`w-full flex items-center gap-4 px-5 py-4 border-b border-gray-100 text-left transition-all ${isSelected
                                 ? "bg-[#eef9f0]"
                                 : "bg-white hover:bg-gray-50"
-                            }`}
+                              }`}
                           >
                             <div
-                              className={`w-5 h-5 rounded-full border flex items-center justify-center shrink-0 ${
-                                isSelected
+                              className={`w-5 h-5 rounded-full border flex items-center justify-center shrink-0 ${isSelected
                                   ? "border-[#2fa84f]"
                                   : "border-gray-400"
-                              }`}
+                                }`}
                             >
                               {isSelected && (
                                 <div className="w-2.5 h-2.5 rounded-full bg-[#2fa84f]" />

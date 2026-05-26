@@ -4,11 +4,8 @@ import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import Footer from "@/components/Footer";
-<<<<<<< HEAD
 import { useToast } from "@/hooks/useToast";
-=======
 import Nav from "@/components/navbar";
->>>>>>> 474bab120b63cc9515cab42e54543657385d0bd2
 
 interface Produk {
   id_produk: string;
@@ -112,7 +109,6 @@ export default function TokoPage() {
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-[#f1f8e9] via-[#2fa84f]/15 to-[#0a110b] font-sans text-[#1a2e1f] relative overflow-hidden">
       <div className="absolute top-[-10%] right-[-5%] w-[600px] h-[600px] bg-[#2fa84f] opacity-20 blur-[150px] rounded-full pointer-events-none" />
 
-<<<<<<< HEAD
       <nav className="fixed top-0 left-0 right-0 z-[100] bg-[#1a1f1b]/90 backdrop-blur-xl border-b border-white/10 shadow-lg h-[72px] px-8 flex items-center justify-between">
         <div className="flex items-center gap-8">
           <button
@@ -253,14 +249,12 @@ export default function TokoPage() {
           </button>
         </div>
       </nav>
-=======
       <Nav
         variant="toko"
         user={user}
         searchTerm={searchTerm}
         setSearchTerm={setSearchTerm}
       />
->>>>>>> 474bab120b63cc9515cab42e54543657385d0bd2
 
       <main className="flex-grow container max-w-[1200px] mx-auto pt-28 px-6 pb-20 relative z-10 w-full">
         <section className="bg-[#1a1f1b]/85 backdrop-blur-xl rounded-[32px] p-6 md:p-8 border border-white/5 shadow-2xl mb-8">

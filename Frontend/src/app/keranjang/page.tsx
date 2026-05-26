@@ -4,12 +4,10 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Footer from "@/components/Footer";
-<<<<<<< HEAD
+
 import { useToast } from "@/hooks/useToast";
 import { useUser } from "@/hooks/useUser";
-=======
 import Nav from "@/components/navbar";
->>>>>>> 474bab120b63cc9515cab42e54543657385d0bd2
 
 // Animation styles removed - imported globally from globals.css
 
@@ -320,7 +318,6 @@ export default function KeranjangPage() {
       <div className="absolute top-0 left-0 right-0 h-[360px] bg-[radial-gradient(circle_at_20%_20%,rgba(47,168,79,0.28),transparent_35%),radial-gradient(circle_at_80%_0%,rgba(238,251,232,0.7),transparent_36%)] pointer-events-none"></div>
       <div className="absolute right-[-160px] bottom-[80px] w-[520px] h-[520px] rounded-full bg-[#1f2a22]/45 blur-[120px] pointer-events-none"></div>
 
-<<<<<<< HEAD
       <nav className={`bg-[#1f2a22]/95 backdrop-blur-xl border-b border-white/10 sticky top-0 z-40 shadow-[0_10px_30px_rgba(10,17,11,0.22)] ${shouldAnimate ? 'animate-fade-in' : 'opacity-0'}`}>
         <div className="max-w-[1200px] mx-auto px-5 sm:px-8 py-6 flex flex-col lg:flex-row lg:items-center gap-6">
           <div className="flex items-center justify-between lg:justify-start gap-5 shrink-0">
@@ -330,7 +327,7 @@ export default function KeranjangPage() {
                 className="flex items-center gap-2 no-underline group"
               >
                 <div className="w-[36px] h-[36px] rounded-xl bg-gradient-to-br from-[#2fa84f] to-[#1a7a35] flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5"><path d="M12 2L3 7v9c0 5 9 7 9 7s9-2 9-7V7l-9-5z"/></svg>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5"><path d="M12 2L3 7v9c0 5 9 7 9 7s9-2 9-7V7l-9-5z" /></svg>
                 </div>
                 <span className="text-xl font-black text-white tracking-tight uppercase hidden sm:block">Green<span className="text-[#2fa84f]">Market</span></span>
               </Link>
@@ -342,7 +339,7 @@ export default function KeranjangPage() {
           <div className="flex-1 max-w-xl lg:ml-16 hidden md:block">
             <div className="relative group">
               <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6b7280" strokeWidth="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6b7280" strokeWidth="2.5"><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></svg>
               </div>
               <input
                 type="text"
@@ -371,40 +368,38 @@ export default function KeranjangPage() {
 
           <button
             type="button"
-              onClick={() => {
-                const userRole = localStorage.getItem("userRole");
+            onClick={() => {
+              const userRole = localStorage.getItem("userRole");
 
-                if (userRole === "GUEST") {
-                  showToast("Fitur ini tidak tersedia pada akun guest.", "warning");
-                  return;
-                }
+              if (userRole === "GUEST") {
+                showToast("Fitur ini tidak tersedia pada akun guest.", "warning");
+                return;
+              }
 
-                router.push("/profile");
-              }}
-              className="hidden lg:flex items-center gap-3 text-right bg-transparent border-0 cursor-pointer"
-            >
-              <div>
-                <p className="m-0 text-sm font-bold text-white">
-                  {user.nama || "User"}
-                </p>
-                <p className="m-0 text-[11px] font-bold text-[#2fa84f] uppercase">
-                  {user.role === "SELLER" ? "Seller Hub" : "Buyer"}
-                </p>
-              </div>
-              <div className="w-10 h-10 rounded-full bg-[#101a13] border-2 border-[#2fa84f] flex items-center justify-center text-white font-black uppercase">
-                {user.nama ? user.nama.charAt(0) : "U"}
-        </div>
-</button>
+              router.push("/profile");
+            }}
+            className="hidden lg:flex items-center gap-3 text-right bg-transparent border-0 cursor-pointer"
+          >
+            <div>
+              <p className="m-0 text-sm font-bold text-white">
+                {user.nama || "User"}
+              </p>
+              <p className="m-0 text-[11px] font-bold text-[#2fa84f] uppercase">
+                {user.role === "SELLER" ? "Seller Hub" : "Buyer"}
+              </p>
+            </div>
+            <div className="w-10 h-10 rounded-full bg-[#101a13] border-2 border-[#2fa84f] flex items-center justify-center text-white font-black uppercase">
+              {user.nama ? user.nama.charAt(0) : "U"}
+            </div>
+          </button>
         </div>
       </nav>
-=======
       <Nav
         variant="keranjang"
         shouldAnimate={shouldAnimate}
         user={user}
         dashboardHref={dashboardHref}
       />
->>>>>>> 474bab120b63cc9515cab42e54543657385d0bd2
 
       <main className="relative z-10 mx-auto w-full max-w-[1200px] flex-1 px-4 pt-8 pb-8 sm:px-8 md:pb-10">
         <div
@@ -510,17 +505,17 @@ export default function KeranjangPage() {
                       setSelectedItems((currentItems) =>
                         allGroupSelected
                           ? currentItems.filter(
-                              (idKeranjang) =>
-                                !group.items.some(
-                                  (item) => item.id_keranjang === idKeranjang,
-                                ),
-                            )
+                            (idKeranjang) =>
+                              !group.items.some(
+                                (item) => item.id_keranjang === idKeranjang,
+                              ),
+                          )
                           : Array.from(
-                              new Set([
-                                ...currentItems,
-                                ...group.items.map((item) => item.id_keranjang),
-                              ]),
-                            ),
+                            new Set([
+                              ...currentItems,
+                              ...group.items.map((item) => item.id_keranjang),
+                            ]),
+                          ),
                       );
                     }}
                     type="checkbox"

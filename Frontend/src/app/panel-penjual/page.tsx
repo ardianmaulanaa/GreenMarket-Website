@@ -3,12 +3,9 @@
 import React, { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-<<<<<<< HEAD
 import { useToast } from "@/hooks/useToast";
 import { useUser } from "@/hooks/useUser";
-=======
 import Nav from "@/components/navbar";
->>>>>>> 474bab120b63cc9515cab42e54543657385d0bd2
 
 // Animation styles removed - imported globally from globals.css
 
@@ -69,19 +66,17 @@ function ProductSelect({
       <button
         type="button"
         onClick={() => setIsOpen((current) => !current)}
-        className={`flex w-full items-center justify-between rounded-xl border bg-white/5 px-3 py-3 text-left text-white outline-none transition-all ${
-          isOpen
+        className={`flex w-full items-center justify-between rounded-xl border bg-white/5 px-3 py-3 text-left text-white outline-none transition-all ${isOpen
             ? "border-[#2fa84f] shadow-[0_0_10px_rgba(47,168,79,0.3)]"
             : "border-white/10 hover:border-white/20"
-        }`}
+          }`}
       >
         <span className="truncate">
           {selectedOption?.label || "Pilih kategori"}
         </span>
         <svg
-          className={`ml-3 h-4 w-4 shrink-0 text-slate-400 transition-transform ${
-            isOpen ? "rotate-180 text-[#2fa84f]" : ""
-          }`}
+          className={`ml-3 h-4 w-4 shrink-0 text-slate-400 transition-transform ${isOpen ? "rotate-180 text-[#2fa84f]" : ""
+            }`}
           viewBox="0 0 24 24"
           fill="none"
           stroke="currentColor"
@@ -106,11 +101,10 @@ function ProductSelect({
                   onChange(option.value);
                   setIsOpen(false);
                 }}
-                className={`flex w-full items-center justify-between px-4 py-3 text-left text-sm transition-colors ${
-                  isSelected
+                className={`flex w-full items-center justify-between px-4 py-3 text-left text-sm transition-colors ${isSelected
                     ? "bg-[#2fa84f]/15 text-[#64d681]"
                     : "text-slate-200 hover:bg-white/7 hover:text-white"
-                }`}
+                  }`}
               >
                 <span>{option.label}</span>
                 {isSelected && (
@@ -403,7 +397,7 @@ export default function PanelPenjual() {
     if (editingProduct && imageFiles.length === 0) {
       const existingList =
         editingProduct.foto_produk_list &&
-        editingProduct.foto_produk_list.length > 0
+          editingProduct.foto_produk_list.length > 0
           ? editingProduct.foto_produk_list
           : editingProduct.foto_produk
             ? [editingProduct.foto_produk]

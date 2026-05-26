@@ -3,11 +3,8 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-<<<<<<< HEAD
 import { useToast } from "@/hooks/useToast";
-=======
 import Nav from "@/components/navbar";
->>>>>>> 474bab120b63cc9515cab42e54543657385d0bd2
 
 interface Post {
   id: number;
@@ -82,10 +79,10 @@ export default function ForumPage() {
       posts.map((post) =>
         post.id === id
           ? {
-              ...post,
-              isLiked: !post.isLiked,
-              likes: post.isLiked ? post.likes - 1 : post.likes + 1,
-            }
+            ...post,
+            isLiked: !post.isLiked,
+            likes: post.isLiked ? post.likes - 1 : post.likes + 1,
+          }
           : post,
       ),
     );

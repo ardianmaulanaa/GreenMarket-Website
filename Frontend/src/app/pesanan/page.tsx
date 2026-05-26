@@ -5,11 +5,8 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import ProfileSidebar from "@/components/profile/ProfileSidebar";
 import Footer from "@/components/Footer";
-<<<<<<< HEAD
 import { useToast } from "@/hooks/useToast";
-=======
 import Nav from "@/components/navbar";
->>>>>>> 474bab120b63cc9515cab42e54543657385d0bd2
 
 // Animation styles for smooth entrance effects
 const animationStyles = `
@@ -140,7 +137,7 @@ type OrderGroup = {
 
 function formatStatus(status: string | undefined | null): string {
   if (!status) return "-";
-  
+
   let upper = status.toUpperCase().trim();
   if (upper.startsWith("DIKIRIM_SELLER_")) {
     return "Sedang Dikirim";
@@ -148,7 +145,7 @@ function formatStatus(status: string | undefined | null): string {
   if (upper.startsWith("SELESAI_SELLER_")) {
     return "Selesai";
   }
-  
+
   switch (upper) {
     case "BELUM_BAYAR":
       return "Belum Bayar";
@@ -236,13 +233,10 @@ function PesananContent() {
       }
     } catch (error) {
       console.error("Gagal mengambil pesanan:", error);
-<<<<<<< HEAD
       showToast("Gagal mengambil pesanan. Periksa koneksi internet Anda.", "error");
-=======
       alert("Terjadi kesalahan saat mengambil pesanan");
     } finally {
       setIsOrderLoading(false);
->>>>>>> 474bab120b63cc9515cab42e54543657385d0bd2
     }
   };
 
@@ -309,13 +303,10 @@ function PesananContent() {
         return;
       }
 
-<<<<<<< HEAD
       showToast("Pesanan berhasil dikonfirmasi dikirim.", "success");
       await fetchTransactions();
-=======
       alert("Pesanan berhasil dikonfirmasi dikirim");
       await fetchTransactions("seller", true);
->>>>>>> 474bab120b63cc9515cab42e54543657385d0bd2
     } catch (error) {
       console.error("Gagal konfirmasi kirim:", error);
       showToast("Terjadi kesalahan. Periksa koneksi internet Anda.", "error");
@@ -372,11 +363,11 @@ function PesananContent() {
     const details =
       orderMode === "seller"
         ? trx.detail_transaksi.filter(
-            (detail) => detail.produk?.id_user_seller === currentUserId,
-          )
+          (detail) => detail.produk?.id_user_seller === currentUserId,
+        )
         : trx.detail_transaksi.filter(
-            (detail) => detail.produk?.id_user_seller !== currentUserId,
-          );
+          (detail) => detail.produk?.id_user_seller !== currentUserId,
+        );
 
     const groups = new Map<number, DetailTransaksi[]>();
 
@@ -519,11 +510,10 @@ function PesananContent() {
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`px-5 py-4 text-[13px] font-[800] transition-all relative whitespace-nowrap uppercase tracking-wider ${
-                    activeTab === tab.id
+                  className={`px-5 py-4 text-[13px] font-[800] transition-all relative whitespace-nowrap uppercase tracking-wider ${activeTab === tab.id
                       ? "text-[#2fa84f]"
                       : "text-gray-400 hover:text-white"
-                  }`}
+                    }`}
                 >
                   {tab.name}
                   {activeTab === tab.id && (
@@ -687,7 +677,7 @@ function PesananContent() {
                         </button>
 
                         {orderMode === "seller" &&
-                        group.status_pengiriman === "DIKEMAS" ? (
+                          group.status_pengiriman === "DIKEMAS" ? (
                           <button
                             type="button"
                             onClick={() =>

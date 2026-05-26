@@ -5,11 +5,8 @@ import Link from "next/link";
 import Image from "next/image";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import Footer from "@/components/Footer";
-<<<<<<< HEAD
 import { useToast } from "@/hooks/useToast";
-=======
 import Nav from "@/components/navbar";
->>>>>>> 474bab120b63cc9515cab42e54543657385d0bd2
 
 interface Produk {
   id_produk: string;
@@ -329,7 +326,6 @@ export default function DetailProdukPage() {
         </div>
       )}
 
-<<<<<<< HEAD
       <nav className="fixed top-0 left-0 right-0 z-[100] bg-[#1a1f1b]/90 backdrop-blur-xl border-b border-white/10 shadow-lg h-[72px] px-8 flex items-center justify-between">
         <div className="flex items-center gap-8">
           <button
@@ -470,9 +466,7 @@ export default function DetailProdukPage() {
           </button>
         </div>
       </nav>
-=======
       <Nav variant="detail" user={user} />
->>>>>>> 474bab120b63cc9515cab42e54543657385d0bd2
 
       <main className="flex-grow container max-w-[1200px] mx-auto pt-28 px-6 pb-20 relative z-10 w-full">
         <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-widest text-gray-500 mb-6">
@@ -516,11 +510,10 @@ export default function DetailProdukPage() {
                   <button
                     key={idx}
                     onClick={() => setActiveImage(idx)}
-                    className={`relative w-20 h-20 shrink-0 rounded-2xl overflow-hidden border-2 transition-all ${
-                      activeImage === idx
+                    className={`relative w-20 h-20 shrink-0 rounded-2xl overflow-hidden border-2 transition-all ${activeImage === idx
                         ? "border-[#2fa84f] shadow-[0_0_15px_rgba(47,168,79,0.3)]"
                         : "border-white/10 hover:border-[#2fa84f]/50"
-                    }`}
+                      }`}
                   >
                     <Image
                       src={foto || "https://via.placeholder.com/1000"}
@@ -720,12 +713,12 @@ export default function DetailProdukPage() {
                 <span className="font-black text-white text-sm">
                   {product.seller?.createdAt
                     ? new Date(product.seller.createdAt).toLocaleDateString(
-                        "id-ID",
-                        {
-                          month: "short",
-                          year: "numeric",
-                        },
-                      )
+                      "id-ID",
+                      {
+                        month: "short",
+                        year: "numeric",
+                      },
+                    )
                     : "Baru"}
                 </span>
               </div>

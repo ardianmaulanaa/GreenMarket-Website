@@ -9,12 +9,9 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState, type SyntheticEvent } from "react";
 import ProfileSidebar from "@/components/profile/ProfileSidebar";
 import Footer from "@/components/Footer";
-<<<<<<< HEAD
 import { useToast } from "@/hooks/useToast";
 import { useUser } from "@/hooks/useUser";
-=======
 import Nav from "@/components/navbar";
->>>>>>> 474bab120b63cc9515cab42e54543657385d0bd2
 
 const fadeUp: Variants = {
   hidden: { opacity: 0, y: 24 },
