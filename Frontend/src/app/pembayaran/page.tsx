@@ -566,7 +566,7 @@ function PembayaranContent() {
             </Link>
           </div>
         </nav>
-        <Nav variant="pembayaran" user={user} handleLogout={handleLogout} />
+        <Nav variant="pembayaran" user={user || undefined} handleLogout={handleLogout} />
 
         {/* CONTENT */}
         <main className="max-w-[1280px] mx-auto pt-[110px] px-6 pb-16 relative z-10">
