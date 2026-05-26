@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import ProfileSidebar from "@/components/profile/ProfileSidebar";
 import Footer from "@/components/Footer";
+import Nav from "@/components/navbar";
 
 // Animation styles for smooth entrance effects
 const animationStyles = `
@@ -143,14 +144,21 @@ export default function PesananPage() {
   const [activeTab, setActiveTab] = useState("semua");
   const [orderMode, setOrderMode] = useState<"buyer" | "seller">("buyer");
   const [user, setUser] = useState({ nama: "", role: "" });
-  const [transactions, setTransactions] = useState<Transaksi[]>([]);
+  const [buyerTransactions, setBuyerTransactions] = useState<Transaksi[]>([]);
+  const [sellerTransactions, setSellerTransactions] = useState<Transaksi[]>([]);
+  const [buyerLoaded, setBuyerLoaded] = useState(false);
+  const [sellerLoaded, setSellerLoaded] = useState(false);
+  const [isOrderLoading, setIsOrderLoading] = useState(false);
   const [selectedTracking, setSelectedTracking] = useState<Transaksi | null>(
     null,
   );
   const [searchTerm, setSearchTerm] = useState("");
+  const activeTransactions =
+    orderMode === "seller" ? sellerTransactions : buyerTransactions;
 
   const fetchTransactions = async (
     modeTarget: "buyer" | "seller" = orderMode,
+    forceRefresh = false,
   ) => {
     const userId = localStorage.getItem("userId");
 
@@ -159,14 +167,21 @@ export default function PesananPage() {
       return;
     }
 
+    const alreadyLoaded = modeTarget === "seller" ? sellerLoaded : buyerLoaded;
+
+    if (alreadyLoaded && !forceRefresh) {
+      return;
+    }
+
     try {
+      setIsOrderLoading(true);
+
       const endpoint =
         modeTarget === "seller"
           ? `http://localhost:5050/api/transaksi/seller/${userId}`
           : `http://localhost:5050/api/transaksi/user/${userId}`;
 
       const response = await fetch(endpoint);
-
       const data = await response.json();
 
       if (!response.ok) {
@@ -174,10 +189,18 @@ export default function PesananPage() {
         return;
       }
 
-      setTransactions(data);
+      if (modeTarget === "seller") {
+        setSellerTransactions(data);
+        setSellerLoaded(true);
+      } else {
+        setBuyerTransactions(data);
+        setBuyerLoaded(true);
+      }
     } catch (error) {
       console.error("Gagal mengambil pesanan:", error);
       alert("Terjadi kesalahan saat mengambil pesanan");
+    } finally {
+      setIsOrderLoading(false);
     }
   };
 
@@ -204,7 +227,7 @@ export default function PesananPage() {
     void fetchTransactions(modeTarget);
 
     const interval = setInterval(() => {
-      void fetchTransactions(modeTarget);
+      void fetchTransactions(modeTarget, true);
     }, 60000);
 
     return () => {
@@ -245,7 +268,7 @@ export default function PesananPage() {
       }
 
       alert("Pesanan berhasil dikonfirmasi dikirim");
-      await fetchTransactions();
+      await fetchTransactions("seller", true);
     } catch (error) {
       console.error("Gagal konfirmasi kirim:", error);
       alert("Terjadi kesalahan saat konfirmasi kirim");
@@ -280,7 +303,7 @@ export default function PesananPage() {
     return "DIKEMAS";
   };
 
-  const searchedTransactions = transactions.filter((trx) => {
+  const searchedTransactions = activeTransactions.filter((trx) => {
     const keyword = searchTerm.toLowerCase();
 
     const matchSearch =
@@ -297,9 +320,20 @@ export default function PesananPage() {
   });
 
   const orderGroups: OrderGroup[] = searchedTransactions.flatMap((trx) => {
+    const currentUserId = Number(localStorage.getItem("userId"));
+
+    const details =
+      orderMode === "seller"
+        ? trx.detail_transaksi.filter(
+            (detail) => detail.produk?.id_user_seller === currentUserId,
+          )
+        : trx.detail_transaksi.filter(
+            (detail) => detail.produk?.id_user_seller !== currentUserId,
+          );
+
     const groups = new Map<number, DetailTransaksi[]>();
 
-    trx.detail_transaksi.forEach((detail) => {
+    details.forEach((detail) => {
       const sellerId = detail.produk?.id_user_seller;
 
       if (!sellerId) return;
@@ -405,123 +439,7 @@ export default function PesananPage() {
       <div className="absolute top-[-10%] right-[-5%] w-[600px] h-[600px] bg-[#2fa84f] opacity-20 blur-[150px] rounded-full pointer-events-none"></div>
 
       {/* ── NAVBAR ── */}
-      <nav
-        className={`fixed top-0 left-0 right-0 z-[100] bg-[#1a1f1b]/90 backdrop-blur-xl border-b border-white/10 shadow-lg h-[72px] px-8 flex items-center justify-between ${shouldAnimate ? "animate-fade-in" : "opacity-0"}`}
-      >
-        <div className="flex items-center gap-8">
-          <button
-            type="button"
-            onClick={() => {
-              const role = localStorage.getItem("userRole");
-              if (role === "SELLER") router.push("/dashboard-seller");
-              else router.push("/dashboard-buyer");
-            }}
-            className="group mr-1 flex shrink-0 items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-3 py-2 text-xs font-semibold text-white/80 shadow-[0_0_20px_rgba(47,168,79,0.15)] backdrop-blur-md transition-all duration-300 hover:-translate-y-0.5 hover:border-[#2fa84f]/45 hover:bg-white/10 hover:text-white hover:shadow-[0_6px_28px_rgba(47,168,79,0.28)]"
-          >
-            <svg
-              className="shrink-0 transition-transform duration-300 group-hover:-translate-x-1"
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <line x1="19" y1="12" x2="5" y2="12" />
-              <polyline points="12 19 5 12 12 5" />
-            </svg>
-            Kembali
-          </button>
-          <Link
-            href={isSeller ? "/dashboard-seller" : "/dashboard-buyer"}
-            className="flex items-center gap-2 no-underline group"
-          >
-            <div className="w-[36px] h-[36px] rounded-xl bg-gradient-to-br from-[#2fa84f] to-[#1a7a35] flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform">
-              <svg
-                width="20"
-                height="20"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="white"
-                strokeWidth="2.5"
-              >
-                <path d="M12 2L3 7v9c0 5 9 7 9 7s9-2 9-7V7l-9-5z" />
-              </svg>
-            </div>
-            <span className="text-xl font-black text-white tracking-tight uppercase">
-              Green<span className="text-[#2fa84f]">Market</span>
-            </span>
-          </Link>
-
-          {!isSeller && (
-            <div className="hidden lg:flex items-center gap-4">
-              <Link
-                href="/register-penjual"
-                className="bg-white/5 border border-white/10 text-white px-5 py-2.5 rounded-xl text-xs font-bold no-underline hover:bg-[#2fa84f] hover:border-transparent transition-all flex items-center gap-2"
-              >
-                <svg
-                  width="14"
-                  height="14"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="3"
-                >
-                  <line x1="12" y1="5" x2="12" y2="19" />
-                  <line x1="5" y1="12" x2="19" y2="12" />
-                </svg>
-                Mulai Berjualan
-              </Link>
-            </div>
-          )}
-        </div>
-
-        {/* SEARCH BAR (Disembunyikan di mobile) */}
-        <div className="flex-1 max-w-xl mx-10 hidden md:block">
-          <div className="relative group">
-            <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
-              <svg
-                width="18"
-                height="18"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="#6b7280"
-                strokeWidth="2.5"
-              >
-                <circle cx="11" cy="11" r="8" />
-                <line x1="21" y1="21" x2="16.65" y2="16.65" />
-              </svg>
-            </div>
-            <input
-              type="text"
-              placeholder="Cari pesanan Anda..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full bg-white/5 border border-white/10 rounded-2xl pl-12 pr-4 py-2.5 text-sm text-white focus:outline-none focus:border-[#2fa84f] transition-all placeholder:text-gray-500"
-            />
-          </div>
-        </div>
-
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-3 pl-2 group">
-            <div className="text-right hidden sm:block">
-              <p className="text-xs font-bold text-white m-0 group-hover:text-[#2fa84f] transition-colors">
-                {user.nama}
-              </p>
-              <p className="text-[10px] text-[#2fa84f] m-0 font-black uppercase">
-                {user.role === "SELLER" ? "SELLER HUB" : "BUYER"}
-              </p>
-            </div>
-            <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-[#2fa84f] to-[#1a7a35] p-[2px]">
-              <div className="w-full h-full rounded-full bg-[#0a110b] flex items-center justify-center text-white font-bold uppercase">
-                {user.nama ? user.nama.charAt(0) : "U"}
-              </div>
-            </div>
-          </div>
-        </div>
-      </nav>
+      <Nav variant="pesanan" shouldAnimate={shouldAnimate} user={user} />
 
       {/* ── KONTEN UTAMA ── */}
       <div className="max-w-[1600px] mx-auto pt-28 pb-20 px-6 flex flex-col lg:flex-row gap-8 relative z-10 w-full flex-grow">
@@ -570,6 +488,12 @@ export default function PesananPage() {
 
             {/* List Pesanan */}
             <div className="space-y-6 relative z-10">
+              {isOrderLoading && filteredOrderGroups.length === 0 && (
+                <div className="text-center py-10 bg-white/5 rounded-[24px] border border-white/10 text-gray-400 font-bold">
+                  Memuat pesanan...
+                </div>
+              )}
+
               {filteredOrderGroups.map((group, index) => {
                 const firstDetail = group.items[0];
                 const firstProduct = firstDetail?.produk;
@@ -741,7 +665,7 @@ export default function PesananPage() {
                 );
               })}
 
-              {filteredOrderGroups.length === 0 && (
+              {!isOrderLoading && filteredOrderGroups.length === 0 && (
                 <div className="text-center py-20 bg-white/5 rounded-[24px] border border-dashed border-white/10 text-gray-500 font-bold">
                   Belum ada pesanan tersimpan.
                 </div>

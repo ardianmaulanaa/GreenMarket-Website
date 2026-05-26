@@ -4,6 +4,7 @@ import React, { Suspense, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import Script from "next/script";
+import Nav from "@/components/navbar";
 
 interface Produk {
   id_produk: string;
@@ -456,116 +457,7 @@ function PembayaranContent() {
       />
       <div className="min-h-screen bg-[#edf3e7] relative overflow-hidden font-sans">
         {/* NAVBAR */}
-        <nav className="fixed top-0 left-0 right-0 z-[100] bg-[#1a1f1b]/90 backdrop-blur-xl border-b border-white/10 shadow-lg h-[72px] px-8 flex items-center justify-between">
-          <div className="flex items-center gap-8">
-            <button
-              type="button"
-              onClick={() => {
-                const role = localStorage.getItem("userRole");
-                if (role === "SELLER") router.push("/dashboard-seller");
-                else router.push("/dashboard-buyer");
-              }}
-              className="group mr-1 flex shrink-0 items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-3 py-2 text-xs font-semibold text-white/80 shadow-[0_0_20px_rgba(47,168,79,0.15)] backdrop-blur-md transition-all duration-300 hover:-translate-y-0.5 hover:border-[#2fa84f]/45 hover:bg-white/10 hover:text-white hover:shadow-[0_6px_28px_rgba(47,168,79,0.28)]"
-            >
-              <svg className="shrink-0 transition-transform duration-300 group-hover:-translate-x-1" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <line x1="19" y1="12" x2="5" y2="12" />
-                <polyline points="12 19 5 12 12 5" />
-              </svg>
-              Kembali
-            </button>
-            <Link
-              href="/dashboard-buyer"
-              className="flex items-center gap-2 no-underline group"
-            >
-              <div className="w-[36px] h-[36px] rounded-xl bg-gradient-to-br from-[#2fa84f] to-[#1a7a35] flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform">
-                <svg
-                  width="20"
-                  height="20"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="white"
-                  strokeWidth="2.5"
-                >
-                  <path d="M12 2L3 7v9c0 5 9 7 9 7s9-2 9-7V7l-9-5z" />
-                </svg>
-              </div>
-              <span className="text-xl font-black text-white tracking-tight uppercase">
-                Green<span className="text-[#2fa84f]">Market</span>
-              </span>
-            </Link>
-
-            <div className="hidden lg:flex items-center gap-4">
-              {user.role === "SELLER" && (
-                <Link
-                  href="/panel-penjual"
-                  className="bg-[#2fa84f] text-white px-5 py-2.5 rounded-xl text-xs font-bold no-underline hover:bg-[#268c41] transition-all shadow-[0_4px_12px_rgba(47,168,79,0.3)] flex items-center gap-2"
-                >
-                  <svg
-                    width="14"
-                    height="14"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="3"
-                  >
-                    <line x1="12" y1="5" x2="12" y2="19" />
-                    <line x1="5" y1="12" x2="19" y2="12" />
-                  </svg>
-                  Panel Inventaris
-                </Link>
-              )}
-            </div>
-          </div>
-
-          <div className="flex items-center gap-4">
-            <Link
-              href="/keranjang"
-              className="w-[42px] h-[42px] rounded-xl border border-white/10 bg-white/5 flex items-center justify-center text-white/70 hover:text-[#2fa84f] transition-all"
-            >
-              <svg
-                width="20"
-                height="20"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.8"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" />
-                <line x1="3" y1="6" x2="21" y2="6" />
-                <path d="M16 10a4 4 0 01-8 0" />
-              </svg>
-            </Link>
-
-            <button
-              onClick={handleLogout}
-              className="text-gray-400 hover:text-red-500 text-xs font-bold uppercase transition-colors bg-transparent border-none cursor-pointer mx-2"
-            >
-              Logout
-            </button>
-
-            <Link
-              href="/profile"
-              className="flex items-center gap-3 group no-underline border-l border-white/10 pl-4"
-            >
-              <div className="text-right hidden sm:block">
-                <p className="text-xs font-bold text-white m-0 group-hover:text-[#2fa84f] transition-colors">
-                  {user.nama || "User"}
-                </p>
-                <p className="text-[10px] text-[#2fa84f] m-0 font-black uppercase">
-                  {user.role === "SELLER" ? "Seller Hub" : "Buyer"}
-                </p>
-              </div>
-
-              <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-[#2fa84f] to-[#1a7a35] p-[2px]">
-                <div className="w-full h-full rounded-full bg-[#0a110b] flex items-center justify-center text-white font-bold uppercase">
-                  {user.nama ? user.nama.charAt(0) : "U"}
-                </div>
-              </div>
-            </Link>
-          </div>
-        </nav>
+        <Nav variant="pembayaran" user={user} handleLogout={handleLogout} />
 
         {/* CONTENT */}
         <main className="max-w-[1280px] mx-auto pt-[110px] px-6 pb-16 relative z-10">

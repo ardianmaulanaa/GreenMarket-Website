@@ -7,6 +7,7 @@ import dynamic from "next/dynamic";
 import ProfileSidebar from "@/components/profile/ProfileSidebar";
 import Footer from "@/components/Footer";
 import { AnimatePresence, motion } from "framer-motion";
+import Nav from "@/components/navbar";
 
 // Animation styles for smooth entrance effects
 const animationStyles = `
@@ -66,7 +67,11 @@ const MapPicker = dynamic(() => import("./MapPicker"), {
 
 type NotificationState = { type: "success" | "error"; message: string } | null;
 
-function FormNotification({ notification }: { notification: NotificationState }) {
+function FormNotification({
+  notification,
+}: {
+  notification: NotificationState;
+}) {
   if (!notification) return null;
 
   const isSuccess = notification.type === "success";
@@ -124,7 +129,9 @@ function FormNotification({ notification }: { notification: NotificationState })
             </svg>
           )}
         </span>
-        <p className={`whitespace-nowrap text-xs font-semibold ${isSuccess ? "text-[#b8f5c8]" : "text-red-100"}`}>
+        <p
+          className={`whitespace-nowrap text-xs font-semibold ${isSuccess ? "text-[#b8f5c8]" : "text-red-100"}`}
+        >
           {text}
         </p>
       </motion.div>
@@ -146,9 +153,12 @@ export default function AlamatPage() {
   const [notification, setNotification] = useState<NotificationState>(null);
   const [deleteModalId, setDeleteModalId] = useState<string | null>(null);
 
-  const showNotification = useCallback((type: "success" | "error", message: string) => {
-    setNotification({ type, message });
-  }, []);
+  const showNotification = useCallback(
+    (type: "success" | "error", message: string) => {
+      setNotification({ type, message });
+    },
+    [],
+  );
 
   useEffect(() => {
     if (!notification) return;
@@ -186,7 +196,10 @@ export default function AlamatPage() {
       );
       const data = await response.json();
       if (!response.ok) {
-        showNotification("error", data.message || "Gagal mengambil data alamat");
+        showNotification(
+          "error",
+          data.message || "Gagal mengambil data alamat",
+        );
         return;
       }
       setAddresses(data);
@@ -228,7 +241,7 @@ export default function AlamatPage() {
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
     setFormData({ ...formData, nama_penerima: val });
-    
+
     if (val && !/^[a-zA-Z\s'.]+$/.test(val)) {
       setNameError("Nama hanya boleh huruf");
     } else {
@@ -237,13 +250,13 @@ export default function AlamatPage() {
   };
 
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    let val = e.target.value.replace(/\D/g, '');
-    if (val.startsWith('0')) {
+    let val = e.target.value.replace(/\D/g, "");
+    if (val.startsWith("0")) {
       val = val.substring(1);
     }
     if (val.length > 13) val = val.substring(0, 13);
     setFormData({ ...formData, nomor_hp: val });
-    
+
     if (val.length > 0 && val.length < 9) {
       setPhoneError("Nomor tidak valid (minimal 9 angka)");
     } else {
@@ -264,7 +277,10 @@ export default function AlamatPage() {
       showNotification("error", "Data tidak valid");
       return;
     }
-    if (formData.nama_penerima && !/^[a-zA-Z\s'.]+$/.test(formData.nama_penerima)) {
+    if (
+      formData.nama_penerima &&
+      !/^[a-zA-Z\s'.]+$/.test(formData.nama_penerima)
+    ) {
       setNameError("Nama hanya boleh huruf");
       showNotification("error", "Data tidak valid");
       return;
@@ -275,10 +291,10 @@ export default function AlamatPage() {
         ? `http://localhost:5050/api/alamat/${userId}/${editingId}`
         : `http://localhost:5050/api/alamat/${userId}`;
       const method = editingId ? "PUT" : "POST";
-      
+
       const payload = {
         ...formData,
-        nomor_hp: "+62" + formData.nomor_hp
+        nomor_hp: "+62" + formData.nomor_hp,
       };
 
       const response = await fetch(url, {
@@ -291,7 +307,12 @@ export default function AlamatPage() {
         showNotification("error", data.message || "Gagal menyimpan alamat");
         return;
       }
-      showNotification("success", editingId ? "Alamat berhasil diperbarui" : "Alamat berhasil ditambahkan");
+      showNotification(
+        "success",
+        editingId
+          ? "Alamat berhasil diperbarui"
+          : "Alamat berhasil ditambahkan",
+      );
       await fetchAddresses();
       resetForm();
       setEditingId(null);
@@ -316,9 +337,9 @@ export default function AlamatPage() {
   };
 
   const handleEdit = (address: Address) => {
-    let phone = address.nomor_hp.replace(/\D/g, '');
-    if (phone.startsWith('62')) phone = phone.substring(2);
-    else if (phone.startsWith('0')) phone = phone.substring(1);
+    let phone = address.nomor_hp.replace(/\D/g, "");
+    if (phone.startsWith("62")) phone = phone.substring(2);
+    else if (phone.startsWith("0")) phone = phone.substring(1);
 
     setFormData({
       nama_penerima: address.nama_penerima,
@@ -341,7 +362,7 @@ export default function AlamatPage() {
     if (!deleteModalId) return;
     const id_alamat = deleteModalId;
     setDeleteModalId(null);
-    
+
     const userId = localStorage.getItem("userId");
     if (!userId) {
       showNotification("error", "Silakan login terlebih dahulu");
@@ -387,118 +408,7 @@ export default function AlamatPage() {
       </AnimatePresence>
 
       {/* NAVBAR */}
-      <nav
-        className={`fixed top-0 left-0 right-0 z-[100] bg-[#1a1f1b]/90 backdrop-blur-xl border-b border-white/10 shadow-lg h-[72px] px-8 flex items-center justify-between ${shouldAnimate ? "animate-fade-in" : "opacity-0"}`}
-      >
-        <div className="flex items-center gap-8">
-          <button
-            type="button"
-            onClick={() => {
-              const role = localStorage.getItem("userRole");
-              if (role === "SELLER") router.push("/dashboard-seller");
-              else router.push("/dashboard-buyer");
-            }}
-            className="group mr-1 flex shrink-0 items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-3 py-2 text-xs font-semibold text-white/80 shadow-[0_0_20px_rgba(47,168,79,0.15)] backdrop-blur-md transition-all duration-300 hover:-translate-y-0.5 hover:border-[#2fa84f]/45 hover:bg-white/10 hover:text-white hover:shadow-[0_6px_28px_rgba(47,168,79,0.28)]"
-          >
-            <svg
-              className="shrink-0 transition-transform duration-300 group-hover:-translate-x-1"
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <line x1="19" y1="12" x2="5" y2="12" />
-              <polyline points="12 19 5 12 12 5" />
-            </svg>
-            Kembali
-          </button>
-          <Link
-            href="/beranda-dashboard"
-            className="flex items-center gap-2 no-underline group"
-          >
-            <div className="w-[36px] h-[36px] rounded-xl bg-gradient-to-br from-[#2fa84f] to-[#1a7a35] flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform">
-              <svg
-                width="20"
-                height="20"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="white"
-                strokeWidth="2.5"
-              >
-                <path d="M12 2L3 7v9c0 5 9 7 9 7s9-2 9-7V7l-9-5z" />
-              </svg>
-            </div>
-            <span className="text-xl font-black text-white tracking-tight uppercase">
-              Green<span className="text-[#2fa84f]">Market</span>
-            </span>
-          </Link>
-
-          {!isSeller && (
-            <div className="hidden lg:flex items-center gap-4">
-              <Link
-                href="/register-penjual"
-                className="bg-white/5 border border-white/10 text-white px-5 py-2.5 rounded-xl text-xs font-bold no-underline hover:bg-[#2fa84f] hover:border-transparent transition-all flex items-center gap-2"
-              >
-                <svg
-                  width="14"
-                  height="14"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="3"
-                >
-                  <line x1="12" y1="5" x2="12" y2="19" />
-                  <line x1="5" y1="12" x2="19" y2="12" />
-                </svg>
-                Mulai Berjualan
-              </Link>
-            </div>
-          )}
-        </div>
-        <div className="flex-1 max-w-xl mx-10 hidden md:block">
-          <div className="relative group">
-            <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
-              <svg
-                width="18"
-                height="18"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="#6b7280"
-                strokeWidth="2.5"
-              >
-                <circle cx="11" cy="11" r="8" />
-                <line x1="21" y1="21" x2="16.65" y2="16.65" />
-              </svg>
-            </div>
-            <input
-              type="text"
-              placeholder="Cari produk ramah lingkungan..."
-              className="w-full bg-white/5 border border-white/10 rounded-2xl pl-12 pr-4 py-2.5 text-sm text-white focus:outline-none focus:border-[#2fa84f] transition-all placeholder:text-gray-500"
-            />
-          </div>
-        </div>
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-3 pl-2 group">
-            <div className="text-right hidden sm:block">
-              <p className="text-xs font-bold text-white m-0 group-hover:text-[#2fa84f] transition-colors">
-                {user.nama}
-              </p>
-              <p className="text-[10px] text-[#2fa84f] m-0 font-black uppercase">
-                {user.role}
-              </p>
-            </div>
-            <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-[#2fa84f] to-[#1a7a35] p-[2px]">
-              <div className="w-full h-full rounded-full bg-[#0a110b] flex items-center justify-center text-white font-bold uppercase">
-                {user.nama ? user.nama.charAt(0) : "U"}
-              </div>
-            </div>
-          </div>
-        </div>
-      </nav>
+      <Nav variant="alamat" shouldAnimate={shouldAnimate} user={user} />
 
       {/* KONTEN UTAMA */}
       <div className="max-w-[1600px] mx-auto pt-28 pb-20 px-6 flex flex-col lg:flex-row gap-8 relative z-10 w-full flex-grow">
@@ -619,7 +529,7 @@ export default function AlamatPage() {
                   name="nama_penerima"
                   value={formData.nama_penerima}
                   onChange={handleNameChange}
-                  className={`w-full px-4 py-3 border rounded-xl outline-none transition-all shadow-inner bg-[#1a1f1b]/50 text-sm text-white ${nameError ? 'border-red-500 shadow-[0_0_10px_rgba(239,68,68,0.3)]' : 'border-white/10 focus:border-[#2fa84f] focus:ring-1 focus:ring-[#2fa84f]'}`}
+                  className={`w-full px-4 py-3 border rounded-xl outline-none transition-all shadow-inner bg-[#1a1f1b]/50 text-sm text-white ${nameError ? "border-red-500 shadow-[0_0_10px_rgba(239,68,68,0.3)]" : "border-white/10 focus:border-[#2fa84f] focus:ring-1 focus:ring-[#2fa84f]"}`}
                   required
                 />
                 {nameError && (
@@ -632,10 +542,16 @@ export default function AlamatPage() {
                 <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1 mb-1.5 block">
                   Nomor Telepon
                 </label>
-                <div className={`flex items-stretch bg-[#1a1f1b]/50 border rounded-xl shadow-inner transition-all overflow-hidden ${phoneError ? 'border-red-500 shadow-[0_0_10px_rgba(239,68,68,0.3)]' : 'border-white/10 focus-within:border-[#2fa84f] focus-within:ring-1 focus-within:ring-[#2fa84f]'}`}>
+                <div
+                  className={`flex items-stretch bg-[#1a1f1b]/50 border rounded-xl shadow-inner transition-all overflow-hidden ${phoneError ? "border-red-500 shadow-[0_0_10px_rgba(239,68,68,0.3)]" : "border-white/10 focus-within:border-[#2fa84f] focus-within:ring-1 focus-within:ring-[#2fa84f]"}`}
+                >
                   <div className="w-[100px] flex shrink-0 items-center justify-center gap-2 bg-white/5 border-r border-white/10 select-none">
-                    <span className="text-lg leading-none flex items-center justify-center">🇮🇩</span>
-                    <span className="text-sm font-bold text-white/80 flex items-center justify-center">+62</span>
+                    <span className="text-lg leading-none flex items-center justify-center">
+                      🇮🇩
+                    </span>
+                    <span className="text-sm font-bold text-white/80 flex items-center justify-center">
+                      +62
+                    </span>
                   </div>
                   <input
                     name="nomor_hp"
@@ -726,21 +642,32 @@ export default function AlamatPage() {
               className="bg-[#1a1f1b] border border-white/10 p-8 rounded-[24px] shadow-[0_20px_50px_rgba(0,0,0,0.5)] w-full max-w-sm text-center relative overflow-hidden"
             >
               <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-transparent via-red-500 to-transparent opacity-50"></div>
-              
+
               <div className="w-16 h-16 bg-red-500/10 border border-red-500/20 rounded-2xl mx-auto flex items-center justify-center mb-6 text-red-500 shadow-[0_0_20px_rgba(239,68,68,0.15)]">
-                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <svg
+                  width="32"
+                  height="32"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
                   <path d="M3 6h18" />
                   <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
                   <line x1="10" y1="11" x2="10" y2="17" />
                   <line x1="14" y1="11" x2="14" y2="17" />
                 </svg>
               </div>
-              
-              <h3 className="text-xl font-[800] text-white mb-2 tracking-tight">Hapus Alamat?</h3>
+
+              <h3 className="text-xl font-[800] text-white mb-2 tracking-tight">
+                Hapus Alamat?
+              </h3>
               <p className="text-sm text-gray-400 mb-8 font-medium">
                 Apakah Anda yakin ingin menghapus alamat ini?
               </p>
-              
+
               <div className="flex gap-3">
                 <button
                   onClick={() => setDeleteModalId(null)}
