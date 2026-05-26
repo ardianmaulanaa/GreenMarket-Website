@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import Footer from "@/components/Footer";
 import { useToast } from "@/hooks/useToast";
 import { AnimatePresence, motion } from "framer-motion";
+import Nav from "@/components/navbar";
 
 // Animation styles for smooth entrance effects
 const animationStyles = `
@@ -477,166 +478,17 @@ export default function DashboardBuyer() {
         </div>
       )}
 
-      <nav
-        className={`fixed top-0 left-0 right-0 z-[100] bg-[#1a1f1b]/90 backdrop-blur-xl border-b border-white/10 shadow-lg h-[72px] px-8 flex items-center justify-between ${shouldAnimate ? "animate-fade-in" : "opacity-0"}`}
-      >
-        <div className="flex items-center gap-8">
-          <Link
-            href="/dashboard-buyer"
-            className="flex items-center gap-2 no-underline group"
-          >
-            <div className="w-[36px] h-[36px] rounded-xl bg-gradient-to-br from-[#2fa84f] to-[#1a7a35] flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform">
-              <svg
-                width="20"
-                height="20"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="white"
-                strokeWidth="2.5"
-              >
-                <path d="M12 2L3 7v9c0 5 9 7 9 7s9-2 9-7V7l-9-5z" />
-              </svg>
-            </div>
-            <span className="text-xl font-black text-white tracking-tight uppercase">
-              Green<span className="text-[#2fa84f]">Market</span>
-            </span>
-          </Link>
-
-          <div className="hidden lg:flex items-center gap-4">
-            <button
-              type="button"
-              onClick={() => {
-                const userRole = localStorage.getItem("userRole");
-
-                if (userRole === "GUEST") {
-                  setShowSellerPopup(true);
-                  return;
-                }
-
-                router.push("/register-penjual");
-              }}
-              className="bg-white/5 border border-white/10 text-white px-5 py-2.5 rounded-xl text-xs font-bold no-underline hover:bg-[#2fa84f] hover:border-transparent transition-all flex items-center gap-2 cursor-pointer"
-            >
-              <svg
-                width="14"
-                height="14"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="3"
-              >
-                <line x1="12" y1="5" x2="12" y2="19" />
-                <line x1="5" y1="12" x2="19" y2="12" />
-              </svg>
-              Mulai Berjualan
-            </button>
-          </div>
-        </div>
-
-        <div className="flex-1 max-w-xl mx-10">
-          <div className="relative group">
-            <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
-              <svg
-                width="18"
-                height="18"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="#6b7280"
-                strokeWidth="2.5"
-              >
-                <circle cx="11" cy="11" r="8" />
-                <line x1="21" y1="21" x2="16.65" y2="16.65" />
-              </svg>
-            </div>
-            <input
-              type="text"
-              placeholder="Cari produk ramah lingkungan..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full bg-white/5 border border-white/10 rounded-2xl pl-12 pr-4 py-2.5 text-sm text-white focus:outline-none focus:border-[#2fa84f] transition-all placeholder:text-gray-500"
-            />
-          </div>
-        </div>
-
-        <div className="flex items-center gap-4">
-          <Link
-            href="/keranjang"
-            className="w-[42px] h-[42px] rounded-xl border border-white/10 bg-white/5 flex items-center justify-center text-white/70 hover:text-[#2fa84f] transition-all"
-          >
-            <svg
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.8"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" />
-              <line x1="3" y1="6" x2="21" y2="6" />
-              <path d="M16 10a4 4 0 01-8 0" />
-            </svg>
-          </Link>
-
-          {userRoleState === "GUEST" ? (
-            <div className="flex items-center gap-3 mx-2 border-l border-white/10 pl-6 h-8">
-              <Link
-                href="/login"
-                className="bg-transparent border border-[#2fa84f] text-[#2fa84f] px-5 py-2 rounded-xl text-xs font-bold no-underline hover:bg-[#2fa84f]/10 transition-colors"
-              >
-                Masuk
-              </Link>
-              <Link
-                href="/register"
-                className="bg-[#2fa84f] text-white px-5 py-2 rounded-xl text-xs font-bold no-underline hover:bg-[#268c41] transition-colors shadow-[0_4px_15px_rgba(47,168,79,0.2)] hover:-translate-y-0.5"
-              >
-                Daftar
-              </Link>
-            </div>
-          ) : (
-            <button
-              onClick={handleLogout}
-              className="text-gray-400 hover:text-red-500 text-xs font-bold uppercase transition-colors bg-transparent border-none cursor-pointer mx-2"
-            >
-              Logout
-            </button>
-          )}
-
-          <button
-            type="button"
-            onClick={() => {
-              const userRole = localStorage.getItem("userRole");
-
-              if (userRole === "GUEST") {
-                showNotification(
-                  "error",
-                  "Fitur ini tidak tersedia pada akun guest",
-                );
-                return;
-              }
-
-              router.push("/profile");
-            }}
-            className="flex items-center gap-3 group no-underline border-l border-white/10 pl-4 bg-transparent border-y-0 border-r-0 cursor-pointer"
-          >
-            <div className="text-right hidden sm:block">
-              <p className="text-xs font-bold text-white m-0 group-hover:text-[#2fa84f] transition-colors">
-                {userName}
-              </p>
-              <p className="text-[10px] text-[#2fa84f] m-0 font-black uppercase">
-                Buyer
-              </p>
-            </div>
-
-            <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-[#2fa84f] to-[#1a7a35] p-[2px]">
-              <div className="w-full h-full rounded-full bg-[#0a110b] flex items-center justify-center text-white font-bold uppercase">
-                {userName.charAt(0)}
-              </div>
-            </div>
-          </button>
-        </div>
-      </nav>
+      <Nav
+        variant="dashboardBuyer"
+        shouldAnimate={shouldAnimate}
+        userName={userName}
+        userRole={userRoleState}
+        searchTerm={searchTerm}
+        setSearchTerm={setSearchTerm}
+        setShowSellerPopup={setShowSellerPopup}
+        showNotification={showNotification}
+        handleLogout={handleLogout}
+      />
 
       <main className="flex-grow container max-w-[1600px] mx-auto pt-24 px-6 pb-20 relative z-10 w-full">
         <div

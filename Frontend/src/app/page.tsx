@@ -15,6 +15,7 @@ import CategoryCard from "@/components/landing/CategoryCard";
 import FloatingBlobs from "@/components/landing/FloatingBlobs";
 import InfoCard from "@/components/landing/InfoCard";
 import ParticlesOverlay from "@/components/landing/ParticlesOverlay";
+import Nav from "@/components/navbar";
 
 import { useToast } from "@/hooks/useToast";
 
@@ -255,66 +256,12 @@ export default function LandingPage() {
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.5 }}
       >
-        <nav className="mx-auto flex h-[72px] max-w-7xl items-center justify-between px-5 md:px-10">
-          <Link href="/" className="flex items-center gap-2.5 no-underline">
-            <motion.div
-              className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-[#2fa84f] to-[#1a7a35] shadow-[0_4px_20px_rgba(47,168,79,0.4)]"
-              whileHover={{ scale: 1.06 }}
-            >
-              <svg
-                width="18"
-                height="18"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="white"
-                strokeWidth="2.2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M12 2L3 7v9c0 5 9 7 9 7s9-2 9-7V7l-9-5z" />
-              </svg>
-            </motion.div>
-
-            <span
-              className={`text-lg font-extrabold tracking-tight transition-colors md:text-xl ${
-                scrolled ? "text-[#1a2e1f]" : "text-white"
-              }`}
-            >
-              GreenMarket
-            </span>
-          </Link>
-
-          <div className="flex items-center gap-4 md:gap-6">
-            <button
-              type="button"
-              onClick={handleGuestAccess}
-              disabled={isGuestLoading}
-              className={`hidden text-sm font-semibold no-underline transition hover:text-[#2fa84f] disabled:cursor-not-allowed disabled:opacity-70 sm:inline ${
-                scrolled ? "text-[#1a2e1f]/80" : "text-white/90"
-              }`}
-            >
-              Jelajahi
-            </button>
-
-            <Link
-              href="/login"
-              className={`text-sm font-semibold no-underline transition hover:text-[#2fa84f] ${
-                scrolled ? "text-[#1a2e1f]" : "text-white"
-              }`}
-            >
-              Masuk
-            </Link>
-
-            <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.97 }}>
-              <Link
-                href="/register"
-                className="inline-block rounded-xl bg-[#2fa84f] px-5 py-2.5 text-sm font-bold text-white no-underline shadow-[0_4px_24px_rgba(47,168,79,0.35)] transition hover:bg-[#268c41]"
-              >
-                Daftar
-              </Link>
-            </motion.div>
-          </div>
-        </nav>
+        <Nav
+          variant="home"
+          scrolled={scrolled}
+          handleGuestAccess={handleGuestAccess}
+          isGuestLoading={isGuestLoading}
+        />
       </motion.header>
 
       <section ref={heroRef} className="relative min-h-screen overflow-hidden">
@@ -351,7 +298,12 @@ export default function LandingPage() {
           className="relative z-10 mx-auto flex min-h-screen max-w-7xl flex-col justify-center px-5 pb-24 pt-28 md:px-10 md:pt-32"
           style={{ y: heroContentY, opacity: heroOpacity }}
         >
-          <motion.div initial="hidden" animate="visible" variants={stagger} className="max-w-3xl">
+          <motion.div
+            initial="hidden"
+            animate="visible"
+            variants={stagger}
+            className="max-w-3xl"
+          >
             <motion.span
               variants={fadeUp}
               custom={0}
@@ -375,11 +327,15 @@ export default function LandingPage() {
               custom={2}
               className="mt-6 max-w-xl text-base leading-relaxed text-white/75 md:text-lg"
             >
-              Bantu selamatkan bumi dengan memberikan nafas kedua bagi barang tak
-              terpakai Anda.
+              Bantu selamatkan bumi dengan memberikan nafas kedua bagi barang
+              tak terpakai Anda.
             </motion.p>
 
-            <motion.div variants={fadeUp} custom={3} className="mt-10 flex flex-wrap gap-4">
+            <motion.div
+              variants={fadeUp}
+              custom={3}
+              className="mt-10 flex flex-wrap gap-4"
+            >
               <motion.button
                 type="button"
                 onClick={handleGuestAccess}
@@ -406,9 +362,23 @@ export default function LandingPage() {
               custom={4}
               className="mt-14 grid grid-cols-1 gap-6 border-t border-white/15 pt-10 sm:grid-cols-3 sm:gap-8"
             >
-              <AnimatedCounter value={50} suffix="K+" label="Produk Daur Ulang" />
-              <AnimatedCounter value={12} suffix="K+" label="Pengguna Aktif" delay={0.1} />
-              <AnimatedCounter value={98} suffix="%" label="Kepuasan Hijau" delay={0.2} />
+              <AnimatedCounter
+                value={50}
+                suffix="K+"
+                label="Produk Daur Ulang"
+              />
+              <AnimatedCounter
+                value={12}
+                suffix="K+"
+                label="Pengguna Aktif"
+                delay={0.1}
+              />
+              <AnimatedCounter
+                value={98}
+                suffix="%"
+                label="Kepuasan Hijau"
+                delay={0.2}
+              />
             </motion.div>
           </motion.div>
         </motion.div>
@@ -449,7 +419,12 @@ export default function LandingPage() {
 
           <div className="mt-14 grid grid-cols-2 gap-4 sm:gap-6 md:grid-cols-3 lg:grid-cols-5">
             {categories.map((cat, i) => (
-              <CategoryCard key={cat.name} name={cat.name} icon={cat.icon} index={i} />
+              <CategoryCard
+                key={cat.name}
+                name={cat.name}
+                icon={cat.icon}
+                index={i}
+              />
             ))}
           </div>
         </SectionReveal>
@@ -476,7 +451,11 @@ export default function LandingPage() {
         />
 
         <SectionReveal className="relative z-10 mx-auto max-w-7xl">
-          <motion.div variants={fadeUp} custom={0} className="mx-auto mb-14 max-w-2xl text-center md:mb-16">
+          <motion.div
+            variants={fadeUp}
+            custom={0}
+            className="mx-auto mb-14 max-w-2xl text-center md:mb-16"
+          >
             <span className="inline-flex items-center gap-2 rounded-full border border-[#2fa84f]/20 bg-white/80 px-4 py-1.5 text-[10px] font-bold uppercase tracking-[0.22em] text-[#2fa84f] backdrop-blur-sm">
               <span className="h-1 w-1 rounded-full bg-[#2fa84f]" />
               Mengapa GreenMarket
@@ -487,8 +466,8 @@ export default function LandingPage() {
             </h2>
 
             <p className="mt-4 text-base text-[#6b7c71] md:text-lg">
-              Dua cara GreenMarket membantu kamu dan planet—dengan pengalaman yang
-              terasa premium dari awal.
+              Dua cara GreenMarket membantu kamu dan planet—dengan pengalaman
+              yang terasa premium dari awal.
             </p>
           </motion.div>
 
@@ -562,14 +541,16 @@ export default function LandingPage() {
                   </h3>
 
                   <p className="mt-5 text-sm leading-relaxed text-white/55 md:text-base">
-                    Setiap transaksi mendukung ekonomi sirkular dan mengurangi limbah
-                    yang mencemari bumi.
+                    Setiap transaksi mendukung ekonomi sirkular dan mengurangi
+                    limbah yang mencemari bumi.
                   </p>
                 </div>
 
                 <div className="mt-8 inline-flex items-center text-sm font-bold text-[#7ee8a0]">
                   {isGuestLoading ? "Memproses..." : "Jelajahi produk"}
-                  <span className="ml-2 transition group-hover:translate-x-1">→</span>
+                  <span className="ml-2 transition group-hover:translate-x-1">
+                    →
+                  </span>
                 </div>
               </div>
             </motion.button>
@@ -608,8 +589,8 @@ export default function LandingPage() {
             </h2>
 
             <p className="relative mx-auto my-8 max-w-2xl text-base text-white/50 md:my-10 md:text-lg">
-              Mulai langkah kecil untuk bumi yang lebih baik bersama jutaan pahlawan bumi
-              lainnya.
+              Mulai langkah kecil untuk bumi yang lebih baik bersama jutaan
+              pahlawan bumi lainnya.
             </p>
 
             <Link
@@ -650,8 +631,8 @@ export default function LandingPage() {
             </motion.div>
 
             <p className="max-w-sm text-sm leading-relaxed text-white/45">
-              Solusi ramah lingkungan untuk masa depan. Menghubungkan barang berkualitas
-              dengan pemilik baru yang peduli bumi.
+              Solusi ramah lingkungan untuk masa depan. Menghubungkan barang
+              berkualitas dengan pemilik baru yang peduli bumi.
             </p>
           </div>
 

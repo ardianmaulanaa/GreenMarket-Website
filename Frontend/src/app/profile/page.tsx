@@ -9,8 +9,12 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState, type SyntheticEvent } from "react";
 import ProfileSidebar from "@/components/profile/ProfileSidebar";
 import Footer from "@/components/Footer";
+<<<<<<< HEAD
 import { useToast } from "@/hooks/useToast";
 import { useUser } from "@/hooks/useUser";
+=======
+import Nav from "@/components/navbar";
+>>>>>>> 474bab120b63cc9515cab42e54543657385d0bd2
 
 const fadeUp: Variants = {
   hidden: { opacity: 0, y: 24 },
@@ -230,118 +234,7 @@ export default function ProfilePage() {
       />
 
       {/* Navbar */}
-      <nav className="fixed top-0 right-0 left-0 z-[100] flex h-[72px] items-center justify-between border-b border-white/10 bg-[#1a1f1b]/90 px-4 shadow-lg backdrop-blur-xl sm:px-6 lg:px-8">
-        <motion.div className="flex min-w-0 items-center gap-2 sm:gap-3">
-          <button
-            type="button"
-            onClick={() => {
-              const role = localStorage.getItem("userRole");
-              if (role === "SELLER") router.push("/dashboard-seller");
-              else router.push("/dashboard-buyer");
-            }}
-            className="group mr-1 flex shrink-0 items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-3 py-2 text-xs font-semibold text-white/80 shadow-[0_0_20px_rgba(47,168,79,0.15)] backdrop-blur-md transition-all duration-300 hover:-translate-y-0.5 hover:border-[#2fa84f]/45 hover:bg-white/10 hover:text-white hover:shadow-[0_6px_28px_rgba(47,168,79,0.28)]"
-          >
-            <svg
-              className="shrink-0 transition-transform duration-300 group-hover:-translate-x-1"
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <line x1="19" y1="12" x2="5" y2="12" />
-              <polyline points="12 19 5 12 12 5" />
-            </svg>
-            Kembali
-          </button>
-          <Link
-            href={dashboardHref}
-            className="flex min-w-0 items-center gap-2 no-underline group"
-          >
-            <motion.div
-              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#2fa84f] to-[#1a7a35] shadow-lg sm:h-[36px] sm:w-[36px]"
-              whileHover={{ scale: 1.05 }}
-            >
-              <svg
-                width="18"
-                height="18"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="white"
-                strokeWidth="2.5"
-              >
-                <path d="M12 2L3 7v9c0 5 9 7 9 7s9-2 9-7V7l-9-5z" />
-              </svg>
-            </motion.div>
-            <span className="truncate text-base font-black tracking-tight text-white uppercase sm:text-xl">
-              Green<span className="text-[#2fa84f]">Market</span>
-            </span>
-          </Link>
-
-          {!isSeller && (
-            <div className="hidden lg:flex items-center gap-4">
-              <Link
-                href="/register-penjual"
-                className="bg-white/5 border border-white/10 text-white px-5 py-2.5 rounded-xl text-xs font-bold no-underline hover:bg-[#2fa84f] hover:border-transparent transition-all flex items-center gap-2"
-              >
-                <svg
-                  width="14"
-                  height="14"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="3"
-                >
-                  <line x1="12" y1="5" x2="12" y2="19" />
-                  <line x1="5" y1="12" x2="19" y2="12" />
-                </svg>
-                Mulai Berjualan
-              </Link>
-            </div>
-          )}
-        </motion.div>
-
-        <div className="mx-4 hidden max-w-xl flex-1 md:block">
-          <div className="relative">
-            <motion.div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
-              <svg
-                width="18"
-                height="18"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="#6b7280"
-                strokeWidth="2.5"
-              >
-                <circle cx="11" cy="11" r="8" />
-                <line x1="21" y1="21" x2="16.65" y2="16.65" />
-              </svg>
-            </motion.div>
-            <input
-              type="text"
-              placeholder="Cari produk ramah lingkungan..."
-              className="w-full rounded-2xl border border-white/10 bg-white/5 py-2.5 pr-4 pl-12 text-sm text-white transition-all placeholder:text-gray-500 focus:border-[#2fa84f] focus:outline-none"
-            />
-          </div>
-        </div>
-
-        <div className="flex shrink-0 items-center gap-2 sm:gap-3">
-          <div className="hidden text-right sm:block">
-            <p className="m-0 text-xs font-bold text-white">{profile.nama}</p>
-            <p className="m-0 text-[10px] font-black uppercase text-[#2fa84f]">
-              {isSeller ? "SELLER HUB" : "BUYER"}
-            </p>
-          </div>
-          <motion.img
-            src={avatarSrc}
-            alt=""
-            className="h-10 w-10 rounded-full border-2 border-[#2fa84f]/40 object-cover shadow-[0_0_12px_rgba(47,168,79,0.3)]"
-            whileHover={{ scale: 1.05 }}
-          />
-        </div>
-      </nav>
+      <Nav variant="profile" profile={profile} avatarSrc={avatarSrc} />
 
       <div className="relative z-10 mx-auto flex w-full max-w-[1600px] flex-grow flex-col gap-6 px-4 pt-24 pb-16 sm:px-6 lg:flex-row lg:gap-8 lg:px-6 lg:pt-28 lg:pb-20">
         {/* Sidebar */}

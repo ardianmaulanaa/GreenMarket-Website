@@ -5,7 +5,11 @@ import Link from "next/link";
 import Image from "next/image";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import Footer from "@/components/Footer";
+<<<<<<< HEAD
 import { useToast } from "@/hooks/useToast";
+=======
+import Nav from "@/components/navbar";
+>>>>>>> 474bab120b63cc9515cab42e54543657385d0bd2
 
 interface Produk {
   id_produk: string;
@@ -325,6 +329,7 @@ export default function DetailProdukPage() {
         </div>
       )}
 
+<<<<<<< HEAD
       <nav className="fixed top-0 left-0 right-0 z-[100] bg-[#1a1f1b]/90 backdrop-blur-xl border-b border-white/10 shadow-lg h-[72px] px-8 flex items-center justify-between">
         <div className="flex items-center gap-8">
           <button
@@ -465,6 +470,9 @@ export default function DetailProdukPage() {
           </button>
         </div>
       </nav>
+=======
+      <Nav variant="detail" user={user} />
+>>>>>>> 474bab120b63cc9515cab42e54543657385d0bd2
 
       <main className="flex-grow container max-w-[1200px] mx-auto pt-28 px-6 pb-20 relative z-10 w-full">
         <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-widest text-gray-500 mb-6">

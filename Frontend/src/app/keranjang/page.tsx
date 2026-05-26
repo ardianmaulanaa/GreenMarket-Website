@@ -4,8 +4,12 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Footer from "@/components/Footer";
+<<<<<<< HEAD
 import { useToast } from "@/hooks/useToast";
 import { useUser } from "@/hooks/useUser";
+=======
+import Nav from "@/components/navbar";
+>>>>>>> 474bab120b63cc9515cab42e54543657385d0bd2
 
 // Animation styles removed - imported globally from globals.css
 
@@ -151,7 +155,9 @@ export default function KeranjangPage() {
         return;
       }
 
-      setIsCheckoutDocked(dock.getBoundingClientRect().top <= window.innerHeight);
+      setIsCheckoutDocked(
+        dock.getBoundingClientRect().top <= window.innerHeight,
+      );
     };
 
     const frame = window.requestAnimationFrame(updateCheckoutDock);
@@ -314,6 +320,7 @@ export default function KeranjangPage() {
       <div className="absolute top-0 left-0 right-0 h-[360px] bg-[radial-gradient(circle_at_20%_20%,rgba(47,168,79,0.28),transparent_35%),radial-gradient(circle_at_80%_0%,rgba(238,251,232,0.7),transparent_36%)] pointer-events-none"></div>
       <div className="absolute right-[-160px] bottom-[80px] w-[520px] h-[520px] rounded-full bg-[#1f2a22]/45 blur-[120px] pointer-events-none"></div>
 
+<<<<<<< HEAD
       <nav className={`bg-[#1f2a22]/95 backdrop-blur-xl border-b border-white/10 sticky top-0 z-40 shadow-[0_10px_30px_rgba(10,17,11,0.22)] ${shouldAnimate ? 'animate-fade-in' : 'opacity-0'}`}>
         <div className="max-w-[1200px] mx-auto px-5 sm:px-8 py-6 flex flex-col lg:flex-row lg:items-center gap-6">
           <div className="flex items-center justify-between lg:justify-start gap-5 shrink-0">
@@ -390,9 +397,19 @@ export default function KeranjangPage() {
 </button>
         </div>
       </nav>
+=======
+      <Nav
+        variant="keranjang"
+        shouldAnimate={shouldAnimate}
+        user={user}
+        dashboardHref={dashboardHref}
+      />
+>>>>>>> 474bab120b63cc9515cab42e54543657385d0bd2
 
       <main className="relative z-10 mx-auto w-full max-w-[1200px] flex-1 px-4 pt-8 pb-8 sm:px-8 md:pb-10">
-        <div className={`mb-6 ${shouldAnimate ? 'animate-fade-in-up' : 'opacity-0'}`}>
+        <div
+          className={`mb-6 ${shouldAnimate ? "animate-fade-in-up" : "opacity-0"}`}
+        >
           <button
             type="button"
             onClick={() => {
@@ -402,7 +419,17 @@ export default function KeranjangPage() {
             }}
             className="group inline-flex shrink-0 items-center gap-1.5 rounded-full border border-[#1a2e1f]/15 bg-[#1a2e1f]/5 px-5 py-2 text-xs font-bold text-[#1a2e1f]/85 backdrop-blur-md transition-all duration-300 hover:-translate-y-0.5 hover:bg-[#2fa84f] hover:text-white hover:border-transparent hover:shadow-[0_6px_20px_rgba(47,168,79,0.25)]"
           >
-            <svg className="shrink-0 transition-transform duration-300 group-hover:-translate-x-1" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <svg
+              className="shrink-0 transition-transform duration-300 group-hover:-translate-x-1"
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
               <line x1="19" y1="12" x2="5" y2="12" />
               <polyline points="12 19 5 12 12 5" />
             </svg>
@@ -410,7 +437,9 @@ export default function KeranjangPage() {
           </button>
         </div>
 
-        <div className={`hidden lg:grid grid-cols-[56px_1.7fr_180px_180px_180px_150px] items-center gap-5 bg-[#1f2a22]/90 backdrop-blur-xl rounded-[18px] shadow-[0_18px_45px_rgba(10,17,11,0.22)] border border-white/10 h-20 px-8 text-slate-300 font-semibold ${shouldAnimate ? 'animate-fade-in-up' : 'opacity-0'}`}>
+        <div
+          className={`hidden lg:grid grid-cols-[56px_1.7fr_180px_180px_180px_150px] items-center gap-5 bg-[#1f2a22]/90 backdrop-blur-xl rounded-[18px] shadow-[0_18px_45px_rgba(10,17,11,0.22)] border border-white/10 h-20 px-8 text-slate-300 font-semibold ${shouldAnimate ? "animate-fade-in-up" : "opacity-0"}`}
+        >
           <input
             checked={isAllSelected}
             onChange={toggleSelectAll}
@@ -426,7 +455,9 @@ export default function KeranjangPage() {
         </div>
 
         {keranjangItems.length === 0 ? (
-          <div className={`bg-[#1f2a22]/90 backdrop-blur-xl mt-6 rounded-[24px] min-h-[420px] flex flex-col items-center justify-center text-center px-6 border border-white/10 shadow-[0_18px_45px_rgba(10,17,11,0.22)] ${shouldAnimate ? 'animate-fade-in-up' : 'opacity-0'}`}>
+          <div
+            className={`bg-[#1f2a22]/90 backdrop-blur-xl mt-6 rounded-[24px] min-h-[420px] flex flex-col items-center justify-center text-center px-6 border border-white/10 shadow-[0_18px_45px_rgba(10,17,11,0.22)] ${shouldAnimate ? "animate-fade-in-up" : "opacity-0"}`}
+          >
             <div className="w-24 h-24 rounded-full bg-[#2fa84f]/15 flex items-center justify-center text-[#2fa84f] mb-6 border border-[#2fa84f]/25">
               <svg
                 width="44"
@@ -459,8 +490,12 @@ export default function KeranjangPage() {
             {groupedItems.map((group, groupIndex) => (
               <section
                 key={group.sellerName}
-                className={`bg-[#1f2a22]/92 backdrop-blur-xl rounded-[22px] border border-white/10 shadow-[0_20px_50px_rgba(10,17,11,0.25)] overflow-hidden ${shouldAnimate ? 'animate-slide-in-up' : 'opacity-0'}`}
-                style={shouldAnimate ? { animationDelay: `${80 + groupIndex * 60}ms` } : {}}
+                className={`bg-[#1f2a22]/92 backdrop-blur-xl rounded-[22px] border border-white/10 shadow-[0_20px_50px_rgba(10,17,11,0.25)] overflow-hidden ${shouldAnimate ? "animate-slide-in-up" : "opacity-0"}`}
+                style={
+                  shouldAnimate
+                    ? { animationDelay: `${80 + groupIndex * 60}ms` }
+                    : {}
+                }
               >
                 <div className="h-[72px] px-5 sm:px-8 flex items-center gap-4 border-b border-white/10">
                   <input
@@ -607,9 +642,9 @@ export default function KeranjangPage() {
 
         {keranjangItems.length > 0 && (
           <div
-            className={`fixed bottom-0 left-0 right-0 z-30 px-4 transition-opacity duration-200 sm:px-8 ${shouldAnimate && !isCheckoutDocked ? 'animate-slide-in-up opacity-100' : 'pointer-events-none opacity-0'}`}
+            className={`fixed bottom-0 left-0 right-0 z-30 px-4 transition-opacity duration-200 sm:px-8 ${shouldAnimate && !isCheckoutDocked ? "animate-slide-in-up opacity-100" : "pointer-events-none opacity-0"}`}
             style={{
-              animationDelay: shouldAnimate ? '120ms' : undefined,
+              animationDelay: shouldAnimate ? "120ms" : undefined,
             }}
           >
             <div className="mx-auto w-full max-w-[1200px] overflow-hidden rounded-t-[14px] border border-white/10 bg-[#1f2a22]/95 shadow-[0_-10px_34px_rgba(10,17,11,0.28)] backdrop-blur-xl">

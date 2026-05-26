@@ -4,8 +4,12 @@ import React, { Suspense, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import Script from "next/script";
+<<<<<<< HEAD
 import { useToast } from "@/hooks/useToast";
 import { useUser } from "@/hooks/useUser";
+=======
+import Nav from "@/components/navbar";
+>>>>>>> 474bab120b63cc9515cab42e54543657385d0bd2
 
 interface Produk {
   id_produk: string;
@@ -455,6 +459,7 @@ function PembayaranContent() {
       />
       <div className="min-h-screen bg-[#edf3e7] relative overflow-hidden font-sans">
         {/* NAVBAR */}
+<<<<<<< HEAD
         <nav className="fixed top-0 left-0 right-0 z-[100] bg-[#1a1f1b]/90 backdrop-blur-xl border-b border-white/10 shadow-lg h-[72px] px-8 flex items-center justify-between">
           <div className="flex items-center gap-8">
             <button
@@ -565,6 +570,9 @@ function PembayaranContent() {
             </Link>
           </div>
         </nav>
+=======
+        <Nav variant="pembayaran" user={user} handleLogout={handleLogout} />
+>>>>>>> 474bab120b63cc9515cab42e54543657385d0bd2
 
         {/* CONTENT */}
         <main className="max-w-[1280px] mx-auto pt-[110px] px-6 pb-16 relative z-10">
