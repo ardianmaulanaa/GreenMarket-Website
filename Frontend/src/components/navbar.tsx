@@ -535,9 +535,13 @@ export default function Navbar({
           </Link>
 
           <div className="flex items-center gap-4">
-            <div className="flex items-center gap-3 pl-4 border-l border-white/10 group">
+            <button
+              type="button"
+              onClick={openProfile}
+              className="flex items-center gap-3 pl-4 border-l border-white/10 group bg-transparent border-y-0 border-r-0 cursor-pointer text-left hover:opacity-80 hover:scale-[1.02] transition-all duration-300"
+            >
               <div className="text-right hidden sm:block">
-                <p className="text-xs font-bold text-white m-0">{adminName}</p>
+                <p className="text-xs font-bold text-white m-0 group-hover:text-[#2fa84f] transition-colors">{adminName}</p>
                 <p className="text-[10px] text-purple-400 m-0 font-black uppercase tracking-wider">
                   Superadmin
                 </p>
@@ -548,7 +552,7 @@ export default function Navbar({
                   {adminName.charAt(0)}
                 </div>
               </div>
-            </div>
+            </button>
           </div>
         </div>
       </nav>
