@@ -3,7 +3,7 @@ const cors = require("cors");
 
 require("dotenv").config();
 
-// Import routes - Menghubungkan dengan file di folder routes
+// Import routes
 const authRoutes = require("./routes/authRoutes");
 const userRoutes = require("./routes/userRoutes");
 const addressRoutes = require("./routes/addressRoutes");
@@ -17,23 +17,38 @@ const transaksiRoutes = require("./routes/transaksiRoutes");
 
 const app = express();
 
-// Middleware CORS - pastikan mengarah ke port frontend Anda
+// Allowed frontend origins
+const allowedOrigins = [
+  "http://localhost:3000",
+  "https://project-76nni.vercel.app",
+  "https://project-76nni-git-main-ardianmaulana92251-gmailcoms-projects.vercel.app",
+];
+
 app.use(
   cors({
-    origin: "http://localhost:3000",
-    methods: ["GET", "POST", "PUT", "DELETE"],
+    origin: function (origin, callback) {
+      // Izinkan request tanpa origin seperti Postman / server-to-server
+      if (!origin) return callback(null, true);
+
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+
+      return callback(new Error("Not allowed by CORS"));
+    },
+    methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
     credentials: true,
-  }),
+  })
 );
 
 app.use(express.json());
 
-//Root endpoint
+// Root endpoint
 app.get("/", (req, res) => {
   res.send("Backend GreenMarket running");
 });
 
-//API routes
+// API routes
 app.use("/", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/alamat", addressRoutes);
@@ -45,8 +60,11 @@ app.use("/api/jasa-kirim", jasaKirimRoutes);
 app.use("/api/metode-pembayaran", metodePembayaranRoutes);
 app.use("/api/transaksi", transaksiRoutes);
 
-// --- LISTENER ---
+// Listener untuk local / Render
 const PORT = process.env.PORT || 5050;
+
 app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
+  console.log(`Server running on port ${PORT}`);
 });
+
+module.exports = app;
