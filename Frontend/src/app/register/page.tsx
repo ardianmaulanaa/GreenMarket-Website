@@ -285,7 +285,7 @@ export default function RegisterPage() {
 
     setIsSubmitting(true);
     try {
-      const response = await fetch("http://localhost:5050/register", {
+      const response = await fetch("https://greenmarket-backend-7o2xj2169.vercel.app/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

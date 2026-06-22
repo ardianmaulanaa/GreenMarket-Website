@@ -90,7 +90,7 @@ export default function AdminPanel() {
     const fetchUsers = async () => {
       try {
         const response = await fetch(
-          `http://localhost:5050/admin/users?role=${role}`,
+          `https://greenmarket-backend-7o2xj2169.vercel.app/admin/users?role=${role}`,
         );
         const data = await response.json();
         if (response.ok) setUsers(data);
@@ -104,7 +104,7 @@ export default function AdminPanel() {
     const fetchStats = async () => {
       try {
         const response = await fetch(
-          `http://localhost:5050/admin/stats?role=${role}`,
+          `https://greenmarket-backend-7o2xj2169.vercel.app/admin/stats?role=${role}`,
         );
         const data = await response.json();
         if (response.ok) setStats(data);
@@ -115,7 +115,7 @@ export default function AdminPanel() {
 
     const fetchLatestProducts = async () => {
       try {
-        const response = await fetch("http://localhost:5050/api/products");
+        const response = await fetch("https://greenmarket-backend-7o2xj2169.vercel.app/api/products");
         const data = await response.json();
         if (response.ok) {
           setLatestProducts(Array.isArray(data) ? data.slice(0, 5) : []);

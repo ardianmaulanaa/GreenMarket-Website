@@ -273,7 +273,7 @@ export default function DashboardBuyer() {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const response = await fetch("http://localhost:5050/api/categories");
+        const response = await fetch("https://greenmarket-backend-7o2xj2169.vercel.app/api/categories");
 
         if (!response.ok) {
           throw new Error("Gagal mengambil kategori");
@@ -333,7 +333,7 @@ export default function DashboardBuyer() {
         }
 
         const response = await fetch(
-          `http://localhost:5050/api/products?${query.toString()}`,
+          `https://greenmarket-backend-7o2xj2169.vercel.app/api/products?${query.toString()}`,
         );
 
         if (!response.ok) {

@@ -177,7 +177,7 @@ export default function AlamatPage() {
     }
     try {
       const response = await fetch(
-        `http://localhost:5050/api/alamat/${userId}`,
+        `https://greenmarket-backend-7o2xj2169.vercel.app/api/alamat/${userId}`,
       );
       const data = await response.json();
       if (!response.ok) {
@@ -279,8 +279,8 @@ export default function AlamatPage() {
 
     try {
       const url = editingId
-        ? `http://localhost:5050/api/alamat/${userId}/${editingId}`
-        : `http://localhost:5050/api/alamat/${userId}`;
+        ? `https://greenmarket-backend-7o2xj2169.vercel.app/api/alamat/${userId}/${editingId}`
+        : `https://greenmarket-backend-7o2xj2169.vercel.app/api/alamat/${userId}`;
       const method = editingId ? "PUT" : "POST";
 
       const payload = {
@@ -357,7 +357,7 @@ export default function AlamatPage() {
     }
     try {
       const response = await fetch(
-        `http://localhost:5050/api/alamat/${userId}/${id_alamat}`,
+        `https://greenmarket-backend-7o2xj2169.vercel.app/api/alamat/${userId}/${id_alamat}`,
         { method: "DELETE" },
       );
       const data = await response.json();

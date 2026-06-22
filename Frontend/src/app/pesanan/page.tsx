@@ -228,8 +228,8 @@ function PesananContent() {
 
       const endpoint =
         modeTarget === "seller"
-          ? `http://localhost:5050/api/transaksi/seller/${userId}`
-          : `http://localhost:5050/api/transaksi/user/${userId}`;
+          ? `https://greenmarket-backend-7o2xj2169.vercel.app/api/transaksi/seller/${userId}`
+          : `https://greenmarket-backend-7o2xj2169.vercel.app/api/transaksi/user/${userId}`;
 
       const response = await fetch(endpoint);
       const data = await response.json();
@@ -297,7 +297,7 @@ function PesananContent() {
 
     try {
       const response = await fetch(
-        `http://localhost:5050/api/transaksi/${idTransaksi}/konfirmasi-kirim`,
+        `https://greenmarket-backend-7o2xj2169.vercel.app/api/transaksi/${idTransaksi}/konfirmasi-kirim`,
         {
           method: "PUT",
           headers: {

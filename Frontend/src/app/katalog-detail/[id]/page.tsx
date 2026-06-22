@@ -76,7 +76,7 @@ export default function DetailProdukPage() {
 
       try {
         const response = await fetch(
-          `http://localhost:5050/api/products/${productId}`,
+          `https://greenmarket-backend-7o2xj2169.vercel.app/api/products/${productId}`,
         );
         if (!response.ok) throw new Error("Gagal mengambil detail produk");
 
@@ -130,7 +130,7 @@ export default function DetailProdukPage() {
 
     try {
       const response = await fetch(
-        `http://localhost:5050/api/keranjang/${userId}`,
+        `https://greenmarket-backend-7o2xj2169.vercel.app/api/keranjang/${userId}`,
         {
           method: "POST",
           headers: {

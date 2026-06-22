@@ -296,7 +296,7 @@ export default function LoginPage() {
         localStorage.setItem("rememberedEmail", rememberedEmail);
       }
 
-      const response = await fetch("http://localhost:5050/guest", {
+      const response = await fetch("https://greenmarket-backend-7o2xj2169.vercel.app/guest", {
         method: "POST",
       });
 
@@ -340,7 +340,7 @@ export default function LoginPage() {
         localStorage.setItem("rememberedEmail", rememberedEmail);
       }
 
-      const response = await fetch("http://localhost:5050/login", {
+      const response = await fetch("https://greenmarket-backend-7o2xj2169.vercel.app/login", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

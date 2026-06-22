@@ -70,7 +70,7 @@ export default function TokoPage() {
         setLoading(true);
 
         const response = await fetch(
-          `http://localhost:5050/api/products?userId=${sellerId}`,
+          `https://greenmarket-backend-7o2xj2169.vercel.app/api/products?userId=${sellerId}`,
         );
 
         if (!response.ok) {

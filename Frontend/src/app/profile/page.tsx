@@ -78,7 +78,7 @@ export default function ProfilePage() {
     }
 
     try {
-      const response = await fetch(`http://localhost:5050/api/users/${uid}`);
+      const response = await fetch(`https://greenmarket-backend-7o2xj2169.vercel.app/api/users/${uid}`);
       const data = await response.json();
 
       if (!response.ok) {
@@ -147,7 +147,7 @@ export default function ProfilePage() {
     setIsSubmitting(true);
     try {
       const response = await fetch(
-        `http://localhost:5050/api/users/${userId}`,
+        `https://greenmarket-backend-7o2xj2169.vercel.app/api/users/${userId}`,
         {
           method: "PUT",
           headers: {

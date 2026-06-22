@@ -93,7 +93,7 @@ function PembayaranContent() {
   const fetchMetodePembayaran = async () => {
     try {
       const response = await fetch(
-        "http://localhost:5050/api/metode-pembayaran",
+        "https://greenmarket-backend-7o2xj2169.vercel.app/api/metode-pembayaran",
       );
       const data = await response.json();
 
@@ -124,7 +124,7 @@ function PembayaranContent() {
 
     try {
       const response = await fetch(
-        `http://localhost:5050/api/alamat/${uid}`,
+        `https://greenmarket-backend-7o2xj2169.vercel.app/api/alamat/${uid}`,
       );
       const data = await response.json();
 
@@ -168,7 +168,7 @@ function PembayaranContent() {
     try {
       setIsPaymentLoading(true);
       const response = await fetch(
-        `http://localhost:5050/api/products/${produkId}`,
+        `https://greenmarket-backend-7o2xj2169.vercel.app/api/products/${produkId}`,
       );
       const data = await response.json();
 
@@ -190,7 +190,7 @@ function PembayaranContent() {
 
   const fetchJasaKirim = async () => {
     try {
-      const response = await fetch("http://localhost:5050/api/jasa-kirim");
+      const response = await fetch("https://greenmarket-backend-7o2xj2169.vercel.app/api/jasa-kirim");
       const data = await response.json();
 
       if (!response.ok) {
@@ -320,7 +320,7 @@ function PembayaranContent() {
           kuantitas: quantity,
         };
 
-      const response = await fetch("http://localhost:5050/api/transaksi", {
+      const response = await fetch("https://greenmarket-backend-7o2xj2169.vercel.app/api/transaksi", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

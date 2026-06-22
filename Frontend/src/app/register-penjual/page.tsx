@@ -71,7 +71,7 @@ export default function RegisterPenjual() {
 
     try {
       const response = await fetch(
-        `http://localhost:5050/api/users/upgrade/${userId}`,
+        `https://greenmarket-backend-7o2xj2169.vercel.app/api/users/upgrade/${userId}`,
         {
           method: "PUT",
           headers: {

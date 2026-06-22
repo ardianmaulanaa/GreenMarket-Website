@@ -74,8 +74,8 @@ export default function KeranjangPage() {
     const initializePage = async (uid: string) => {
       try {
         const [profileResult, keranjangResult] = await Promise.allSettled([
-          fetch(`http://localhost:5050/api/users/${uid}`),
-          fetch(`http://localhost:5050/api/keranjang/${uid}`),
+          fetch(`https://greenmarket-backend-7o2xj2169.vercel.app/api/users/${uid}`),
+          fetch(`https://greenmarket-backend-7o2xj2169.vercel.app/api/keranjang/${uid}`),
         ]);
 
         let profileOk = false;
@@ -238,7 +238,7 @@ export default function KeranjangPage() {
 
     try {
       const response = await fetch(
-        `http://localhost:5050/api/keranjang/${userId}/${idProduk}`,
+        `https://greenmarket-backend-7o2xj2169.vercel.app/api/keranjang/${userId}/${idProduk}`,
         {
           method: "DELETE",
         },

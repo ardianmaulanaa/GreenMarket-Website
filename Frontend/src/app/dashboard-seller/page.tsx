@@ -150,7 +150,7 @@ export default function DashboardSeller() {
       try {
         setLoading(true);
 
-        const response = await fetch("http://localhost:5050/api/products");
+        const response = await fetch("https://greenmarket-backend-7o2xj2169.vercel.app/api/products");
 
         if (!response.ok) {
           throw new Error("Gagal mengambil data produk seller");

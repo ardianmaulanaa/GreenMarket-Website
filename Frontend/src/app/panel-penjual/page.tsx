@@ -180,8 +180,8 @@ export default function PanelPenjual() {
   const fetchInitialData = async (uid: string) => {
     try {
       const [catRes, prodRes] = await Promise.all([
-        fetch("http://localhost:5050/api/categories"),
-        fetch(`http://localhost:5050/api/products?userId=${uid}`),
+        fetch("https://greenmarket-backend-7o2xj2169.vercel.app/api/categories"),
+        fetch(`https://greenmarket-backend-7o2xj2169.vercel.app/api/products?userId=${uid}`),
       ]);
 
       if (!catRes.ok || !prodRes.ok)
@@ -431,8 +431,8 @@ export default function PanelPenjual() {
     }
 
     const url = editingProduct
-      ? `http://localhost:5050/api/products/${editingProduct.id_produk}`
-      : "http://localhost:5050/api/products";
+      ? `https://greenmarket-backend-7o2xj2169.vercel.app/api/products/${editingProduct.id_produk}`
+      : "https://greenmarket-backend-7o2xj2169.vercel.app/api/products";
 
     const method = editingProduct ? "PUT" : "POST";
 
@@ -500,7 +500,7 @@ export default function PanelPenjual() {
 
     try {
       const response = await fetch(
-        `http://localhost:5050/api/products/${deleteModal.productId}?userId=${userId}`,
+        `https://greenmarket-backend-7o2xj2169.vercel.app/api/products/${deleteModal.productId}?userId=${userId}`,
         { method: "DELETE" },
       );
 
